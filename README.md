@@ -4,6 +4,15 @@ The C++ REST SDK is a Microsoft project for cloud-based client-server communicat
 
 ## Getting Started
 
+[![Vcpkg package](https://repology.org/badge/version-for-repo/vcpkg/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
+[![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
+[![Ubuntu 18.04 package](https://repology.org/badge/version-for-repo/ubuntu_18_04/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
+[![Fedora Rawhide package](https://repology.org/badge/version-for-repo/fedora_rawhide/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
+[![openSUSE Tumbleweed package](https://repology.org/badge/version-for-repo/opensuse_tumbleweed/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
+[![Debian Testing package](https://repology.org/badge/version-for-repo/debian_testing/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
+
+[![Build Status](https://dev.azure.com/vclibs/cpprestsdk/_apis/build/status/Microsoft.cpprestsdk.Ubuntu)](https://dev.azure.com/vclibs/cpprestsdk/_build/latest?definitionId=1)
+
 With [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
 ```
 PS> vcpkg install cpprestsdk cpprestsdk:x64-windows
@@ -11,6 +20,10 @@ PS> vcpkg install cpprestsdk cpprestsdk:x64-windows
 With [apt-get](https://launchpad.net/ubuntu/+source/casablanca/2.8.0-2build2) on Debian/Ubuntu
 ```
 $ sudo apt-get install libcpprest-dev
+```
+With [dnf](https://apps.fedoraproject.org/packages/cpprest) on Fedora
+```
+$ sudo dnf install cpprest-devel
 ```
 With [brew](https://github.com/Homebrew/homebrew-core/blob/master/Formula/cpprestsdk.rb) on OSX
 ```
@@ -29,35 +42,18 @@ To use from CMake:
 cmake_minimum_required(VERSION 3.7)
 project(main)
 
-find_path(CPPREST_INCLUDE cpprest/http_client.h)
-find_library(CPPREST_LIB NAMES cpprest_2_9d cpprest_2_9 cpprestd cpprest)
-find_package(Boost REQUIRED COMPONENTS random system thread filesystem chrono atomic date_time regex)
-find_package(OpenSSL 1.0.0 REQUIRED)
+find_package(cpprestsdk REQUIRED)
 
 add_executable(main main.cpp)
-target_include_directories(main ${CPPREST_INCLUDE})
-target_link_libraries(main
-  ${CPPREST_LIB}
-  Boost::boost
-  Boost::random
-  Boost::system
-  Boost::thread
-  Boost::filesystem
-  Boost::chrono
-  Boost::atomic
-  Boost::date_time
-  Boost::regex
-  OpenSSL::SSL
-)
+target_link_libraries(main PRIVATE cpprestsdk::cpprest)
 ```
 
 ## What's in the SDK:
 
 *   Features - HTTP client/server, JSON, URI, asynchronous streams, WebSockets client, oAuth
 *   PPL Tasks - A powerful model for composing asynchronous operations based on C++ 11 features
-*   Platforms - Windows desktop, Windows Store, Windows Phone, Ubuntu, OS X, iOS, and Android
-*   Support for Visual Studio 2012, 2013, and 2015 with debugger visualizers
-*   NuGet package with binaries for Windows and Android platforms
+*   Platforms - Windows desktop, Windows Store (UWP), Linux, OS X, Unix, iOS, and Android
+*   Support for [Visual Studio 2015 and 2017](https://visualstudio.microsoft.com/) with debugger visualizers
 
 ## Contribute Back!
 
@@ -67,7 +63,7 @@ Big or small we'd like to take your [contributions](https://github.com/Microsoft
 
 ## Having Trouble?
 
-We'd love to get your review score, whether good or bad, but even more than that, we want to fix your problem. If you submit your issue as a Review, we won't be able to respond to your problem and ask any follow-up questions that may be necessary. The most efficient way to do that is to open a an issue in our [issue tracker](https://github.com/Microsoft/cpprestsdk/issues).  
+We'd love to get your review score, whether good or bad, but even more than that, we want to fix your problem. If you submit your issue as a Review, we won't be able to respond to your problem and ask any follow-up questions that may be necessary. The most efficient way to do that is to open an issue in our [issue tracker](https://github.com/Microsoft/cpprestsdk/issues).  
 
 ### Quick Links
 

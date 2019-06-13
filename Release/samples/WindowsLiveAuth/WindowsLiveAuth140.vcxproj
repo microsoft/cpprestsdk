@@ -151,7 +151,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <AppxManifest Include="Package120.appxmanifest">
+    <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
     <None Include="WindowsLiveAuth_TemporaryKey.pfx" />

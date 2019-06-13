@@ -7,10 +7,9 @@ if (WIN32)
 endif()
 
 add_executable(test_runner test_runner.cpp test_module_loader.cpp)
-target_link_libraries(test_runner PRIVATE unittestpp)
+target_link_libraries(test_runner PRIVATE unittestpp ${CMAKE_DL_LIBS})
 
-if(BUILD_SHARED_LIBS)
-  target_link_libraries(test_runner PRIVATE ${CMAKE_DL_LIBS})
+if(BUILD_SHARED_LIBS AND NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
 elseif(APPLE)
   target_link_libraries(test_runner PRIVATE
     -Wl,-force_load httpclient_test
@@ -22,7 +21,7 @@ elseif(APPLE)
     -Wl,-force_load utils_test
     )
 elseif(UNIX)
-  target_link_libraries(test_runner PRIVATE ${CMAKE_DL_LIBS}
+  target_link_libraries(test_runner PRIVATE
     -Wl,--whole-archive
     httpclient_test
     json_test
@@ -52,6 +51,9 @@ else()
     httptest_utilities
     cpprest
   )
+  if(TARGET websockettest_utilities)
+      target_link_libraries(test_runner PRIVATE websockettest_utilities)
+  endif()
   if(CPPREST_WEBSOCKETS_IMPL STREQUAL "wspp")
     cpprest_find_websocketpp()
     target_link_libraries(test_runner PRIVATE cpprestsdk_websocketpp_internal)

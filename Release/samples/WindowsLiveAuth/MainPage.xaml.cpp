@@ -1,10 +1,12 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ ****/
 
 #include "pch.h"
+
 #include "MainPage.xaml.h"
+
 #include "cpprest/filestream.h"
 
 using namespace WindowsLiveAuth;
@@ -20,29 +22,26 @@ using namespace Windows::UI::Xaml::Input;
 using namespace Windows::UI::Xaml::Media;
 using namespace Windows::UI::Xaml::Navigation;
 
-using  namespace Platform::Collections;
-using  namespace Windows::Security::Authentication::OnlineId;
+using namespace Platform::Collections;
+using namespace Windows::Security::Authentication::OnlineId;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
-MainPage::MainPage()
-{
-	InitializeComponent();
-}
+MainPage::MainPage() { InitializeComponent(); }
 
 /// <summary>
 /// Invoked when this page is about to be displayed in a Frame.
 /// </summary>
 /// <param name="e">Event data that describes how this page was reached.  The Parameter
 /// property is typically used to configure the page.</param>
-void MainPage::OnNavigatedTo(NavigationEventArgs^ e)
+void MainPage::OnNavigatedTo(NavigationEventArgs ^ e)
 {
-	(void) e;	// Unused parameter
+    (void)e; // Unused parameter
 }
 
 static web::live::live_client lv_client;
 
-void MainPage::Button_Click_1(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void MainPage::Button_Click_1(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
 {
     try
     {
@@ -52,31 +51,35 @@ void MainPage::Button_Click_1(Platform::Object^ sender, Windows::UI::Xaml::Route
         scopes.push_back(web::live::scopes::wl_basic);
         scopes.push_back(web::live::scopes::wl_skydrive);
         scopes.push_back(web::live::scopes::wl_skydrive_update);
-        lv_client.login(std::begin(scopes), std::end(scopes)).then([this](bool ok)
-        {
-            if (ok)
-            {
-                this->LogOutButton->Visibility =  Windows::UI::Xaml::Visibility::Visible;
-                this->LogInButton->Visibility =  Windows::UI::Xaml::Visibility::Collapsed;
+        lv_client.login(std::begin(scopes), std::end(scopes))
+            .then(
+                [this](bool ok) {
+                    if (ok)
+                    {
+                        this->LogOutButton->Visibility = Windows::UI::Xaml::Visibility::Visible;
+                        this->LogInButton->Visibility = Windows::UI::Xaml::Visibility::Collapsed;
 
-                this->Block1->Text = ref new Platform::String((L"access_token = \n" + lv_client.access_token()).c_str());
-            }
-        }, ui_ctx);
+                        this->Block1->Text =
+                            ref new Platform::String((L"access_token = \n" + lv_client.access_token()).c_str());
+                    }
+                },
+                ui_ctx);
     }
-    catch(...)
+    catch (...)
     {
     }
 }
 
-void MainPage::LogOutButton_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void MainPage::LogOutButton_Click(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
 {
     auto ui_ctx = pplx::task_continuation_context::use_current();
 
-    lv_client.logout().then([this](bool)
-    {
-        this->LogOutButton->Visibility =  Windows::UI::Xaml::Visibility::Collapsed;
-        this->LogInButton->Visibility =  Windows::UI::Xaml::Visibility::Visible;
-    }, ui_ctx);
+    lv_client.logout().then(
+        [this](bool) {
+            this->LogOutButton->Visibility = Windows::UI::Xaml::Visibility::Collapsed;
+            this->LogInButton->Visibility = Windows::UI::Xaml::Visibility::Visible;
+        },
+        ui_ctx);
 }
 
 // The following functions let you get information for an arbitrary WL resource, upload a file, or download a file.
@@ -89,28 +92,28 @@ void MainPage::LogOutButton_Click(Platform::Object^ sender, Windows::UI::Xaml::R
 //  create a contact using lv_client.post()
 //  modify a calendar event using lv_client.put()
 //
-void MainPage::Button_Click_2(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void MainPage::Button_Click_2(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
 {
     auto ui_ctx = pplx::task_continuation_context::use_current();
 
-    lv_client.get(this->Box1->Text->Data()).then(
-        [this](pplx::task<web::json::value> value)
-        {
-            try
-            {
-                auto str = value.get().serialize();
-                this->Block1->Text = ref new Platform::String(str.c_str());
-            }
-            catch(std::exception& exc)
-            {
-                this->Block1->Text = ref new Platform::String(utility::conversions::to_string_t(exc.what()).c_str());
-            }
-        }, ui_ctx);
-
+    lv_client.get(this->Box1->Text->Data())
+        .then(
+            [this](pplx::task<web::json::value> value) {
+                try
+                {
+                    auto str = value.get().serialize();
+                    this->Block1->Text = ref new Platform::String(str.c_str());
+                }
+                catch (std::exception& exc)
+                {
+                    this->Block1->Text =
+                        ref new Platform::String(utility::conversions::to_string_t(exc.what()).c_str());
+                }
+            },
+            ui_ctx);
 }
 
-
-void MainPage::UploadButton_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void MainPage::UploadButton_Click(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
 {
     this->Block1->Text = ref new Platform::String(L"Processing request...");
 
@@ -129,9 +132,8 @@ void MainPage::UploadButton_Click(Platform::Object^ sender, Windows::UI::Xaml::R
     utility::string_t path = this->Box1->Text->Data();
 
     pplx::create_task(file)
-        .then([path](Windows::Storage::StorageFile^ file)
-        {
-            if ( file == nullptr )
+        .then([path](Windows::Storage::StorageFile ^ file) {
+            if (file == nullptr)
             {
                 throw std::exception("No file was picked");
             }
@@ -140,22 +142,23 @@ void MainPage::UploadButton_Click(Platform::Object^ sender, Windows::UI::Xaml::R
 
             return lv_client.upload(full_path, file);
         })
-        .then([this](pplx::task<web::json::value> response)
-        {
-            try
-            {
-                auto message = response.get().serialize();
-                this->Block1->Text = ref new Platform::String(message.c_str());
-            }
-            catch(std::exception& exc)
-            {
-                this->Block1->Text = ref new Platform::String(utility::conversions::to_string_t(exc.what()).c_str());
-            }
-        }, ui_ctx);
+        .then(
+            [this](pplx::task<web::json::value> response) {
+                try
+                {
+                    auto message = response.get().serialize();
+                    this->Block1->Text = ref new Platform::String(message.c_str());
+                }
+                catch (std::exception& exc)
+                {
+                    this->Block1->Text =
+                        ref new Platform::String(utility::conversions::to_string_t(exc.what()).c_str());
+                }
+            },
+            ui_ctx);
 }
 
-
-void MainPage::DownloadButton_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void MainPage::DownloadButton_Click(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
 {
     this->Block1->Text = ref new Platform::String(L"Processing request...");
 
@@ -164,38 +167,34 @@ void MainPage::DownloadButton_Click(Platform::Object^ sender, Windows::UI::Xaml:
 
     // Start by getting the file metadata from OneDrive. We need the file name.
     lv_client.get(path)
-    .then([this](web::json::value file_info)
-    {
-        if (!file_info.is_object())
-            throw std::exception("unexpected file info response format");
-            
-        auto name = file_info[L"name"].as_string();
+        .then([this](web::json::value file_info) {
+            if (!file_info.is_object()) throw std::exception("unexpected file info response format");
 
-        // Once we have the name, we can create a storage file in the downloads folder.
+            auto name = file_info[L"name"].as_string();
 
-        return pplx::create_task(
-            Windows::Storage::DownloadsFolder::CreateFileAsync(
-                ref new Platform::String(name.c_str()), 
-                Windows::Storage::CreationCollisionOption::GenerateUniqueName));
-    })
-    .then([path,ui_ctx,this](Windows::Storage::StorageFile^ file)
-    {
-        if ( file == nullptr )
-            throw std::exception("unexpected file info response format");
-        auto name = file->Name;
-        // With a file reference in hand, we download the file.
-        return lv_client.download(path, file); 
-    })
-    .then([this](pplx::task<size_t> response)
-    {
-        try
-        {
-            response.wait();
-            this->Block1->Text = ref new Platform::String(L"Download complete.");
-        }
-        catch(std::exception& exc)
-        {
-            this->Block1->Text = ref new Platform::String(utility::conversions::to_string_t(exc.what()).c_str());
-        }
-    }, ui_ctx);
+            // Once we have the name, we can create a storage file in the downloads folder.
+
+            return pplx::create_task(Windows::Storage::DownloadsFolder::CreateFileAsync(
+                ref new Platform::String(name.c_str()), Windows::Storage::CreationCollisionOption::GenerateUniqueName));
+        })
+        .then([path, ui_ctx, this](Windows::Storage::StorageFile ^ file) {
+            if (file == nullptr) throw std::exception("unexpected file info response format");
+            auto name = file->Name;
+            // With a file reference in hand, we download the file.
+            return lv_client.download(path, file);
+        })
+        .then(
+            [this](pplx::task<size_t> response) {
+                try
+                {
+                    response.wait();
+                    this->Block1->Text = ref new Platform::String(L"Download complete.");
+                }
+                catch (std::exception& exc)
+                {
+                    this->Block1->Text =
+                        ref new Platform::String(utility::conversions::to_string_t(exc.what()).c_str());
+                }
+            },
+            ui_ctx);
 }

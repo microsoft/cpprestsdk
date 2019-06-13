@@ -1,13 +1,13 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Oauth2Client.cpp : Defines the entry point for the console application
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Oauth2Client.cpp : Defines the entry point for the console application
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 /*
 
@@ -26,16 +26,18 @@ Set following entry in the hosts file:
 127.0.0.1    testhost.local
 
 */
-#include "stdafx.h"
+#include "cpprest/http_client.h"
+#include <mutex>
 
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
 // Extra includes for Windows desktop.
 #include <windows.h>
+
 #include <Shellapi.h>
 #endif
 
-#include "cpprest/http_listener.h"
 #include "cpprest/http_client.h"
+#include "cpprest/http_listener.h"
 
 using namespace utility;
 using namespace web;
@@ -67,11 +69,11 @@ static void open_browser(utility::string_t auth_uri)
 #elif defined(__APPLE__)
     // NOTE: OS X only.
     string_t browser_cmd(U("open \"") + auth_uri + U("\""));
-    system(browser_cmd.c_str());
+    (void)system(browser_cmd.c_str());
 #else
     // NOTE: Linux/X11 only.
     string_t browser_cmd(U("xdg-open \"") + auth_uri + U("\""));
-    system(browser_cmd.c_str());
+    (void)system(browser_cmd.c_str());
 #endif
 }
 
@@ -83,31 +85,27 @@ static void open_browser(utility::string_t auth_uri)
 class oauth2_code_listener
 {
 public:
-    oauth2_code_listener(
-        uri listen_uri,
-        oauth2_config& config) :
-            m_listener(new http_listener(listen_uri)),
-            m_config(config)
+    oauth2_code_listener(uri listen_uri, oauth2_config& config)
+        : m_listener(new http_listener(listen_uri)), m_config(config)
     {
-        m_listener->support([this](http::http_request request) -> void
-        {
+        m_listener->support([this](http::http_request request) -> void {
             if (request.request_uri().path() == U("/") && request.request_uri().query() != U(""))
             {
                 m_resplock.lock();
 
-                m_config.token_from_redirected_uri(request.request_uri()).then([this,request](pplx::task<void> token_task) -> void
-                {
-                    try
-                    {
-                        token_task.wait();
-                        m_tce.set(true);
-                    }
-                    catch (const oauth2_exception& e)
-                    {
-                        ucout << "Error: " << e.what() << std::endl;
-                        m_tce.set(false);
-                    }
-                });
+                m_config.token_from_redirected_uri(request.request_uri())
+                    .then([this, request](pplx::task<void> token_task) -> void {
+                        try
+                        {
+                            token_task.wait();
+                            m_tce.set(true);
+                        }
+                        catch (const oauth2_exception& e)
+                        {
+                            ucout << "Error: " << e.what() << std::endl;
+                            m_tce.set(false);
+                        }
+                    });
 
                 request.reply(status_codes::OK, U("Ok."));
 
@@ -122,15 +120,9 @@ public:
         m_listener->open().wait();
     }
 
-    ~oauth2_code_listener()
-    {
-        m_listener->close().wait();
-    }
+    ~oauth2_code_listener() { m_listener->close().wait(); }
 
-    pplx::task<bool> listen_for_code()
-    {
-        return pplx::create_task(m_tce);
-    }
+    pplx::task<bool> listen_for_code() { return pplx::create_task(m_tce); }
 
 private:
     std::unique_ptr<http_listener> m_listener;
@@ -146,19 +138,16 @@ class oauth2_session_sample
 {
 public:
     oauth2_session_sample(utility::string_t name,
-        utility::string_t client_key,
-        utility::string_t client_secret,
-        utility::string_t auth_endpoint,
-        utility::string_t token_endpoint,
-        utility::string_t redirect_uri) :
-            m_oauth2_config(client_key,
-                client_secret,
-                auth_endpoint,
-                token_endpoint,
-                redirect_uri),
-            m_name(name),
-            m_listener(new oauth2_code_listener(redirect_uri, m_oauth2_config))
-    {}
+                          utility::string_t client_key,
+                          utility::string_t client_secret,
+                          utility::string_t auth_endpoint,
+                          utility::string_t token_endpoint,
+                          utility::string_t redirect_uri)
+        : m_oauth2_config(client_key, client_secret, auth_endpoint, token_endpoint, redirect_uri)
+        , m_name(name)
+        , m_listener(new oauth2_code_listener(redirect_uri, m_oauth2_config))
+    {
+    }
 
     void run()
     {
@@ -182,7 +171,8 @@ public:
         }
         else
         {
-            ucout << "Skipped " << m_name.c_str() << " session sample because app key or secret is empty. Please see instructions." << std::endl;
+            ucout << "Skipped " << m_name.c_str()
+                  << " session sample because app key or secret is empty. Please see instructions." << std::endl;
         }
     }
 
@@ -222,13 +212,13 @@ private:
 class dropbox_session_sample : public oauth2_session_sample
 {
 public:
-    dropbox_session_sample() :
-        oauth2_session_sample(U("Dropbox"),
-            s_dropbox_key,
-            s_dropbox_secret,
-            U("https://www.dropbox.com/1/oauth2/authorize"),
-            U("https://api.dropbox.com/1/oauth2/token"),
-            U("http://localhost:8889/"))
+    dropbox_session_sample()
+        : oauth2_session_sample(U("Dropbox"),
+                                s_dropbox_key,
+                                s_dropbox_secret,
+                                U("https://www.dropbox.com/1/oauth2/authorize"),
+                                U("https://api.dropbox.com/1/oauth2/token"),
+                                U("http://localhost:8889/"))
     {
         // Dropbox uses "default" OAuth 2.0 settings.
     }
@@ -238,7 +228,8 @@ protected:
     {
         http_client api(U("https://api.dropbox.com/1/"), m_http_config);
         ucout << "Requesting account information:" << std::endl;
-        ucout << "Information: " << api.request(methods::GET, U("account/info")).get().extract_json().get() << std::endl;
+        ucout << "Information: " << api.request(methods::GET, U("account/info")).get().extract_json().get()
+              << std::endl;
     }
 };
 
@@ -248,13 +239,13 @@ protected:
 class linkedin_session_sample : public oauth2_session_sample
 {
 public:
-    linkedin_session_sample() :
-        oauth2_session_sample(U("LinkedIn"),
-            s_linkedin_key,
-            s_linkedin_secret,
-            U("https://www.linkedin.com/uas/oauth2/authorization"),
-            U("https://www.linkedin.com/uas/oauth2/accessToken"),
-            U("http://localhost:8888/"))
+    linkedin_session_sample()
+        : oauth2_session_sample(U("LinkedIn"),
+                                s_linkedin_key,
+                                s_linkedin_secret,
+                                U("https://www.linkedin.com/uas/oauth2/authorization"),
+                                U("https://www.linkedin.com/uas/oauth2/accessToken"),
+                                U("http://localhost:8888/"))
     {
         // LinkedIn doesn't use bearer auth.
         m_oauth2_config.set_bearer_auth(false);
@@ -269,9 +260,9 @@ protected:
     {
         http_client api(U("https://api.linkedin.com/v1/people/"), m_http_config);
         ucout << "Requesting account information:" << std::endl;
-        ucout << "Information: " << api.request(methods::GET, U("~?format=json")).get().extract_json().get() << std::endl;
+        ucout << "Information: " << api.request(methods::GET, U("~?format=json")).get().extract_json().get()
+              << std::endl;
     }
-
 };
 
 //
@@ -280,13 +271,13 @@ protected:
 class live_session_sample : public oauth2_session_sample
 {
 public:
-    live_session_sample() :
-        oauth2_session_sample(U("Live"),
-            s_live_key,
-            s_live_secret,
-            U("https://login.live.com/oauth20_authorize.srf"),
-            U("https://login.live.com/oauth20_token.srf"),
-            U("http://testhost.local:8890/"))
+    live_session_sample()
+        : oauth2_session_sample(U("Live"),
+                                s_live_key,
+                                s_live_secret,
+                                U("https://login.live.com/oauth20_authorize.srf"),
+                                U("https://login.live.com/oauth20_token.srf"),
+                                U("http://testhost.local:8890/"))
     {
         // Scope "wl.basic" allows fetching user information.
         m_oauth2_config.set_scope(U("wl.basic"));
@@ -301,18 +292,17 @@ protected:
     }
 };
 
-
 #ifdef _WIN32
-int wmain(int argc, wchar_t *argv[])
+int wmain(int argc, wchar_t* argv[])
 #else
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 #endif
 {
     ucout << "Running OAuth 2.0 client sample..." << std::endl;
 
     linkedin_session_sample linkedin;
-    dropbox_session_sample  dropbox;
-    live_session_sample     live;
+    dropbox_session_sample dropbox;
+    live_session_sample live;
 
     linkedin.run();
     dropbox.run();

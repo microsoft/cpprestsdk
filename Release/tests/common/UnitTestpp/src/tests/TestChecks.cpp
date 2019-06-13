@@ -1,41 +1,40 @@
 /***
-* This file is based on or incorporates material from the UnitTest++ r30 open source project.
-* Microsoft is not the original author of this code but has modified it and is licensing the code under 
-* the MIT License. Microsoft reserves all other rights not expressly granted under the MIT License, 
-* whether by implication, estoppel or otherwise. 
-*
-* UnitTest++ r30 
-*
-* Copyright (c) 2006 Noel Llopis and Charles Nicholson
-* Portions Copyright (c) Microsoft Corporation
-*
-* All Rights Reserved.
-*
-* MIT License
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
-* and associated documentation files (the "Software"), to deal in the Software without restriction, 
-* including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-* and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, 
-* subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in all copies or 
-* substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE 
-* AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
-* DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-***/
+ * This file is based on or incorporates material from the UnitTest++ r30 open source project.
+ * Microsoft is not the original author of this code but has modified it and is licensing the code under
+ * the MIT License. Microsoft reserves all other rights not expressly granted under the MIT License,
+ * whether by implication, estoppel or otherwise.
+ *
+ * UnitTest++ r30
+ *
+ * Copyright (c) 2006 Noel Llopis and Charles Nicholson
+ * Portions Copyright (c) Microsoft Corporation
+ *
+ * All Rights Reserved.
+ *
+ * MIT License
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+ * and associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+ * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ ***/
 
 #include "stdafx.h"
 
 using namespace UnitTest;
 
-namespace {
-
-
+namespace
+{
 TEST(CheckEqualWithUnsignedLong)
 {
     TestResults results;
@@ -106,7 +105,7 @@ TEST(CheckEqualFailureIncludesCheckExpectedAndActual)
     const int something = 2;
     CheckEqual(results, "1", "something", 1, something, TestDetails("", "", "", 0));
 
-	using namespace std;
+    using namespace std;
     CHECK(strstr(reporter.lastFailedMessage, "1=1"));
     CHECK(strstr(reporter.lastFailedMessage, "something=2"));
 }
@@ -148,20 +147,20 @@ TEST(CheckCloseWithZeroEpsilonWorksForSameNumber)
 
 TEST(CheckCloseWithNaNFails)
 {
-	const unsigned int bitpattern = 0xFFFFFFFF;
-	float nan;
-	std::memcpy(&nan, &bitpattern, sizeof(bitpattern));
+    const unsigned int bitpattern = 0xFFFFFFFF;
+    float nan;
+    std::memcpy(&nan, &bitpattern, sizeof(bitpattern));
 
-	TestResults results;
+    TestResults results;
     CheckClose(results, 3.0f, nan, 0.1f, TestDetails("", "", "", 0));
     CHECK_EQUAL(1, results.GetFailureCount());
 }
 
 TEST(CheckCloseWithNaNAgainstItselfFails)
 {
-	const unsigned int bitpattern = 0xFFFFFFFF;
-	float nan;
-	std::memcpy(&nan, &bitpattern, sizeof(bitpattern));
+    const unsigned int bitpattern = 0xFFFFFFFF;
+    float nan;
+    std::memcpy(&nan, &bitpattern, sizeof(bitpattern));
 
     TestResults results;
     CheckClose(results, nan, nan, 0.1f, TestDetails("", "", "", 0));
@@ -176,7 +175,7 @@ TEST(CheckCloseFailureIncludesCheckExpectedAndActual)
     const float actual = 1.1f;
     CheckClose(results, expected, actual, 0.01f, TestDetails("", "", "", 0));
 
-	using namespace std;
+    using namespace std;
     CHECK(strstr(reporter.lastFailedMessage, "xpected 0.9"));
     CHECK(strstr(reporter.lastFailedMessage, "was 1.1"));
 }
@@ -187,7 +186,7 @@ TEST(CheckCloseFailureIncludesTolerance)
     TestResults results(&reporter);
     CheckClose(results, 2, 3, 0.01f, TestDetails("", "", "", 0));
 
-	using namespace std;
+    using namespace std;
     CHECK(strstr(reporter.lastFailedMessage, "0.01"));
 }
 
@@ -205,12 +204,11 @@ TEST(CheckCloseFailureIncludesDetails)
     CHECK_EQUAL(10, reporter.lastFailedLine);
 }
 
-
 TEST(CheckArrayEqualTrue)
 {
     TestResults results;
 
-    int const array[3] = { 1, 2, 3 };
+    int const array[3] = {1, 2, 3};
     CheckArrayEqual(results, array, array, 3, TestDetails("", "", "", 0));
     CHECK_EQUAL(0, results.GetFailureCount());
 }
@@ -219,8 +217,8 @@ TEST(CheckArrayEqualFalse)
 {
     TestResults results;
 
-    int const array1[3] = { 1, 2, 3 };
-    int const array2[3] = { 1, 2, 2 };
+    int const array1[3] = {1, 2, 3};
+    int const array2[3] = {1, 2, 2};
     CheckArrayEqual(results, array1, array2, 3, TestDetails("", "", "", 0));
     CHECK_EQUAL(1, results.GetFailureCount());
 }
@@ -229,8 +227,8 @@ TEST(CheckArrayCloseTrue)
 {
     TestResults results;
 
-    float const array1[3] = { 1.0f, 1.5f, 2.0f };
-    float const array2[3] = { 1.01f, 1.51f, 2.01f };
+    float const array1[3] = {1.0f, 1.5f, 2.0f};
+    float const array2[3] = {1.01f, 1.51f, 2.01f};
     CheckArrayClose(results, array1, array2, 3, 0.02f, TestDetails("", "", "", 0));
     CHECK_EQUAL(0, results.GetFailureCount());
 }
@@ -239,8 +237,8 @@ TEST(CheckArrayCloseFalse)
 {
     TestResults results;
 
-    float const array1[3] = { 1.0f, 1.5f, 2.0f };
-    float const array2[3] = { 1.01f, 1.51f, 2.01f };
+    float const array1[3] = {1.0f, 1.5f, 2.0f};
+    float const array2[3] = {1.01f, 1.51f, 2.01f};
     CheckArrayClose(results, array1, array2, 3, 0.001f, TestDetails("", "", "", 0));
     CHECK_EQUAL(1, results.GetFailureCount());
 }
@@ -251,8 +249,8 @@ TEST(CheckArrayCloseFailureIncludesDetails)
     TestResults results(&reporter);
     TestDetails const details("arrayCloseTest", "arrayCloseSuite", "file", 1337);
 
-    float const array1[3] = { 1.0f, 1.5f, 2.0f };
-    float const array2[3] = { 1.01f, 1.51f, 2.01f };
+    float const array1[3] = {1.0f, 1.5f, 2.0f};
+    float const array2[3] = {1.01f, 1.51f, 2.01f};
     CheckArrayClose(results, array1, array2, 3, 0.001f, details);
 
     CHECK_EQUAL("arrayCloseTest", reporter.lastFailedTest);
@@ -261,17 +259,12 @@ TEST(CheckArrayCloseFailureIncludesDetails)
     CHECK_EQUAL(1337, reporter.lastFailedLine);
 }
 
-
 TEST(CheckArray2DCloseTrue)
 {
     TestResults results;
 
-    float const array1[3][3] = { { 1.0f, 1.5f, 2.0f },
-                                 { 2.0f, 2.5f, 3.0f },
-                                 { 3.0f, 3.5f, 4.0f } };
-    float const array2[3][3] = { { 1.01f, 1.51f, 2.01f },
-                                 { 2.01f, 2.51f, 3.01f },
-                                 { 3.01f, 3.51f, 4.01f } };
+    float const array1[3][3] = {{1.0f, 1.5f, 2.0f}, {2.0f, 2.5f, 3.0f}, {3.0f, 3.5f, 4.0f}};
+    float const array2[3][3] = {{1.01f, 1.51f, 2.01f}, {2.01f, 2.51f, 3.01f}, {3.01f, 3.51f, 4.01f}};
     CheckArray2DClose(results, array1, array2, 3, 3, 0.02f, TestDetails("", "", "", 0));
     CHECK_EQUAL(0, results.GetFailureCount());
 }
@@ -280,20 +273,13 @@ TEST(CheckArray2DCloseFalse)
 {
     TestResults results;
 
-    float const array1[3][3] = { { 1.0f, 1.5f, 2.0f },
-                                 { 2.0f, 2.5f, 3.0f },
-                                 { 3.0f, 3.5f, 4.0f } };
-    float const array2[3][3] = { { 1.01f, 1.51f, 2.01f },
-                                 { 2.01f, 2.51f, 3.01f },
-                                 { 3.01f, 3.51f, 4.01f } };
+    float const array1[3][3] = {{1.0f, 1.5f, 2.0f}, {2.0f, 2.5f, 3.0f}, {3.0f, 3.5f, 4.0f}};
+    float const array2[3][3] = {{1.01f, 1.51f, 2.01f}, {2.01f, 2.51f, 3.01f}, {3.01f, 3.51f, 4.01f}};
     CheckArray2DClose(results, array1, array2, 3, 3, 0.001f, TestDetails("", "", "", 0));
     CHECK_EQUAL(1, results.GetFailureCount());
 }
 
-TEST(CheckCloseWithDoublesSucceeds)
-{
-    CHECK_CLOSE(0.5, 0.5, 0.0001);
-}
+TEST(CheckCloseWithDoublesSucceeds) { CHECK_CLOSE(0.5, 0.5, 0.0001); }
 
 TEST(CheckArray2DCloseFailureIncludesDetails)
 {
@@ -301,12 +287,8 @@ TEST(CheckArray2DCloseFailureIncludesDetails)
     TestResults results(&reporter);
     TestDetails const details("array2DCloseTest", "array2DCloseSuite", "file", 1234);
 
-    float const array1[3][3] = { { 1.0f, 1.5f, 2.0f },
-                                 { 2.0f, 2.5f, 3.0f },
-                                 { 3.0f, 3.5f, 4.0f } };
-    float const array2[3][3] = { { 1.01f, 1.51f, 2.01f },
-                                 { 2.01f, 2.51f, 3.01f },
-                                 { 3.01f, 3.51f, 4.01f } };
+    float const array1[3][3] = {{1.0f, 1.5f, 2.0f}, {2.0f, 2.5f, 3.0f}, {3.0f, 3.5f, 4.0f}};
+    float const array2[3][3] = {{1.01f, 1.51f, 2.01f}, {2.01f, 2.51f, 3.01f}, {3.01f, 3.51f, 4.01f}};
     CheckArray2DClose(results, array1, array2, 3, 3, 0.001f, details);
 
     CHECK_EQUAL("array2DCloseTest", reporter.lastFailedTest);
@@ -315,4 +297,4 @@ TEST(CheckArray2DCloseFailureIncludesDetails)
     CHECK_EQUAL(1234, reporter.lastFailedLine);
 }
 
-}
+} // namespace

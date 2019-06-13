@@ -6,7 +6,6 @@ endif()
 
 add_library(common_utilities
   os_utilities.cpp
-  stdafx.cpp
   )
 
 if(NOT BUILD_SHARED_LIBS)
