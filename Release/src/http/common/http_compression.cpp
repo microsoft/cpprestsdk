@@ -32,6 +32,10 @@
 
 #if defined(CPPREST_HTTP_COMPRESSION)
 #include <zlib.h>
+// zconf.h may define compress
+#ifdef compress
+#undef compress
+#endif
 #if !defined(CPPREST_EXCLUDE_BROTLI)
 #define CPPREST_BROTLI_COMPRESSION
 #endif // CPPREST_EXCLUDE_BROTLI
