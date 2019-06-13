@@ -136,7 +136,7 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& ke
 
 std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& key, const utility::string_t& data)
 {
-    unsigned char digest[HMAC_MAX_MD_CBLOCK];
+    unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int digest_len = 0;
 
     HMAC(EVP_sha1(),
