@@ -325,6 +325,35 @@ public:
                 }
             });
 
+        client.set_ping_handler(
+            [this](websocketpp::connection_hdl, const std::string& msg) {
+                if (m_external_message_handler)
+                {
+                    _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
+                    websocket_incoming_message incoming_msg;
+
+                    incoming_msg.m_msg_type = websocket_message_type::ping;
+                    incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(msg);
+
+                    m_external_message_handler(incoming_msg);
+                }
+                return true;
+            });
+
+        client.set_pong_handler(
+            [this](websocketpp::connection_hdl, const std::string& msg) {
+                if (m_external_message_handler)
+                {
+                    _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
+                    websocket_incoming_message incoming_msg;
+
+                    incoming_msg.m_msg_type = websocket_message_type::pong;
+                    incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(msg);
+
+                    m_external_message_handler(incoming_msg);
+                }
+            });
+
         client.set_close_handler([this](websocketpp::connection_hdl con_hdl) {
             _ASSERTE(m_state != CLOSED);
             shutdown_wspp_impl<WebsocketConfigType>(con_hdl, false);
@@ -434,12 +463,13 @@ public:
         {
             case websocket_message_type::text_message:
             case websocket_message_type::binary_message:
+            case websocket_message_type::ping:
             case websocket_message_type::pong: break;
             default: return pplx::task_from_exception<void>(websocket_exception("Message Type not supported."));
         }
 
         const auto length = msg.m_length;
-        if (length == 0 && msg.m_msg_type != websocket_message_type::pong)
+        if (length == 0 && msg.m_msg_type != websocket_message_type::ping && msg.m_msg_type != websocket_message_type::pong)
         {
             return pplx::task_from_exception<void>(websocket_exception("Cannot send empty message."));
         }
@@ -694,7 +724,18 @@ private:
             case websocket_message_type::binary_message:
                 client.send(this_client->m_con, sp_allocated.get(), length, websocketpp::frame::opcode::binary, ec);
                 break;
-            case websocket_message_type::pong: client.pong(this_client->m_con, "", ec); break;
+            case websocket_message_type::ping:
+            {
+                std::string s(reinterpret_cast<char*>(sp_allocated.get()), length);
+                client.ping(this_client->m_con, s, ec);
+                break;
+            }
+            case websocket_message_type::pong:
+            {
+                std::string s(reinterpret_cast<char*>(sp_allocated.get()), length);
+                client.pong(this_client->m_con, s, ec);
+                break;
+            }
             default:
                 // This case should have already been filtered above.
                 std::abort();
