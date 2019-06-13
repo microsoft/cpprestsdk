@@ -905,7 +905,8 @@ public:
             }
         };
 
-        if (proxy_type == http_proxy_type::ssl_tunnel)
+        // Note that we must not try to CONNECT using an already established connection via proxy -- this would send CONNECT to the end server which is definitely not what we want.
+        if (proxy_type == http_proxy_type::ssl_tunnel && !m_connection->is_reused())
         {
             // The ssl_tunnel_proxy keeps the context alive and then calls back once the ssl tunnel is established via
             // 'start_http_request_flow'
