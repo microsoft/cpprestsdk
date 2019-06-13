@@ -73,8 +73,8 @@ while (( "$#" )); do
 done
 
 ## Configuration
-DEFAULT_BOOST_VERSION=1.67.0
-DEFAULT_OPENSSL_VERSION=1.0.2o
+DEFAULT_BOOST_VERSION=1.69.0
+DEFAULT_OPENSSL_VERSION=1.1.0k
 BOOST_VERSION=${BOOST_VERSION:-${DEFAULT_BOOST_VERSION}}
 OPENSSL_VERSION=${OPENSSL_VERSION:-${DEFAULT_OPENSSL_VERSION}}
 CPPRESTSDK_BUILD_TYPE=${CPPRESTSDK_BUILD_TYPE:-Release}
@@ -96,7 +96,7 @@ if [ ! -e $ABS_PATH/boost.framework ] && [ ! -d $ABS_PATH/boost ]; then
         git clone https://github.com/faithfracture/Apple-Boost-BuildScript ${ABS_PATH}/Apple-Boost-BuildScript
     fi
     pushd ${ABS_PATH}/Apple-Boost-BuildScript
-    git checkout 1b94ec2e2b5af1ee036d9559b96e70c113846392
+    git checkout 1ebe6e7654d9c9e1792076ee3827a45d5d2f34c5
     BOOST_LIBS="thread chrono filesystem regex system random" ./boost.sh -ios -tvos --boost-version $BOOST_VERSION
     popd
     mv ${ABS_PATH}/Apple-Boost-BuildScript/build/boost/${BOOST_VERSION}/ios/framework/boost.framework ${ABS_PATH}
