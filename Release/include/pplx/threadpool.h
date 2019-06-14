@@ -46,10 +46,20 @@ template<class T>
 using java_local_ref = std::unique_ptr<typename std::remove_pointer<T>::type, java_local_ref_deleter>;
 #endif
 
-#if defined(_Win32)
+#if defined(_WIN32)
  // manually init Winsock
+class winsock_init_helper_base
+{
+protected:
+    struct data
+    {
+        long init_count = 0;
+        long result = 0;
+    };
+};
+
 template <int Major = 2, int Minor = 0>
-class winsock_init_helper
+class winsock_init_helper : private winsock_init_helper_base
 {
 public:
     winsock_init_helper()
@@ -69,16 +79,12 @@ public:
             WSACleanup();
         }
     }
-
 private:
-    struct data
-    {
-        long init_count = 0;
-        long result = 0;
-    };
-
     static data m_data;
 };
+
+template <int Major, int Minor>
+winsock_init_helper_base::data winsock_init_helper<Major, Minor>::m_data;
 #endif
 
 class threadpool
@@ -112,7 +118,7 @@ public:
 protected:
     threadpool(size_t num_threads) : m_service(static_cast<int>(num_threads)) {}
 
-#if defined(_Win32)
+#if defined(_WIN32)
     winsock_init_helper<> m_init_helper;
 #endif
     boost::asio::io_service m_service;
