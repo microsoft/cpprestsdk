@@ -147,8 +147,7 @@ SUITE(negative_parsing_tests)
         verify_json_throws(stream);
     }
 
-// Test using Windows only API.
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(wstream_left_over_chars)
     {
         std::wstringbuf buf;

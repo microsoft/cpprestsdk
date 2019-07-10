@@ -275,7 +275,7 @@ public:
     /// </remarks>
     static _ASYNCRTIMP value __cdecl string(utility::string_t value, bool has_escape_chars);
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 private:
     // Only used internally by JSON parser.
     static _ASYNCRTIMP value __cdecl string(const std::string& value);
@@ -436,7 +436,7 @@ public:
     /// <param name="stream">The stream that the JSON string representation should be written to.</param>
     _ASYNCRTIMP void serialize(utility::ostream_t& stream) const;
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     /// <summary>
     /// Parses a JSON value from the contents of a single-byte (UTF8) stream.
     /// </summary>
@@ -643,7 +643,7 @@ public:
     /// <returns>A reference to the value kept in the field.</returns>
     _ASYNCRTIMP value& operator[](const utility::string_t& key);
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 private:
     // Only used internally by JSON parser
     _ASYNCRTIMP value& operator[](const std::string& key)
@@ -677,7 +677,7 @@ private:
     template<typename CharType>
     friend class web::json::details::JSON_Parser;
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     /// <summary>
     /// Writes the current JSON value as a double-byte string to a string instance.
     /// </summary>
@@ -1366,7 +1366,7 @@ public:
 
     // Common function used for serialization to strings and streams.
     virtual void serialize_impl(std::string& str) const { format(str); }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     virtual void serialize_impl(std::wstring& str) const { format(str); }
 #endif
 
@@ -1400,7 +1400,7 @@ protected:
     _Value() {}
 
     virtual void format(std::basic_string<char>& stream) const { stream.append("null"); }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     virtual void format(std::basic_string<wchar_t>& stream) const { stream.append(L"null"); }
 #endif
 private:
@@ -1438,7 +1438,7 @@ public:
 
 protected:
     virtual void format(std::basic_string<char>& stream) const;
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     virtual void format(std::basic_string<wchar_t>& stream) const;
 #endif
 private:
@@ -1462,7 +1462,7 @@ public:
 protected:
     virtual void format(std::basic_string<char>& stream) const { stream.append(m_value ? "true" : "false"); }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     virtual void format(std::basic_string<wchar_t>& stream) const { stream.append(m_value ? L"true" : L"false"); }
 #endif
 private:
@@ -1479,7 +1479,7 @@ public:
     {
     }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     _String(std::string&& value) : m_string(utility::conversions::to_utf16string(std::move(value)))
     {
         m_has_escape_char = has_escape_chars(*this);
@@ -1497,13 +1497,13 @@ public:
     virtual const utility::string_t& as_string() const;
 
     virtual void serialize_impl(std::string& str) const { serialize_impl_char_type(str); }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     virtual void serialize_impl(std::wstring& str) const { serialize_impl_char_type(str); }
 #endif
 
 protected:
     virtual void format(std::basic_string<char>& str) const;
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     virtual void format(std::basic_string<wchar_t>& str) const;
 #endif
 
@@ -1538,7 +1538,7 @@ _ASYNCRTIMP void append_escape_string(std::basic_string<CharType>& str, const st
 
 void format_string(const utility::string_t& key, utility::string_t& str);
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 void format_string(const utility::string_t& key, std::string& str);
 #endif
 
@@ -1573,7 +1573,7 @@ public:
         str.reserve(get_reserve_size());
         format(str);
     }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     virtual void serialize_impl(std::wstring& str) const
     {
         // To avoid repeated allocations reserve some space all up front.
@@ -1585,7 +1585,7 @@ public:
 
 protected:
     virtual void format(std::basic_string<char>& str) const { format_impl(str); }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     virtual void format(std::basic_string<wchar_t>& str) const { format_impl(str); }
 #endif
 
@@ -1682,7 +1682,7 @@ public:
         str.reserve(get_reserve_size());
         format(str);
     }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     virtual void serialize_impl(std::wstring& str) const
     {
         // To avoid repeated allocations reserve some space all up front.
@@ -1694,7 +1694,7 @@ public:
 
 protected:
     virtual void format(std::basic_string<char>& str) const { format_impl(str); }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     virtual void format(std::basic_string<wchar_t>& str) const { format_impl(str); }
 #endif
 private:
