@@ -464,17 +464,24 @@ struct _TaskTypeTraits
 };
 #endif /* defined (__cplusplus_winrt) */
 
+template<typename _Function, typename... Args>
+struct _CallableResult
+	: std::result_of<_Function(Args...)> //TODO: replace with std::invoke_result
+{};
+
+template<typename _Function, typename = void>
+struct _IsCallableNoArgs
+	: std::false_type
+{};
+
 template<typename _Function>
-auto _IsCallable(_Function _Func, int) -> decltype(_Func(), std::true_type())
-{
-    (void)(_Func);
-    return std::true_type();
-}
-template<typename _Function>
-std::false_type _IsCallable(_Function, ...)
-{
-    return std::false_type();
-}
+struct _IsCallableNoArgs<_Function, typename std::enable_if<
+	std::is_constructible<
+		std::function<typename _CallableResult<_Function>::type()>,
+		std::reference_wrapper<typename std::remove_reference<_Function>::type>
+	>::value
+>::type> : std::true_type
+{};
 
 template<>
 struct _TaskTypeTraits<void>
@@ -3073,9 +3080,12 @@ template<typename _ReturnType, typename _Ty>
 std::false_type _IsValidTaskCtor(_Ty _Param, ...);
 
 template<typename _ReturnType, typename _Ty>
-void _ValidateTaskConstructorArgs(_Ty _Param)
+struct _TaskConstructorArgsValidator
 {
-    static_assert(std::is_same<decltype(_IsValidTaskCtor<_ReturnType>(_Param, 0, 0, 0, 0)), std::true_type>::value,
+    static_assert(std::is_same<
+        decltype(_IsValidTaskCtor<_ReturnType, _Ty>(std::declval<_Ty>(), 0, 0, 0, 0)),
+        std::true_type
+    >::value,
 #if defined(__cplusplus_winrt)
                   "incorrect argument for task constructor; can be a callable object, an asynchronous operation, or a "
                   "task_completion_event"
@@ -3087,7 +3097,7 @@ void _ValidateTaskConstructorArgs(_Ty _Param)
     static_assert(!(std::is_same<_Ty, _ReturnType>::value && details::_IsIAsyncInfo<_Ty>::_Value),
                   "incorrect template argument for task; consider using the return type of the async operation");
 #endif /* defined (__cplusplus_winrt) */
-}
+};
 
 #if defined(__cplusplus_winrt)
 // Helpers for create_async validation
@@ -3144,7 +3154,7 @@ struct _NonCopyableFunctorWrapper
     std::shared_ptr<_Ty> _M_functor;
 };
 
-template<typename _Ty, typename Enable = void>
+template<typename _Ty, typename = void>
 struct _CopyableFunctor
 {
     typedef _Ty _Type;
@@ -3315,14 +3325,14 @@ public:
         explicit task(_Ty _Param)
     {
         task_options _TaskOptions;
-        details::_ValidateTaskConstructorArgs<_ReturnType, _Ty>(_Param);
+        details::_TaskConstructorArgsValidator<_ReturnType, _Ty>();
 
         _CreateImpl(_TaskOptions.get_cancellation_token()._GetImplValue(), _TaskOptions.get_scheduler());
         // Do not move the next line out of this function. It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the
         // the call site of the task constructor.
         _SetTaskCreationCallstack(PPLX_CAPTURE_CALLSTACK());
 
-        _TaskInitMaybeFunctor(_Param, details::_IsCallable(_Param, 0));
+        _TaskInitMaybeFunctor(_Param, details::_IsCallableNoArgs<_Ty>());
     }
 
     /// <summary>
@@ -3365,7 +3375,7 @@ public:
     __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
         explicit task(_Ty _Param, const task_options& _TaskOptions)
     {
-        details::_ValidateTaskConstructorArgs<_ReturnType, _Ty>(_Param);
+        details::_TaskConstructorArgsValidator<_ReturnType, _Ty>();
 
         _CreateImpl(_TaskOptions.get_cancellation_token()._GetImplValue(), _TaskOptions.get_scheduler());
         // Do not move the next line out of this function. It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the
@@ -3374,7 +3384,7 @@ public:
                                       ? details::_get_internal_task_options(_TaskOptions)._M_presetCreationCallstack
                                       : PPLX_CAPTURE_CALLSTACK());
 
-        _TaskInitMaybeFunctor(_Param, details::_IsCallable(_Param, 0));
+        _TaskInitMaybeFunctor(_Param, details::_IsCallableNoArgs<_Ty>());
     }
 
     /// <summary>
@@ -4395,7 +4405,7 @@ public:
     __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
         explicit task(_Ty _Param, const task_options& _TaskOptions = task_options())
     {
-        details::_ValidateTaskConstructorArgs<void, _Ty>(_Param);
+        details::_TaskConstructorArgsValidator<void, _Ty>();
 
         _M_unitTask._CreateImpl(_TaskOptions.get_cancellation_token()._GetImplValue(), _TaskOptions.get_scheduler());
         // Do not move the next line out of this function. It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the
@@ -4405,7 +4415,7 @@ public:
                 ? details::_get_internal_task_options(_TaskOptions)._M_presetCreationCallstack
                 : PPLX_CAPTURE_CALLSTACK());
 
-        _TaskInitMaybeFunctor(_Param, details::_IsCallable(_Param, 0));
+        _TaskInitMaybeFunctor(_Param, details::_IsCallableNoArgs<_Ty>());
     }
 
     /// <summary>
@@ -4825,7 +4835,7 @@ struct _BadArgType
 };
 
 template<typename _Ty>
-auto _FilterValidTaskType(_Ty _Param, int) -> decltype(_GetTaskType(_Param, _IsCallable(_Param, 0)));
+auto _FilterValidTaskType(_Ty _Param, int) -> decltype(_GetTaskType(_Param, _IsCallableNoArgs<_Ty>()));
 
 template<typename _Ty>
 _BadArgType _FilterValidTaskType(_Ty _Param, ...);
