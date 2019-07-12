@@ -689,9 +689,6 @@ private:
                 }
             } // unlock
 
-            // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
-            m_client.reset();
-
             if (connecting)
             {
                 websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
@@ -801,8 +798,6 @@ private:
         websocketpp::client<websocketpp::config::asio_tls_client> m_client;
     };
 
-    websocketpp::connection_hdl m_con;
-
     pplx::task_completion_event<void> m_connect_tce;
     pplx::task_completion_event<void> m_close_tce;
 
@@ -810,6 +805,7 @@ private:
     std::mutex m_wspp_client_lock;
     State m_state;
     std::unique_ptr<websocketpp_client_base> m_client;
+    websocketpp::connection_hdl m_con;
 
     // Queue to track pending sends
     outgoing_msg_queue m_out_queue;
