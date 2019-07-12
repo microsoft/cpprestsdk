@@ -531,9 +531,9 @@ public:
         typedef typename _type_parser_integral_traits<T>::_is_integral ii;
         typedef typename _type_parser_integral_traits<T>::_is_unsigned ui;
 
-		static_assert(ii::value || !ui::value, "type is not supported for extraction from a stream");
+        static_assert(ii::value || !ui::value, "type is not supported for extraction from a stream");
 
-        return _parse(buffer, ii{}, ui{});
+        return _parse(buffer, ii {}, ui {});
     }
 
 private:
