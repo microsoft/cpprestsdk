@@ -151,13 +151,13 @@ public:
     /// <summary>
     /// Constructs a proxy with the default settings.
     /// </summary>
-    web_proxy() : m_address(_XPLATSTR("")), m_mode(use_default_) {}
+    web_proxy() : m_address(), m_mode(use_default_) {}
 
     /// <summary>
     /// Creates a proxy with specified mode.
     /// </summary>
     /// <param name="mode">Mode to use.</param>
-    web_proxy(web_proxy_mode mode) : m_address(_XPLATSTR("")), m_mode(static_cast<web_proxy_mode_internal>(mode)) {}
+    web_proxy(web_proxy_mode mode) : m_address(), m_mode(static_cast<web_proxy_mode_internal>(mode)) {}
 
     /// <summary>
     /// Creates a proxy explicitly with provided address.

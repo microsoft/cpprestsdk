@@ -116,7 +116,7 @@ void BlackjackClient::PlayingTable::Refresh()
 
     request.then(
         [this](pplx::task<http_response> tsk) {
-            this->resultLabel->Text = L"";
+            this->resultLabel->Text.clear();
 
             try
             {
@@ -137,7 +137,7 @@ void BlackjackClient::PlayingTable::InterpretResponse(http_response& response)
 {
     if (response.headers().content_type() != L"application/json") return;
 
-    this->resultLabel->Text = L"";
+    this->resultLabel->Text.clear();
 
     response.extract_json().then(
         [this, response](json::value jsonResponse) {
@@ -265,7 +265,7 @@ void BlackjackClient::PlayingTable::BetButton_Click(Platform::Object ^ sender,
 
     request.then(
         [this](pplx::task<http_response> tsk) {
-            this->resultLabel->Text = L"";
+            this->resultLabel->Text.clear();
 
             try
             {
@@ -307,7 +307,7 @@ void BlackjackClient::PlayingTable::InsuranceButton_Click(Platform::Object ^ sen
 
     request.then(
         [this](pplx::task<http_response> tsk) {
-            this->resultLabel->Text = L"";
+            this->resultLabel->Text.clear();
 
             try
             {
@@ -343,7 +343,7 @@ void BlackjackClient::PlayingTable::DoubleButton_Click(Platform::Object ^ sender
 
     request.then(
         [this](pplx::task<http_response> tsk) {
-            this->resultLabel->Text = L"";
+            this->resultLabel->Text.clear();
 
             try
             {
@@ -378,7 +378,7 @@ void BlackjackClient::PlayingTable::StayButton_Click(Platform::Object ^ sender,
 
     request.then(
         [this](pplx::task<http_response> tsk) {
-            this->resultLabel->Text = L"";
+            this->resultLabel->Text.clear();
 
             try
             {
@@ -412,7 +412,7 @@ void BlackjackClient::PlayingTable::HitButton_Click(Platform::Object ^ sender,
 
     request.then(
         [this](pplx::task<http_response> tsk) {
-            this->resultLabel->Text = L"";
+            this->resultLabel->Text.clear();
 
             try
             {
@@ -449,7 +449,7 @@ void BlackjackClient::PlayingTable::ExitButton_Click(Platform::Object ^ sender, 
             [this](pplx::task<http_response> tsk) {
                 EnableExit();
 
-                this->resultLabel->Text = L"";
+                this->resultLabel->Text.clear();
 
                 try
                 {
@@ -499,7 +499,7 @@ void BlackjackClient::PlayingTable::JoinButton_Click(Platform::Object ^ sender, 
         [this](pplx::task<http_response> tsk) {
             EnableExit();
 
-            this->resultLabel->Text = L"";
+            this->resultLabel->Text.clear();
 
             try
             {
@@ -516,7 +516,7 @@ void BlackjackClient::PlayingTable::JoinButton_Click(Platform::Object ^ sender, 
             {
                 InterpretError(exc.error_code().value());
                 EnableConnecting();
-                _tableId = L"";
+                _tableId.clear();
             }
         },
         ctx);
@@ -551,7 +551,7 @@ void BlackjackClient::PlayingTable::LeaveButton_Click(Platform::Object ^ sender,
 
                 this->resultLabel->Text = L"Thanks for playing!";
 
-                _tableId = L"";
+                _tableId.clear();
             }
             catch (const http_exception& exc)
             {

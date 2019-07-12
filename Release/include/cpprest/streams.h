@@ -1308,9 +1308,15 @@ struct _double_state
 template<typename FloatingPoint, typename int_type>
 static std::string create_exception_message(int_type ch, bool exponent)
 {
-    std::ostringstream os;
-    os << "Invalid character '" << char(ch) << "'" << (exponent ? " in exponent" : "");
-    return os.str();
+    std::string result;
+    if (exponent) {
+        result.assign("Invalid character 'X' in exponent");
+    } else {
+        result.assign("Invalid character 'X'");
+    }
+
+    result[20] = static_cast<char>(ch);
+    return result;
 }
 
 template<typename FloatingPoint, typename int_type>

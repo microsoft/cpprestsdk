@@ -54,7 +54,13 @@ void PlayerSpace::Update(Player player)
     playerName->Text = ref new Platform::String(web::uri::decode(player.Name).c_str());
     playerBalance->Text = "$" + player.Balance.ToString();
     playerBet->Text = "Bet: $" + player.Hand.bet.ToString();
-    playerInsurance->Text = (player.Hand.insurance > 0) ? "Ins: $" + player.Hand.insurance.ToString() : "";
+    if (player.Hand.insurance > 0) {
+        auto& text = playerInsurance->Text;
+        text.assign("Ins: $");
+        text.append(std::to_string(player.Hand.insurance));
+    } else {
+        text.clear();
+    }
 }
 
 void PlayerSpace::AddCard(Card card)
@@ -87,19 +93,19 @@ void PlayerSpace::ShowResult(BJHandResult result)
     {
         case BJHandResult::HR_ComputerWin:
             playerInsurance->Text = L"Dealer Wins";
-            playerBet->Text = L"";
+            playerBet->Text.clear();
             break;
         case BJHandResult::HR_PlayerWin:
             playerInsurance->Text = L"Player Wins";
-            playerBet->Text = L"";
+            playerBet->Text.clear();
             break;
         case BJHandResult::HR_Push:
             playerInsurance->Text = L"Push";
-            playerBet->Text = L"";
+            playerBet->Text.clear();
             break;
         case BJHandResult::HR_PlayerBlackJack:
             playerInsurance->Text = L"Blackjack!";
-            playerBet->Text = L"";
+            playerBet->Text.clear();
             break;
         default: break;
     }

@@ -175,7 +175,7 @@ public:
         auto path_segments = uri::split_path(uri::decode(u.path()));
         for (auto i = static_cast<long>(path_segments.size()); i >= 0; --i)
         {
-            std::string path = "";
+            std::string path;
             for (size_t j = 0; j < static_cast<size_t>(i); ++j)
             {
                 path += "/" + utility::conversions::to_utf8string(path_segments[j]);

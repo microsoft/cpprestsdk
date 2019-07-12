@@ -271,7 +271,7 @@ struct Player
 
     static Player FromJSON(const web::json::object& object)
     {
-        Player result(U(""));
+        Player result({});
 
         auto iName = object.find(NAME);
         if (iName == object.end())

@@ -155,7 +155,7 @@ void parse_http_headers(const HTTP_REQUEST_HEADERS& headers, http::http_headers&
         }
         else
         {
-            msgHeaders[unknown_header_name] = U("");
+            msgHeaders[unknown_header_name].clear();
         }
     }
     for (int i = 0; i < HttpHeaderMaximum; ++i)
