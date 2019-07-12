@@ -682,10 +682,10 @@ public:
     }
     LPVOID GetUserData() { return m_UserBuffer; }
 
-    void SetFullPath(const char *server, const char *relative)
+    void SetFullPath(std::string &server, std::string &relative)
     {
-        m_FullPath.append(server, strlen(server));
-        m_FullPath.append(relative, strlen(relative));
+        m_FullPath.append(server);
+        m_FullPath.append(relative);
     }
     std::string &GetFullPath() { return m_FullPath; }
     std::string &GetType() { return m_Type; }
@@ -730,11 +730,11 @@ public:
         return TRUE;
     }
 
-    BOOL SetServer(const char *ServerName, int nServerPort)
+    BOOL SetServer(std::string &ServerName, int nServerPort)
     {
         CURLcode res;
 
-        res = curl_easy_setopt(GetCurl(), CURLOPT_URL, ServerName);
+        res = curl_easy_setopt(GetCurl(), CURLOPT_URL, ServerName.c_str());
         if (res != CURLE_OK)
             return FALSE;
 
@@ -2132,15 +2132,16 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpenRequest(
             /* Advance index forward so the next iteration doesn't pick it up as well. */
             index += 3;
         }
-        request->SetFullPath(server.c_str(), objectname.c_str());
-        if (!request->SetServer(request->GetFullPath().c_str(), session->GetServerPort())) {
+        request->SetFullPath(server, objectname);
+        if (!request->SetServer(request->GetFullPath(), session->GetServerPort())) {
             return NULL;
         }
     }
     else
     {
-        request->SetFullPath(server.c_str(), "");
-        if (!request->SetServer(request->GetFullPath().c_str(), session->GetServerPort())) {
+		std::string nullstr("");
+        request->SetFullPath(server, nullstr);
+        if (!request->SetServer(request->GetFullPath(), session->GetServerPort())) {
             return NULL;
         }
     }
@@ -2446,7 +2447,7 @@ BOOLAPI WinHttpSendRequest
     }
 
     if (dwOptionalLength == (DWORD)-1)
-        dwOptionalLength = strlen(request->GetOptionalData().c_str());
+        dwOptionalLength = request->GetOptionalData().length();
 
     DWORD totalsize = MAX(dwOptionalLength, dwTotalLength);
     /* provide the size of the upload, we specicially typecast the value
@@ -3164,7 +3165,7 @@ BOOLAPI WinHttpQueryHeaders(
 
         request->GetHeaderStringMutex().lock();
         length = request->GetHeaderString().length();
-        header.append(request->GetHeaderString().c_str());
+        header.append(request->GetHeaderString());
         request->GetHeaderStringMutex().unlock();
 
         if (SizeCheck(lpBuffer, lpdwBufferLength, (length + 1) * sizeof(TCHAR)) == FALSE)
