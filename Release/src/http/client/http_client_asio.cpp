@@ -570,7 +570,7 @@ public:
 
             if (m_context->m_http_client->client_config().proxy().credentials().is_set())
             {
-                request_stream << m_context->generate_basic_proxy_auth_header() << CRLF;
+                request_stream << m_context->generate_basic_proxy_auth_header();
             }
 
             request_stream << CRLF;
