@@ -102,13 +102,44 @@ static http::status_code parse_status_code(HINTERNET request_handle)
 // Helper function to trim leading and trailing null characters from a string.
 static void trim_nulls(utility::string_t& str)
 {
-    size_t index;
-    for (index = 0; index < str.size() && str[index] == 0; ++index)
-        ;
-    str.erase(0, index);
-    for (index = str.size(); index > 0 && str[index - 1] == 0; --index)
-        ;
-    str.erase(index);
+    if (str.empty())
+    {
+        return;
+    }
+
+    auto first = str.begin();
+    auto last = str.end();
+
+    if (*first)
+    {
+        --last;
+        if (*last)
+        {
+            // no nulls to remove
+            return;
+        }
+
+        // nulls at the back to remove
+        do
+        {
+            --last;
+        } while (*last == utility::char_t {});
+        ++last;
+        str.erase(last, str.end());
+        return;
+    }
+
+    // nulls at the front, and maybe the back, to remove
+    first = std::find_if(str.begin(), last, [](const utility::char_t c) {
+        return c != utility::char_t {}
+    });
+
+    do
+    {
+        --last;
+    } while (*last == utility::char_t {});
+    ++last;
+    str.assign(first, last);
 }
 
 // Helper function to get the reason phrase from a WinHTTP response.
@@ -1319,7 +1350,7 @@ private:
             {
                 // Choose a semi-intelligent size based on how much total data is left to compress
                 chunk_size = (std::min)(static_cast<size_t>(p_request_context->m_remaining_to_write) + 128,
-                                      p_request_context->m_http_client->client_config().chunksize());
+                                        p_request_context->m_http_client->client_config().chunksize());
             }
             else
             {
@@ -1332,7 +1363,7 @@ private:
             // We're not compressing; use the smaller of the remaining data (if known) and the configured (or default)
             // chunk size
             chunk_size = (std::min)(static_cast<size_t>(p_request_context->m_remaining_to_write),
-                                  p_request_context->m_http_client->client_config().chunksize());
+                                    p_request_context->m_http_client->client_config().chunksize());
         }
         p_request_context->allocate_request_space(
             nullptr, chunk_size + http::details::chunked_encoding::additional_encoding_space);
@@ -1587,7 +1618,7 @@ private:
                 else
                 {
                     length = (std::min)(static_cast<size_t>(p_request_context->m_remaining_to_write),
-                                      p_request_context->m_http_client->client_config().chunksize());
+                                        p_request_context->m_http_client->client_config().chunksize());
                     if (p_request_context->m_compression_state.m_buffer.capacity() < length)
                     {
                         p_request_context->m_compression_state.m_buffer.reserve(length);
@@ -2209,7 +2240,7 @@ private:
                 if (p_request_context->m_decompressor)
                 {
                     size_t chunk_size = (std::max)(static_cast<size_t>(bytesRead),
-                                                 p_request_context->m_http_client->client_config().chunksize());
+                                                   p_request_context->m_http_client->client_config().chunksize());
                     p_request_context->m_compression_state.m_bytes_read = static_cast<size_t>(bytesRead);
                     p_request_context->m_compression_state.m_chunk_bytes = 0;
 
@@ -2396,24 +2427,23 @@ private:
                                         return keep_going(p_request_context.get());
                                     });
                             });
-                    })
-                        .then([p_request_context](pplx::task<bool> op) {
-                            try
+                    }).then([p_request_context](pplx::task<bool> op) {
+                        try
+                        {
+                            bool ignored = op.get();
+                        }
+                        catch (...)
+                        {
+                            // We're only here to pick up any exception that may have been thrown, and to clean up
+                            // if needed
+                            if (p_request_context->m_compression_state.m_acquired)
                             {
-                                bool ignored = op.get();
+                                p_request_context->_get_writebuffer().commit(0);
+                                p_request_context->m_compression_state.m_acquired = nullptr;
                             }
-                            catch (...)
-                            {
-                                // We're only here to pick up any exception that may have been thrown, and to clean up
-                                // if needed
-                                if (p_request_context->m_compression_state.m_acquired)
-                                {
-                                    p_request_context->_get_writebuffer().commit(0);
-                                    p_request_context->m_compression_state.m_acquired = nullptr;
-                                }
-                                p_request_context->report_exception(std::current_exception());
-                            }
-                        });
+                            p_request_context->report_exception(std::current_exception());
+                        }
+                    });
                 }
                 else
                 {
