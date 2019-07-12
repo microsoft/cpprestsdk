@@ -179,7 +179,7 @@ struct BJHand
         {
             if (iter->value == CV_Ace) hasAces = true;
 
-            res.low += std::min((int)iter->value, 10);
+            res.low += (std::min)((int)iter->value, 10);
         }
         res.high = hasAces ? res.low + 10 : res.low;
         return res;

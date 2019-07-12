@@ -375,7 +375,7 @@ size_t _fill_buffer_fsb(_file_info_impl* fInfo, _filestream_callback* callback, 
     size_t byteCount = count * charSize;
     if (fInfo->m_buffer == nullptr)
     {
-        fInfo->m_bufsize = std::max(PageSize, byteCount);
+        fInfo->m_bufsize = (std::max)(PageSize, byteCount);
         fInfo->m_buffer = new char[static_cast<size_t>(fInfo->m_bufsize)];
         fInfo->m_bufoff = fInfo->m_rdpos;
 
@@ -396,7 +396,7 @@ size_t _fill_buffer_fsb(_file_info_impl* fInfo, _filestream_callback* callback, 
 
     if (bufrem < count)
     {
-        fInfo->m_bufsize = std::max(PageSize, byteCount);
+        fInfo->m_bufsize = (std::max)(PageSize, byteCount);
 
         // Then, we allocate a new buffer.
 
@@ -456,7 +456,7 @@ size_t _getn_fsb(Concurrency::streams::details::_file_info* info,
     if (fInfo->m_buffer_reads)
     {
         auto cb = create_callback(fInfo, callback, [=](size_t read) {
-            auto copy = std::min(read, byteCount);
+            auto copy = (std::min)(read, byteCount);
             auto bufoff = fInfo->m_rdpos - fInfo->m_bufoff;
             memcpy(ptr, fInfo->m_buffer + bufoff * charSize, copy);
             fInfo->m_atend = copy < byteCount;
@@ -467,7 +467,7 @@ size_t _getn_fsb(Concurrency::streams::details::_file_info* info,
 
         if (static_cast<int>(read) > 0)
         {
-            auto copy = std::min(read, byteCount);
+            auto copy = (std::min)(read, byteCount);
             auto bufoff = fInfo->m_rdpos - fInfo->m_bufoff;
             memcpy(ptr, fInfo->m_buffer + bufoff * charSize, copy);
             fInfo->m_atend = copy < byteCount;

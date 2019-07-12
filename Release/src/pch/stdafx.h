@@ -20,8 +20,6 @@
 #endif
 
 #ifdef _WIN32
-#define NOMINMAX
-
 // use the debug version of the CRT if _DEBUG is defined
 #ifdef _DEBUG
 #define _CRTDBG_MAP_ALLOC

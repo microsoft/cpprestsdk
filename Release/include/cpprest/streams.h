@@ -470,7 +470,7 @@ _UINT_TRAIT(unsigned long long, ULLONG_MIN, ULLONG_MAX)
     {                                                                                                                  \
         typedef std::true_type _is_integral;                                                                           \
         typedef std::false_type _is_unsigned;                                                                          \
-        static const int64_t _min = std::numeric_limits<_t>::min();                                                    \
+        static const int64_t _min = (std::numeric_limits<_t>::min)();                                                  \
         static const int64_t _max = (std::numeric_limits<_t>::max)();                                                  \
     };
 #define _UINT_TRAIT(_t)                                                                                                \

@@ -326,7 +326,7 @@ size_t http_msg_base::_get_stream_length()
         return static_cast<size_t>(end - offset);
     }
 
-    return std::numeric_limits<size_t>::max();
+    return (std::numeric_limits<size_t>::max)();
 }
 
 size_t http_msg_base::_get_content_length(bool honor_compression)
@@ -356,7 +356,7 @@ size_t http_msg_base::_get_content_length(bool honor_compression)
                 }
             }
 
-            return std::numeric_limits<size_t>::max();
+            return (std::numeric_limits<size_t>::max)();
         }
 
         if (honor_compression && m_compressor)
@@ -365,7 +365,7 @@ size_t http_msg_base::_get_content_length(bool honor_compression)
             // up front for content encoding.  We return the uncompressed length if we can figure it out.
             headers().add(header_names::transfer_encoding, m_compressor->algorithm());
             headers().add(header_names::transfer_encoding, _XPLATSTR("chunked"));
-            return std::numeric_limits<size_t>::max();
+            return (std::numeric_limits<size_t>::max)();
         }
 
         if (headers().match(header_names::content_length, content_length))
@@ -376,7 +376,7 @@ size_t http_msg_base::_get_content_length(bool honor_compression)
         }
 
         content_length = _get_stream_length();
-        if (content_length != std::numeric_limits<size_t>::max())
+        if (content_length != (std::numeric_limits<size_t>::max)())
         {
             // The content length wasn't explicitly set, but we figured it out;
             // use it, since sending this way is more efficient than chunking
@@ -386,7 +386,7 @@ size_t http_msg_base::_get_content_length(bool honor_compression)
 
         // We don't know the content length; we'll chunk the stream
         headers().add(header_names::transfer_encoding, _XPLATSTR("chunked"));
-        return std::numeric_limits<size_t>::max();
+        return (std::numeric_limits<size_t>::max)();
     }
 
     // There is no content

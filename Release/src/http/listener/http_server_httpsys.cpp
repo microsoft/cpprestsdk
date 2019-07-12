@@ -976,10 +976,10 @@ void windows_request_context::async_process_response()
 
     // OK, so we need to chunk it up.
     _ASSERTE(content_length > 0);
-    m_sending_in_chunks = (content_length != std::numeric_limits<size_t>::max());
-    m_transfer_encoding = (content_length == std::numeric_limits<size_t>::max());
+    m_sending_in_chunks = (content_length != (std::numeric_limits<size_t>::max)());
+    m_transfer_encoding = (content_length == (std::numeric_limits<size_t>::max)());
     m_remaining_to_write = content_length;
-    if (content_length == std::numeric_limits<size_t>::max())
+    if (content_length == (std::numeric_limits<size_t>::max)())
     {
         // Attempt to figure out the remaining length of the input stream
         m_remaining_to_write = m_response._get_impl()->_get_stream_length();

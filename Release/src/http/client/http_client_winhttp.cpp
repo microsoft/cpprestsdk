@@ -464,7 +464,7 @@ public:
                         if (m_bytes_remaining)
                         {
                             // We're at the offset of a chunk of consumable data; let the caller process it
-                            l = std::min(m_bytes_remaining, buffer_size - n);
+                            l = (std::min)(m_bytes_remaining, buffer_size - n);
                             m_bytes_remaining -= l;
                             if (!m_bytes_remaining)
                             {
@@ -1134,7 +1134,7 @@ protected:
             }
 
             // There is a request body that needs to be transferred.
-            if (content_length == std::numeric_limits<size_t>::max())
+            if (content_length == (std::numeric_limits<size_t>::max)())
             {
                 // The content length is not set and the application set a stream. This is an
                 // indication that we will use transfer encoding chunked.  We still want to
@@ -1315,10 +1315,10 @@ private:
                 chunk_size =
                     p_request_context->m_body_data.size() - http::details::chunked_encoding::additional_encoding_space;
             }
-            else if (p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+            else if (p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
             {
                 // Choose a semi-intelligent size based on how much total data is left to compress
-                chunk_size = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write) + 128,
+                chunk_size = (std::min)(static_cast<size_t>(p_request_context->m_remaining_to_write) + 128,
                                       p_request_context->m_http_client->client_config().chunksize());
             }
             else
@@ -1331,7 +1331,7 @@ private:
         {
             // We're not compressing; use the smaller of the remaining data (if known) and the configured (or default)
             // chunk size
-            chunk_size = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write),
+            chunk_size = (std::min)(static_cast<size_t>(p_request_context->m_remaining_to_write),
                                   p_request_context->m_http_client->client_config().chunksize());
         }
         p_request_context->allocate_request_space(
@@ -1370,7 +1370,7 @@ private:
                 chunk_size + http::details::chunked_encoding::additional_encoding_space,
                 bytes_read);
 
-            if (!compressor && p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+            if (!compressor && p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
             {
                 if (bytes_read == 0 && p_request_context->m_remaining_to_write)
                 {
@@ -1465,7 +1465,7 @@ private:
                          p_request_context->m_compression_state.m_bytes_read)
                 {
                     if (p_request_context->m_remaining_to_write &&
-                        p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+                        p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
                     {
                         // The stream ended earlier than we detected it should
                         return pplx::task_from_exception<size_t>(http_exception(
@@ -1518,7 +1518,7 @@ private:
                         p_request_context->m_compression_state.m_bytes_processed += r.input_bytes_processed;
                         _ASSERTE(p_request_context->m_compression_state.m_bytes_processed <=
                                  p_request_context->m_compression_state.m_bytes_read);
-                        if (p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+                        if (p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
                         {
                             _ASSERTE(p_request_context->m_remaining_to_write >= r.input_bytes_processed);
                             p_request_context->m_remaining_to_write -= r.input_bytes_processed;
@@ -1568,7 +1568,7 @@ private:
                             return;
                         }
                         else if (p_request_context->m_remaining_to_write &&
-                                 p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+                                 p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
                         {
                             // Unexpected end-of-stream.
                             p_request_context->report_error(GetLastError(),
@@ -1586,7 +1586,7 @@ private:
                 }
                 else
                 {
-                    length = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write),
+                    length = (std::min)(static_cast<size_t>(p_request_context->m_remaining_to_write),
                                       p_request_context->m_http_client->client_config().chunksize());
                     if (p_request_context->m_compression_state.m_buffer.capacity() < length)
                     {
@@ -1842,7 +1842,7 @@ private:
         if (content_length > 0)
         {
             // There is a request body that needs to be transferred.
-            if (content_length == std::numeric_limits<size_t>::max())
+            if (content_length == (std::numeric_limits<size_t>::max)())
             {
                 // The content length is unknown and the application set a stream. This is an
                 // indication that we will need to chunk the data.
@@ -2208,7 +2208,7 @@ private:
 
                 if (p_request_context->m_decompressor)
                 {
-                    size_t chunk_size = std::max(static_cast<size_t>(bytesRead),
+                    size_t chunk_size = (std::max)(static_cast<size_t>(bytesRead),
                                                  p_request_context->m_http_client->client_config().chunksize());
                     p_request_context->m_compression_state.m_bytes_read = static_cast<size_t>(bytesRead);
                     p_request_context->m_compression_state.m_chunk_bytes = 0;
