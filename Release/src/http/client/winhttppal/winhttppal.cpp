@@ -143,14 +143,11 @@ int gettimeofday(struct timeval * tp, struct timezone * tzp);
 std::mutex trcmtx;
 
 #ifndef _MSC_VER
-static void TRACE(const char *fmt, ...) __attribute__ ((format (gnu_printf, 1, 2)));
+static void TRACE_INTERNAL(const char *fmt, ...) __attribute__ ((format (gnu_printf, 1, 2)));
 #endif
 
-static void TRACE(const char *fmt, ...)
+static void TRACE_INTERNAL(const char *fmt, ...)
 {
-    if (!winhttp_tracing)
-        return;
-
     std::lock_guard<std::mutex> lck(trcmtx);
     va_list args;
     va_start(args, fmt);
@@ -174,70 +171,48 @@ static void TRACE(const char *fmt, ...)
     va_end(args);
 }
 
-#ifndef _MSC_VER
-static void TRACE_VERBOSE(const char *fmt, ...) __attribute__ ((format (gnu_printf, 1, 2)));
-#endif
-static void TRACE_VERBOSE(const char *fmt, ...)
-{
-    if (!winhttp_tracing_verbose)
-        return;
+#define TRACE(fmt, ...) \
+            do { if (winhttp_tracing) TRACE_INTERNAL(fmt, __VA_ARGS__); } while (0)
 
-    std::lock_guard<std::mutex> lck(trcmtx);
-    struct timeval tv;
-    time_t nowtime;
-    struct tm *nowtm;
-    char tmbuf[64], buf[64];
-
-    gettimeofday(&tv, NULL);
-    nowtime = tv.tv_sec;
-    nowtm = localtime(&nowtime);
-    strftime(tmbuf, sizeof tmbuf, "%H:%M:%S", nowtm);
-    snprintf(buf, sizeof buf, "%s.%06ld ", tmbuf, tv.tv_usec);
-    printf("%s", buf);
-
-    va_list args;
-    va_start(args, fmt);
-    char szBuffer[512];
-    vsnprintf(szBuffer,  sizeof szBuffer -1, fmt, args);
-    szBuffer[sizeof(szBuffer)/sizeof(szBuffer[0]) - 1] = '\0';
-    printf("%s", szBuffer);
-    va_end(args);
-}
+#define TRACE_VERBOSE(fmt, ...) \
+            do { if (winhttp_tracing_verbose) TRACE_INTERNAL(fmt, __VA_ARGS__); } while (0)
 
 typedef void (*CompletionCb)(std::shared_ptr<WinHttpRequestImp>, DWORD status);
 
-#define MUTEX_TYPE       std::mutex
+#define MUTEX_TYPE                              std::mutex
 #define MUTEX_SETUP(x)   
 #define MUTEX_CLEANUP(x) 
-#define MUTEX_LOCK(x)    x.lock()
-#define MUTEX_UNLOCK(x)  x.unlock()
+#define MUTEX_LOCK(x)                           x.lock()
+#define MUTEX_UNLOCK(x)                         x.unlock()
 #ifdef WIN32
-#define THREAD_ID         GetCurrentThreadId()
-#define THREAD_HANDLE     HANDLE
-#define THREADPARAM         LPVOID
+#define THREAD_ID                               GetCurrentThreadId()
+#define THREAD_HANDLE                           HANDLE
+#define THREADPARAM                             LPVOID
 #define CREATETHREAD(func, param, id) \
-    CreateThread(                   \
-            NULL,                   \
-            0,                      \
-            (LPTHREAD_START_ROUTINE)func,                   \
-            param,                  \
-            0,                      \
-            id)
-#define THREADJOIN(h)         WaitForSingleObject(h, INFINITE);
-#define THREADRETURN    DWORD
+                                                CreateThread(                         \
+                                                        NULL,                         \
+                                                        0,                            \
+                                                        (LPTHREAD_START_ROUTINE)func, \
+                                                        param,                        \
+                                                        0,                             \
+                                                        id)
+
+#define THREADJOIN(h)                           WaitForSingleObject(h, INFINITE);
+#define THREADRETURN                            DWORD
 #else
-#define THREADPARAM         void*
-#define THREADRETURN    void*
+#define THREADPARAM                             void*
+#define THREADRETURN                            void*
+#define THREAD_ID                               pthread_self()
+#define THREAD_HANDLE                           pthread_t
+#define THREADJOIN(x)                           pthread_join(x, NULL)
+
 typedef void* (*LPTHREAD_START_ROUTINE)(void *);
-#define THREAD_ID        pthread_self()
-#define THREAD_HANDLE     pthread_t
 static inline THREAD_HANDLE CREATETHREAD(LPTHREAD_START_ROUTINE func, LPVOID param, pthread_t *id)
 {
     pthread_t inc_x_thread;    
     pthread_create(&inc_x_thread, NULL, func, param);
     return inc_x_thread;
 }
-#define THREADJOIN(x) pthread_join(x, NULL)
 #endif
 
 void handle_error(const char *file, int lineno, const char *msg)
@@ -1483,35 +1458,23 @@ UserCallbackContext::UserCallbackContext(std::shared_ptr<WinHttpRequestImp> &req
 
 WinHttpSessionImp *GetImp(WinHttpBase *base)
 {
+    WinHttpConnectImp *connect;
     WinHttpSessionImp *session;
+    WinHttpRequestImp *request;
 
-    if (dynamic_cast<WinHttpConnectImp *>(base))
+    if ((connect = dynamic_cast<WinHttpConnectImp *>(base)))
     {
-        WinHttpConnectImp *connect = dynamic_cast<WinHttpConnectImp *>(base);
-
-        if (!connect)
-            return NULL;
-
         session = connect->GetHandle();
     }
-    else if (dynamic_cast<WinHttpRequestImp *>(base))
+    else if ((request = dynamic_cast<WinHttpRequestImp *>(base)))
     {
-        WinHttpRequestImp *request = dynamic_cast<WinHttpRequestImp *>(base);
-
-        if (!request)
-            return NULL;
-
         WinHttpConnectImp *connect = request->GetSession();
         session = connect->GetHandle();
     }
-    else if (dynamic_cast<WinHttpSessionImp *>(base))
+    else
     {
         session = dynamic_cast<WinHttpSessionImp *>(base);
-        if (!session)
-            return NULL;
     }
-    else
-        return NULL;
 
     return session;
 }
@@ -1845,7 +1808,7 @@ size_t WinHttpRequestImp::ReadCallback(void *ptr, size_t size, size_t nmemb, voi
     {
         len = request->GetOptionalData().length();
         TRACE("%s:%d writing optional length of %lu\n", __func__, __LINE__, len);
-        memcpy(ptr, request->GetOptionalData().c_str(), len);
+        std::copy(request->GetOptionalData().begin(), request->GetOptionalData().end(), (char*)ptr);
         request->GetOptionalData().erase(0, len);
         request->GetReadLength() += len;
         return len;
@@ -1883,7 +1846,7 @@ size_t WinHttpRequestImp::ReadCallback(void *ptr, size_t size, size_t nmemb, voi
 
             TRACE("%s:%d writing additional length:%lu written:%lu\n", __func__, __LINE__, len, written);
             if (len)
-                memcpy(&((char*)ptr)[written], buf.m_Buffer, len);
+                memcpy((char*)ptr, buf.m_Buffer, len);
 
             result = len;
             dwInternetStatus = WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE;
@@ -1899,7 +1862,7 @@ size_t WinHttpRequestImp::ReadCallback(void *ptr, size_t size, size_t nmemb, voi
         request->GetReadDataEventMtx().lock();
         len = MIN(request->GetReadData().size(), size * nmemb);
         TRACE("%s:%d writing additional length:%lu\n", __func__, __LINE__, len);
-        memcpy(ptr, request->GetReadData().data(), len);
+        std::copy(request->GetReadData().begin(), request->GetReadData().begin() + len, (char*)ptr);
         request->GetReadLength() += len;
         request->GetReadData().erase(request->GetReadData().begin(), request->GetReadData().begin() + len);
         request->GetReadData().shrink_to_fit();
@@ -2139,7 +2102,7 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpenRequest(
     }
     else
     {
-		std::string nullstr("");
+        std::string nullstr("");
         request->SetFullPath(server, nullstr);
         if (!request->SetServer(request->GetFullPath(), session->GetServerPort())) {
             return NULL;
@@ -2894,7 +2857,7 @@ WinHttpReadData
     }
     if (readLength)
     {
-        memcpy(reinterpret_cast<char *>(lpBuffer), request->GetResponseString().data(), readLength);
+        std::copy(request->GetResponseString().begin(), request->GetResponseString().begin() + readLength, reinterpret_cast<char *>(lpBuffer));
         request->GetResponseString().erase(request->GetResponseString().begin(), request->GetResponseString().begin() + readLength);
         request->GetResponseString().shrink_to_fit();
     }
@@ -2929,26 +2892,17 @@ WinHttpSetTimeouts
 )
 {
     WinHttpBase *base = static_cast<WinHttpBase *>(hInternet);
+    WinHttpSessionImp *session;
+    WinHttpRequestImp *request;
     CURLcode res;
 
     TRACE("%s:%d\n", __func__, __LINE__);
-    if (dynamic_cast<WinHttpSessionImp *>(base))
+    if ((session = dynamic_cast<WinHttpSessionImp *>(base)))
     {
-        WinHttpSessionImp *session;
-
-        session = dynamic_cast<WinHttpSessionImp *>(base);
-        if (!session)
-            return FALSE;
-
         session->SetTimeout(nReceiveTimeout);
     }
-    else if (dynamic_cast<WinHttpRequestImp *>(base))
+    else if ((request = dynamic_cast<WinHttpRequestImp *>(base)))
     {
-        WinHttpRequestImp *request = dynamic_cast<WinHttpRequestImp *>(base);
-
-        if (!request)
-            return FALSE;
-
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_TIMEOUT_MS, nReceiveTimeout);
         if (res != CURLE_OK)
             return FALSE;
@@ -3295,25 +3249,24 @@ BOOLAPI WinHttpSetOption(
 
     if (dwOption == WINHTTP_OPTION_MAX_CONNS_PER_SERVER)
     {
+        WinHttpSessionImp *session;
+        WinHttpRequestImp *request;
+
         if (dwBufferLength != sizeof(DWORD))
             return FALSE;
 
-        if (dynamic_cast<WinHttpSessionImp *>(base))
+        if ((session = dynamic_cast<WinHttpSessionImp *>(base)))
         {
-            WinHttpSessionImp *session = dynamic_cast<WinHttpSessionImp *>(base);
-
-            if (!session || !lpBuffer)
+            if (!lpBuffer)
                 return FALSE;
 
             if (!session->SetMaxConnections(reinterpret_cast<DWORD*>(lpBuffer)))
                 return FALSE;
             return TRUE;
         }
-        else if (dynamic_cast<WinHttpRequestImp *>(base))
+        else if ((request = dynamic_cast<WinHttpRequestImp *>(base)))
         {
-            WinHttpRequestImp *request = dynamic_cast<WinHttpRequestImp *>(base);
-
-            if (!request || !lpBuffer)
+            if (!lpBuffer)
                 return FALSE;
 
             if (!request->SetMaxConnections(reinterpret_cast<DWORD*>(lpBuffer)))
@@ -3326,36 +3279,34 @@ BOOLAPI WinHttpSetOption(
     }
     else if (dwOption == WINHTTP_OPTION_CONTEXT_VALUE)
     {
+        WinHttpConnectImp *connect;
+        WinHttpSessionImp *session;
+        WinHttpRequestImp *request;
+
         if (dwBufferLength != sizeof(void*))
             return FALSE;
 
-        if (dynamic_cast<WinHttpConnectImp *>(base))
+        if ((connect = dynamic_cast<WinHttpConnectImp *>(base)))
         {
-            WinHttpConnectImp *connect = dynamic_cast<WinHttpConnectImp *>(base);
-
-            if (!connect || !lpBuffer)
+            if (!lpBuffer)
                 return FALSE;
 
             if (!connect->SetUserData(reinterpret_cast<void**>(lpBuffer)))
                 return FALSE;
             return TRUE;
         }
-        else if (dynamic_cast<WinHttpSessionImp *>(base))
+        else if ((session = dynamic_cast<WinHttpSessionImp *>(base)))
         {
-            WinHttpSessionImp *session = dynamic_cast<WinHttpSessionImp *>(base);
-
-            if (!session || !lpBuffer)
+            if (!lpBuffer)
                 return FALSE;
 
             if (!session->SetUserData(reinterpret_cast<void**>(lpBuffer)))
                 return FALSE;
             return TRUE;
         }
-        else if (dynamic_cast<WinHttpRequestImp *>(base))
+        else if ((request = dynamic_cast<WinHttpRequestImp *>(base)))
         {
-            WinHttpRequestImp *request = dynamic_cast<WinHttpRequestImp *>(base);
-
-            if (!request || !lpBuffer)
+            if (!lpBuffer)
                 return FALSE;
 
             if (!request->SetUserData(reinterpret_cast<void**>(lpBuffer)))
@@ -3367,14 +3318,15 @@ BOOLAPI WinHttpSetOption(
     }
     else if (dwOption == WINHTTP_OPTION_SECURE_PROTOCOLS)
     {
+        WinHttpSessionImp *session;
+        WinHttpRequestImp *request;
+
         if (dwBufferLength != sizeof(DWORD))
             return FALSE;
 
-        if (dynamic_cast<WinHttpSessionImp *>(base))
+        if ((session = dynamic_cast<WinHttpSessionImp *>(base)))
         {
-            WinHttpSessionImp *session = dynamic_cast<WinHttpSessionImp *>(base);
-
-            if (!session || !lpBuffer)
+            if (!lpBuffer)
                 return FALSE;
 
             DWORD curlOffered = ConvertSecurityProtocol(*reinterpret_cast<DWORD*>(lpBuffer));
@@ -3382,11 +3334,9 @@ BOOLAPI WinHttpSetOption(
                 return FALSE;
             return TRUE;
         }
-        else if (dynamic_cast<WinHttpRequestImp *>(base))
+        else if ((request = dynamic_cast<WinHttpRequestImp *>(base)))
         {
-            WinHttpRequestImp *request = dynamic_cast<WinHttpRequestImp *>(base);
-
-            if (!request || !lpBuffer)
+            if (!lpBuffer)
                 return FALSE;
 
             DWORD curlOffered = ConvertSecurityProtocol(*reinterpret_cast<DWORD*>(lpBuffer));
@@ -3399,14 +3349,14 @@ BOOLAPI WinHttpSetOption(
     }
     else if (dwOption == WINHTTP_OPTION_SECURITY_FLAGS)
     {
+        WinHttpRequestImp *request;
+
         if (dwBufferLength != sizeof(DWORD))
             return FALSE;
 
-        if (dynamic_cast<WinHttpRequestImp *>(base))
+        if ((request = dynamic_cast<WinHttpRequestImp *>(base)))
         {
-            WinHttpRequestImp *request = dynamic_cast<WinHttpRequestImp *>(base);
-
-            if (!request || !lpBuffer)
+            if (!lpBuffer)
                 return FALSE;
 
             DWORD value = *reinterpret_cast<DWORD*>(lpBuffer);
@@ -3506,11 +3456,7 @@ WinHttpQueryOption
     {
         WinHttpRequestImp *request;
 
-        if (dynamic_cast<WinHttpRequestImp *>(base))
-        {
-            request = dynamic_cast<WinHttpRequestImp *>(base);
-        }
-        else
+        if (!(request = dynamic_cast<WinHttpRequestImp *>(base)))
             return FALSE;
 
         char *url = NULL;
@@ -3553,11 +3499,7 @@ WinHttpQueryOption
     {
         WinHttpRequestImp *request;
 
-        if (dynamic_cast<WinHttpRequestImp *>(base))
-        {
-            request = dynamic_cast<WinHttpRequestImp *>(base);
-        }
-        else
+        if (!(request = dynamic_cast<WinHttpRequestImp *>(base)))
             return FALSE;
 
         if (SizeCheck(lpBuffer, lpdwBufferLength, sizeof(HTTP_VERSION_INFO)) == FALSE)
