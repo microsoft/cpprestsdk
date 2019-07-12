@@ -25,7 +25,7 @@ DO_OPENSSL=1
 DO_CMAKE=1
 DO_CPPRESTSDK=1
 
-BOOSTVER=1.69.0
+BOOSTVER=1.70.0
 OPENSSLVER=1.1.0j
 CMAKEVER=3.14.0
 
@@ -155,7 +155,7 @@ if [ "${DO_OPENSSL}" == "1" ]; then (
 if [ "${DO_BOOST}" == "1" ]; then (
     if [ ! -d 'Boost-for-Android' ]; then git clone https://github.com/moritz-wundke/Boost-for-Android; fi
     cd Boost-for-Android
-    git checkout b1e2cb397d3ec573f1cfdf4f4d965766204c53f1
+    git checkout aed656a97fb3af7322fd2c3da5995a2d09d87d4b
     PATH="$PATH:$NDK_DIR" \
     CXXFLAGS="-std=gnu++11" \
     ./build-android.sh \
