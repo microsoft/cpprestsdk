@@ -222,79 +222,38 @@ jobs:
         export NCPU=2
         ../configure.sh --ndk /usr/local/lib/android/sdk/ndk-bundle
       displayName: 'Build for Android'
-  - job: MacOS_Homebrew
-    pool:
-      vmImage: 'macOS-10.14'
-    steps:
-    - script: brew install boost openssl ninja
-      displayName: Brew install dependencies
-    - script: |
-        mkdir build.debug
-        mkdir build.release
-        mkdir build.release.static
-      displayName: Make Build Directories
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.debug'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.release'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.release.static'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ..'
-    - script: |
-        cd build.debug
-        ninja
-      displayName: 'Run ninja, debug'
-    - script: |
-        cd build.debug/Release/Binaries
-        ./test_runner *test.dylib
-      displayName: 'Run tests, debug'
-    - script: |
-        cd build.release
-        ninja
-      displayName: 'Run ninja, release'
-    - script: |
-        cd build.release/Release/Binaries
-        ./test_runner *test.dylib
-      displayName: 'Run tests, release'
-    - script: |
-        cd build.release.static
-        ninja
-      displayName: 'Run ninja, release static'
   # Homebrew is disabled for now because it apparently is deploying a Boost version that the version of xcode deployed in Pipelines cannot build.
-  # - job: MacOS_Vcpkg
+  # - job: MacOS_Homebrew
   #   pool:
   #     vmImage: 'macOS-10.14'
   #   steps:
-  #   - script: |
-  #       brew install gcc ninja
-  #       ./vcpkg/bootstrap-vcpkg.sh
-  #       ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
-  #     displayName: Vcpkg install dependencies
+  #   - script: brew install boost openssl ninja
+  #     displayName: Brew install dependencies
   #   - script: |
   #       mkdir build.debug
   #       mkdir build.release
+  #       mkdir build.release.static
   #     displayName: Make Build Directories
   #   - task: CMake@1
   #     inputs:
   #       workingDirectory: 'build.debug'
-  #       cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+  #       cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
   #   - task: CMake@1
   #     inputs:
   #       workingDirectory: 'build.release'
-  #       cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+  #       cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
+  #   - task: CMake@1
+  #     inputs:
+  #       workingDirectory: 'build.release.static'
+  #       cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ..'
   #   - script: |
   #       cd build.debug
   #       ninja
-  #     displayName: 'Run ninja debug'
+  #     displayName: 'Run ninja, debug'
   #   - script: |
   #       cd build.debug/Release/Binaries
   #       ./test_runner *test.dylib
-  #     displayName: 'Run Tests debug'
+  #     displayName: 'Run tests, debug'
   #   - script: |
   #       cd build.release
   #       ninja
@@ -303,6 +262,47 @@ jobs:
   #       cd build.release/Release/Binaries
   #       ./test_runner *test.dylib
   #     displayName: 'Run tests, release'
+  #   - script: |
+  #       cd build.release.static
+  #       ninja
+  #     displayName: 'Run ninja, release static'
+  - job: MacOS_Vcpkg
+    pool:
+      vmImage: 'macOS-10.14'
+    steps:
+    - script: |
+        brew install gcc ninja
+        ./vcpkg/bootstrap-vcpkg.sh
+        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
+      displayName: Vcpkg install dependencies
+    - script: |
+        mkdir build.debug
+        mkdir build.release
+      displayName: Make Build Directories
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.debug'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.release'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+    - script: |
+        cd build.debug
+        ninja
+      displayName: 'Run ninja debug'
+    - script: |
+        cd build.debug/Release/Binaries
+        ./test_runner *test.dylib
+      displayName: 'Run Tests debug'
+    - script: |
+        cd build.release
+        ninja
+      displayName: 'Run ninja, release'
+    - script: |
+        cd build.release/Release/Binaries
+        ./test_runner *test.dylib
+      displayName: 'Run tests, release'
   # iOS is disabled for now because the dependency Apple-Boost-BuildScript appears to be broken with the version of XCode in use in Pipelines.
   # - job: MacOS_iOS
   #   pool:
