@@ -10,6 +10,10 @@
  ****/
 #pragma once
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif // _WIN32
+
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/uri.h"
 
@@ -24,23 +28,24 @@ public:
 };
 typedef std::unique_ptr<::utility::string_t, zero_memory_deleter> plaintext_string;
 
+#ifdef _WIN32
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #ifdef __cplusplus_winrt
 class winrt_encryption
 {
 public:
-    winrt_encryption() {}
+    winrt_encryption() = default;
     _ASYNCRTIMP winrt_encryption(const std::wstring& data);
     _ASYNCRTIMP plaintext_string decrypt() const;
 
 private:
     ::pplx::task<Windows::Storage::Streams::IBuffer ^> m_buffer;
 };
-#else // ^^^ __cplusplus_winrt ^^^ // vvv !__cplusplus_winrt vvv
+#else  // ^^^ __cplusplus_winrt ^^^ // vvv !__cplusplus_winrt vvv
 class win32_encryption
 {
 public:
-    win32_encryption() {}
+    win32_encryption() = default;
     _ASYNCRTIMP win32_encryption(const std::wstring& data);
     _ASYNCRTIMP ~win32_encryption();
     _ASYNCRTIMP plaintext_string decrypt() const;
@@ -51,6 +56,7 @@ private:
 };
 #endif // __cplusplus_winrt
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#endif // _WIN32
 } // namespace details
 
 /// <summary>
@@ -89,7 +95,7 @@ public:
         "This API is deprecated for security reasons to avoid unnecessary password copies stored in plaintext.")
     utility::string_t password() const
     {
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#if defined(_WIN32) && _WIN32_WINNT >= _WIN32_WINNT_VISTA
         return utility::string_t(*m_password.decrypt());
 #else
         return m_password;
@@ -105,7 +111,7 @@ public:
     details::plaintext_string _internal_decrypt() const
     {
         // Encryption APIs not supported on XP
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#if defined(_WIN32) && _WIN32_WINNT >= _WIN32_WINNT_VISTA
         return m_password.decrypt();
 #else
         return details::plaintext_string(new ::utility::string_t(m_password));
@@ -115,7 +121,7 @@ public:
 private:
     ::utility::string_t m_username;
 
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#if defined(_WIN32) && _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #if defined(__cplusplus_winrt)
     details::winrt_encryption m_password;
 #else

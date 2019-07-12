@@ -1873,7 +1873,7 @@ private:
     static void CALLBACK completion_callback(
         HINTERNET hRequestHandle, DWORD_PTR context, DWORD statusCode, _In_ void* statusInfo, DWORD statusInfoLength)
     {
-        CASABLANCA_UNREFERENCED_PARAMETER(statusInfoLength);
+        (void)statusInfoLength;
 
         std::weak_ptr<winhttp_request_context>* p_weak_request_context =
             reinterpret_cast<std::weak_ptr<winhttp_request_context>*>(context);

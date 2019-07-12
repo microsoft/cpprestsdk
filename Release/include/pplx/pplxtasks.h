@@ -3799,7 +3799,7 @@ private:
         auto _LogWorkItemAndInvokeUserLambda(_Func&& _func) const -> decltype(_func())
         {
             details::_TaskWorkItemRAIILogger _LogWorkItem(this->_M_pTask->_M_taskEventLogger);
-            CASABLANCA_UNREFERENCED_PARAMETER(_LogWorkItem);
+            (void)_LogWorkItem;
             return _func();
         }
 
@@ -3931,7 +3931,7 @@ private:
             -> decltype(_func(std::forward<_Arg>(_value)))
         {
             details::_TaskWorkItemRAIILogger _LogWorkItem(this->_M_pTask->_M_taskEventLogger);
-            CASABLANCA_UNREFERENCED_PARAMETER(_LogWorkItem);
+            (void)_LogWorkItem;
             return _func(std::forward<_Arg>(_value));
         }
 

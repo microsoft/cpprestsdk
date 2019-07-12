@@ -253,9 +253,9 @@ public:
                                             _In_ ULONG cb,
                                             _Out_opt_ ULONG* pcbWritten)
     {
-        CASABLANCA_UNREFERENCED_PARAMETER(pv);
-        CASABLANCA_UNREFERENCED_PARAMETER(cb);
-        CASABLANCA_UNREFERENCED_PARAMETER(pcbWritten);
+        (void)pv;
+        (void)cb;
+        (void)pcbWritten;
         return E_NOTIMPL;
     }
 
@@ -345,9 +345,9 @@ public:
                                            _In_ ULONG cb,
                                            _Out_ ULONG* pcbRead)
     {
-        CASABLANCA_UNREFERENCED_PARAMETER(pv);
-        CASABLANCA_UNREFERENCED_PARAMETER(cb);
-        CASABLANCA_UNREFERENCED_PARAMETER(pcbRead);
+        (void)pv;
+        (void)cb;
+        (void)pcbRead;
         return E_NOTIMPL;
     }
 
