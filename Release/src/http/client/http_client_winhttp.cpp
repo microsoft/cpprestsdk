@@ -130,15 +130,17 @@ static void trim_nulls(utility::string_t& str)
     }
 
     // nulls at the front, and maybe the back, to remove
-    first = std::find_if(str.begin(), last, [](const utility::char_t c) {
-        return c != utility::char_t {}
-    });
+    first = std::find_if(str.begin(), last, [](const utility::char_t c) { return c != utility::char_t {}; });
 
-    do
+    if (first != last)
     {
-        --last;
-    } while (*last == utility::char_t {});
-    ++last;
+        do
+        {
+            --last;
+        } while (*last == utility::char_t {});
+        ++last;
+    }
+
     str.assign(first, last);
 }
 
