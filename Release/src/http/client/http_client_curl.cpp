@@ -128,9 +128,9 @@ static utility::string_t parse_reason_phrase(HINTERNET request_handle)
 }
 
 
-static void parse_headers_string(_Inout_z_ TCHAR* headersStr, web::http::http_headers& headers)
+static void parse_headers_string(_Inout_z_ utility::char_t* headersStr, web::http::http_headers& headers)
 {
-    TCHAR* line = strtok (headersStr, "\r\n");
+    utility::char_t* line = strtok (headersStr, "\r\n");
     while (line != nullptr)
     {
         const utility::string_t header_line(line);
@@ -150,7 +150,7 @@ static void parse_headers_string(_Inout_z_ TCHAR* headersStr, web::http::http_he
 /// <summary>
 /// Parses a string containing HTTP headers.
 /// </summary>
-static void parse_curl_headers(HINTERNET request_handle, _In_z_ TCHAR* headersStr, http_response& response)
+static void parse_curl_headers(HINTERNET request_handle, _In_z_ utility::char_t* headersStr, http_response& response)
 {
     // Clear the header map for each new response; otherwise, the header values will be combined.
     response.headers().clear();
@@ -1557,7 +1557,7 @@ private:
         auto urlSize = static_cast<unsigned long>(url.capacity()) * 2; // use initial small string optimization capacity
         for (;;)
         {
-            url.resize(urlSize / sizeof(TCHAR));
+            url.resize(urlSize / sizeof(utility::char_t));
             if (WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, &url[0], (LPDWORD)&urlSize))
             {
                 url.resize(strlen(url.c_str()));
@@ -1811,7 +1811,7 @@ private:
                 // Now allocate buffer for headers and query for them.
                 std::vector<unsigned char> header_raw_buffer;
                 header_raw_buffer.resize(headerBufferLength);
-                TCHAR* header_buffer = reinterpret_cast<TCHAR*>(&header_raw_buffer[0]);
+                utility::char_t* header_buffer = reinterpret_cast<utility::char_t*>(&header_raw_buffer[0]);
                 if (!WinHttpQueryHeaders(hRequestHandle,
                                          WINHTTP_QUERY_RAW_HEADERS_CRLF,
                                          WINHTTP_HEADER_NAME_BY_INDEX,
