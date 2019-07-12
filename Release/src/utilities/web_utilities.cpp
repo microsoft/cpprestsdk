@@ -27,8 +27,8 @@ namespace web
 {
 namespace details
 {
-#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
-#if defined(__cplusplus_winrt)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#ifdef __cplusplus_winrt
 
 // Helper function to zero out memory of an IBuffer.
 void winrt_secure_zero_buffer(Windows::Storage::Streams::IBuffer ^ buffer)
@@ -88,7 +88,7 @@ plaintext_string winrt_encryption::decrypt() const
     return std::move(data);
 }
 
-#else
+#else // ^^^ __cplusplus_winrt ^^^ // vvv !__cplusplus_winrt vvv
 
 win32_encryption::win32_encryption(const std::wstring& data) : m_numCharacters(data.size())
 {
@@ -141,8 +141,8 @@ plaintext_string win32_encryption::decrypt() const
 
     return result;
 }
-#endif
-#endif
+#endif // __cplusplus_winrt
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
 void zero_memory_deleter::operator()(::utility::string_t* data) const
 {

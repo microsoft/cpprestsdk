@@ -8,5 +8,12 @@
         "build.x86.release": true,
         "build.x64.debug": true,
         "build.x64.release": true,
-    }
+        "out": true,
+    },
+    "cSpell.words": [
+        "XPLATSTR",
+        "pplx",
+        "rdpos",
+        "rgpsz"
+    ]
 }

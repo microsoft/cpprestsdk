@@ -24,8 +24,8 @@ public:
 };
 typedef std::unique_ptr<::utility::string_t, zero_memory_deleter> plaintext_string;
 
-#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
-#if defined(__cplusplus_winrt)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#ifdef __cplusplus_winrt
 class winrt_encryption
 {
 public:
@@ -36,7 +36,7 @@ public:
 private:
     ::pplx::task<Windows::Storage::Streams::IBuffer ^> m_buffer;
 };
-#else
+#else // ^^^ __cplusplus_winrt ^^^ // vvv !__cplusplus_winrt vvv
 class win32_encryption
 {
 public:
@@ -49,8 +49,8 @@ private:
     std::vector<char> m_buffer;
     size_t m_numCharacters;
 };
-#endif
-#endif
+#endif // __cplusplus_winrt
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 } // namespace details
 
 /// <summary>
@@ -89,7 +89,7 @@ public:
         "This API is deprecated for security reasons to avoid unnecessary password copies stored in plaintext.")
     utility::string_t password() const
     {
-#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
         return utility::string_t(*m_password.decrypt());
 #else
         return m_password;
@@ -105,7 +105,7 @@ public:
     details::plaintext_string _internal_decrypt() const
     {
         // Encryption APIs not supported on XP
-#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
         return m_password.decrypt();
 #else
         return details::plaintext_string(new ::utility::string_t(m_password));
@@ -115,7 +115,7 @@ public:
 private:
     ::utility::string_t m_username;
 
-#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #if defined(__cplusplus_winrt)
     details::winrt_encryption m_password;
 #else

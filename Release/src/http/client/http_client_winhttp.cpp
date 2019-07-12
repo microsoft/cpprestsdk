@@ -20,7 +20,7 @@
 #include <Wincrypt.h>
 #include <atomic>
 
-#ifndef CPPREST_TARGET_XP
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #include <VersionHelpers.h>
 #endif
 
@@ -245,7 +245,7 @@ public:
 
     HINTERNET m_request_handle;
     std::weak_ptr<winhttp_request_context>*
-        m_request_handle_context; // owned by m_request_handle to be delete'd by WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING
+        m_request_handle_context; // owned by m_request_handle to be deleted by WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING
 
     bool m_proxy_authentication_tried;
     bool m_server_authentication_tried;
@@ -803,12 +803,12 @@ protected:
             access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
             proxy_name = WINHTTP_NO_PROXY_NAME;
 
-#ifdef CPPREST_TARGET_XP
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
             if (config.proxy().is_auto_discovery())
             {
                 m_proxy_auto_config = true;
             }
-#else  // ^^^ CPPREST_TARGET_XP ^^^ // vvv !CPPREST_TARGET_XP vvv
+#else  // ^^^ _WIN32_WINNT < _WIN32_WINNT_VISTA ^^^ // vvv _WIN32_WINNT >= _WIN32_WINNT_VISTA vvv
             if (IsWindows8Point1OrGreater())
             {
                 // Windows 8.1 and newer supports automatic proxy discovery and auto-fallback to IE proxy settings
@@ -854,7 +854,7 @@ protected:
                     m_proxy_auto_config = true;
                 }
             }
-#endif // CPPREST_TARGET_XP
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
         }
         else
         {
@@ -908,7 +908,7 @@ protected:
         }
 
         // Enable TLS 1.1 and 1.2
-#if !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
         BOOL win32_result(FALSE);
 
         DWORD secure_protocols(WINHTTP_FLAG_SECURE_PROTOCOL_SSL3 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 |
@@ -1074,11 +1074,11 @@ protected:
         if (client_config().validate_certificates())
         {
             // if we are validating certificates, also turn on revocation checking
-            DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
+            DWORD dwEnableSSLRevocationOpt = WINHTTP_ENABLE_SSL_REVOCATION;
             if (!WinHttpSetOption(winhttp_context->m_request_handle,
                                   WINHTTP_OPTION_ENABLE_FEATURE,
-                                  &dwEnableSSLRevocOpt,
-                                  sizeof(dwEnableSSLRevocOpt)))
+                                  &dwEnableSSLRevocationOpt,
+                                  sizeof(dwEnableSSLRevocationOpt)))
             {
                 auto errorCode = GetLastError();
                 request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));

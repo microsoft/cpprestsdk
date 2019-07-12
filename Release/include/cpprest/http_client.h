@@ -54,7 +54,7 @@ typedef void* native_handle;
 #include <limits>
 #include <memory>
 
-#if !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #include "cpprest/oauth1.h"
 #endif
 
@@ -110,7 +110,7 @@ public:
     {
     }
 
-#if !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     /// <summary>
     /// Get OAuth 1.0 configuration.
     /// </summary>
@@ -363,7 +363,7 @@ public:
 #endif
 
 private:
-#if !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
 #endif
 
