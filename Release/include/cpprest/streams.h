@@ -528,24 +528,18 @@ class type_parser
 public:
     static pplx::task<T> parse(streams::streambuf<CharType> buffer)
     {
-        typename _type_parser_integral_traits<T>::_is_integral ii;
-        typename _type_parser_integral_traits<T>::_is_unsigned ui;
-        return _parse(buffer, ii, ui);
+        typedef typename _type_parser_integral_traits<T>::_is_integral ii;
+        typedef typename _type_parser_integral_traits<T>::_is_unsigned ui;
+
+        static_assert(ii::value || !ui::value, "type is not supported for extraction from a stream");
+
+        return _parse(buffer, ii {}, ui {});
     }
 
 private:
     static pplx::task<T> _parse(streams::streambuf<CharType> buffer, std::false_type, std::false_type)
     {
         _parse_floating_point(buffer);
-    }
-
-    static pplx::task<T> _parse(streams::streambuf<CharType>, std::false_type, std::true_type)
-    {
-#ifdef _WIN32
-        static_assert(false, "type is not supported for extraction from a stream");
-#else
-        throw std::runtime_error("type is not supported for extraction from a stream");
-#endif
     }
 
     static pplx::task<T> _parse(streams::streambuf<CharType> buffer, std::true_type, std::false_type)
