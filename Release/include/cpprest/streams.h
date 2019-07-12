@@ -1139,8 +1139,8 @@ pplx::task<ReturnType> _type_parser_base<CharType>::_parse_input(concurrency::st
     auto update = [=](pplx::task<int_type> op) -> pplx::task<bool> {
         int_type ch = op.get();
         if (ch == traits::eof()) return pplx::task_from_result(false);
-        bool accptd = accept_character(state, ch);
-        if (!accptd) return pplx::task_from_result(false);
+        bool accepted = accept_character(state, ch);
+        if (!accepted) return pplx::task_from_result(false);
         // We peeked earlier, so now we must advance the position.
         concurrency::streams::streambuf<CharType> buf = buffer;
         return buf.bumpc().then([](int_type) { return true; });
