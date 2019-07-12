@@ -1315,7 +1315,7 @@ static std::string create_exception_message(int_type ch, bool exponent)
         result.assign("Invalid character 'X'");
     }
 
-    result[20] = static_cast<char>(ch);
+    result[19] = static_cast<char>(ch);
     return result;
 }
 
