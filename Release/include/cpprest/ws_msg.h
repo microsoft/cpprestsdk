@@ -74,7 +74,7 @@ public:
     /// </summary>
     /// <param name="data">UTF-8 String containing the optional pong message.</param>
     void set_pong_message(const std::string& data = {})
-    { 
+    {
         this->set_message_pong(concurrency::streams::container_buffer<std::string>(data));
     }
 #endif

@@ -330,8 +330,7 @@ public:
 
     virtual pplx::task<void> close() = 0;
 
-    virtual pplx::task<void> close(websocket_close_status close_status,
-                                   const utility::string_t& close_reason = {}) = 0;
+    virtual pplx::task<void> close(websocket_close_status close_status, const utility::string_t& close_reason = {}) = 0;
 
     virtual void set_close_handler(
         const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>&

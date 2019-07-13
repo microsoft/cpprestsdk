@@ -89,7 +89,7 @@ plaintext_string winrt_encryption::decrypt() const
     return std::move(data);
 }
 
-#else // ^^^ __cplusplus_winrt ^^^ // vvv !__cplusplus_winrt vvv
+#else  // ^^^ __cplusplus_winrt ^^^ // vvv !__cplusplus_winrt vvv
 
 win32_encryption::win32_encryption(const std::wstring& data) : m_numCharacters(data.size())
 {

@@ -1309,9 +1309,12 @@ template<typename FloatingPoint, typename int_type>
 static std::string create_exception_message(int_type ch, bool exponent)
 {
     std::string result;
-    if (exponent) {
+    if (exponent)
+    {
         result.assign("Invalid character 'X' in exponent");
-    } else {
+    }
+    else
+    {
         result.assign("Invalid character 'X'");
     }
 
