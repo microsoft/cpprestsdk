@@ -330,7 +330,7 @@ jobs:
         ./buildconf
         ./configure --with-ssl --prefix=/usr
         make
-        make install
+        sudo make install
         cd ..
         mkdir build.debug
         cd build.debug
