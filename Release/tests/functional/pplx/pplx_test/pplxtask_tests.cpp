@@ -1839,6 +1839,25 @@ SUITE(pplxtask_tests)
         checkTaskCtorResult<std::string>(true, std::move(strLambda), "TestTaskCtorArgsStaticValidation: move std::string -> task<std::string>");
         checkTaskCtorResult<std::string>(true, std::move(charStrLambda), "TestTaskCtorArgsStaticValidation: move const char* -> task<std::string>"); // implicit conversion
         checkTaskCtorResult<void>(true, std::move(voidLambda), "TestTaskCtorArgsStaticValidation: move void -> task<void>");
+
+        task_completion_event<void> voidCompletionEvent;
+        task_completion_event<int> intCompletionEvent;
+        task_completion_event<const char*> charStrCompletionEvent;
+
+        // fail cases
+        checkTaskCtorResult<void>(false, intCompletionEvent, "TestTaskCtorArgsStaticValidation: task_completion_event<int> !-> task<void>");
+        checkTaskCtorResult<std::string>(false, intCompletionEvent, "TestTaskCtorArgsStaticValidation: task_completion_event<int> !-> task<std::string>");
+        checkTaskCtorResult<int>(false, voidCompletionEvent, "TestTaskCtorArgsStaticValidation: task_completion_event<void> !-> task<int>");
+        checkTaskCtorResult<std::vector<int>>(false, intCompletionEvent, "TestTaskCtorArgsStaticValidation: task_completion_event<int> !-> task<std::vector<int>>"); // explicit conversion
+        checkTaskCtorResult<std::string>(false, charStrCompletionEvent, "TestTaskCtorArgsStaticValidation: task_completion_event<const char*> !-> task<std::string>"); // implicit conversion (illegal for task_completion_event)
+
+        // ok copy cases
+        checkTaskCtorResult<void>(true, voidCompletionEvent, "TestTaskCtorArgsStaticValidation: task_completion_event<void> -> task<void>");
+        checkTaskCtorResult<int>(true, intCompletionEvent, "TestTaskCtorArgsStaticValidation: task_completion_event<int> -> task<int>");
+
+        // ok move cases
+        checkTaskCtorResult<void>(true, std::move(voidCompletionEvent), "TestTaskCtorArgsStaticValidation: move task_completion_event<void> -> task<void>");
+        checkTaskCtorResult<int>(true, std::move(intCompletionEvent), "TestTaskCtorArgsStaticValidation: move task_completion_event<int> -> task<int>");
     }
 
     //TODO: tests for _AsyncTaskCtorArgsValidator

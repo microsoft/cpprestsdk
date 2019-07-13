@@ -3073,7 +3073,8 @@ auto _IsValidTaskCtor(_Ty _Param, int, int, ...)
     -> decltype(_Param.set(stdx::declval<_ReturnType>()), std::true_type());
 
 template<typename _ReturnType, typename _Ty>
-auto _IsValidTaskCtor(_Ty _Param, int, ...) -> decltype(_Param.set(), std::true_type());
+auto _IsValidTaskCtor(_Ty _Param, int, ...)
+    -> decltype(_Param.set(), typename std::enable_if<std::is_same<_ReturnType, void>::value>::type(), std::true_type());
 
 // All else is invalid
 template<typename _ReturnType, typename _Ty>
