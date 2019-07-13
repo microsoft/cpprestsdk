@@ -13,7 +13,6 @@
 
 #if defined(_WIN32)
 // Include first to avoid any issues with Windows.h.
-#define NOMINMAX
 #include <winsock2.h>
 #endif
 

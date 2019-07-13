@@ -87,8 +87,7 @@ namespace
 {
 const std::string CRLF("\r\n");
 
-std::string calc_cn_host(const web::http::uri& baseUri,
-                         const web::http::http_headers& requestHeaders)
+std::string calc_cn_host(const web::http::uri& baseUri, const web::http::http_headers& requestHeaders)
 {
     std::string result;
     if (baseUri.scheme() == U("https"))
@@ -905,7 +904,8 @@ public:
             }
         };
 
-        // Note that we must not try to CONNECT using an already established connection via proxy -- this would send CONNECT to the end server which is definitely not what we want.
+        // Note that we must not try to CONNECT using an already established connection via proxy -- this would send
+        // CONNECT to the end server which is definitely not what we want.
         if (proxy_type == http_proxy_type::ssl_tunnel && !m_connection->is_reused())
         {
             // The ssl_tunnel_proxy keeps the context alive and then calls back once the ssl tunnel is established via
@@ -1234,8 +1234,8 @@ private:
         }
 
         const auto this_request = shared_from_this();
-        const auto readSize = static_cast<size_t>(
-            std::min(static_cast<uint64_t>(m_http_client->client_config().chunksize()), m_content_length - m_uploaded));
+        const auto readSize = static_cast<size_t>((std::min)(
+            static_cast<uint64_t>(m_http_client->client_config().chunksize()), m_content_length - m_uploaded));
         auto readbuf = _get_readbuffer();
         readbuf.getn(boost::asio::buffer_cast<uint8_t*>(m_body_buf.prepare(readSize)), readSize)
             .then([this_request AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op) {
@@ -1487,8 +1487,8 @@ private:
             if (!needChunked)
             {
                 async_read_until_buffersize(
-                    static_cast<size_t>(
-                        std::min(m_content_length, static_cast<uint64_t>(m_http_client->client_config().chunksize()))),
+                    static_cast<size_t>((std::min)(m_content_length,
+                                                   static_cast<uint64_t>(m_http_client->client_config().chunksize()))),
                     boost::bind(
                         &asio_context::handle_read_content, shared_from_this(), boost::asio::placeholders::error));
             }
@@ -1572,7 +1572,7 @@ private:
             {
                 if (inbytes)
                 {
-                    output.resize(output.size() + std::max(input_size, static_cast<size_t>(1024)));
+                    output.resize(output.size() + (std::max)(input_size, static_cast<size_t>(1024)));
                 }
                 got = m_decompressor->decompress(input + inbytes,
                                                  input_size - inbytes,
@@ -1710,7 +1710,7 @@ private:
 
         if (ec)
         {
-            if (ec == boost::asio::error::eof && m_content_length == std::numeric_limits<size_t>::max())
+            if (ec == boost::asio::error::eof && m_content_length == (std::numeric_limits<size_t>::max)())
             {
                 m_content_length = m_downloaded + m_body_buf.size();
             }
@@ -1742,7 +1742,7 @@ private:
             const auto this_request = shared_from_this();
 
             auto read_size = static_cast<size_t>(
-                std::min(static_cast<uint64_t>(m_body_buf.size()), m_content_length - m_downloaded));
+                (std::min)(static_cast<uint64_t>(m_body_buf.size()), m_content_length - m_downloaded));
 
             if (m_decompressor)
             {
@@ -1765,7 +1765,7 @@ private:
                         this_request->m_downloaded += static_cast<uint64_t>(read_size);
 
                         this_request->async_read_until_buffersize(
-                            static_cast<size_t>(std::min(
+                            static_cast<size_t>((std::min)(
                                 static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()),
                                 this_request->m_content_length - this_request->m_downloaded)),
                             boost::bind(
@@ -1794,7 +1794,7 @@ private:
                                 this_request->m_downloaded += static_cast<uint64_t>(read_size);
                                 this_request->m_body_buf.consume(read_size);
                                 this_request->async_read_until_buffersize(
-                                    static_cast<size_t>(std::min(
+                                    static_cast<size_t>((std::min)(
                                         static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()),
                                         this_request->m_content_length - this_request->m_downloaded)),
                                     boost::bind(&asio_context::handle_read_content,
@@ -1820,7 +1820,7 @@ private:
                             this_request->m_downloaded += static_cast<uint64_t>(writtenSize);
                             this_request->m_body_buf.consume(writtenSize);
                             this_request->async_read_until_buffersize(
-                                static_cast<size_t>(std::min(
+                                static_cast<size_t>((std::min)(
                                     static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()),
                                     this_request->m_content_length - this_request->m_downloaded)),
                                 boost::bind(&asio_context::handle_read_content,

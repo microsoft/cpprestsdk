@@ -58,9 +58,9 @@ public:
                                                 ULONG_PTR numberOfBytesTransferred,
                                                 PTP_IO io)
     {
-        CASABLANCA_UNREFERENCED_PARAMETER(io);
-        CASABLANCA_UNREFERENCED_PARAMETER(context);
-        CASABLANCA_UNREFERENCED_PARAMETER(instance);
+        (void)io;
+        (void)context;
+        (void)instance;
 
         http_overlapped* p_http_overlapped = (http_overlapped*)pOverlapped;
         p_http_overlapped->m_http_io_completion(result, (DWORD)numberOfBytesTransferred);

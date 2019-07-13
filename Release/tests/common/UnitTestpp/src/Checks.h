@@ -103,7 +103,7 @@ struct BuildFailureStringImpl
     std::string BuildString(const char*, const char*, const T1&, const T2&)
     {
         // Don't do anything since operator<< isn't supported.
-        return "";
+        return std::string{};
     }
 };
 

@@ -93,7 +93,7 @@ private:
     {
         ClearDealerCards();
         ClearPlayerCards();
-        resultLabel->Text = "";
+        resultLabel->Text.clear();
     }
 
     void EnableBetting()

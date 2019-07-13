@@ -734,7 +734,7 @@ std::map<utility::string_t, utility::string_t> uri::split_query(const utility::s
         else if (equals_index == 0)
         {
             utility::string_t value(key_value_pair.begin() + equals_index + 1, key_value_pair.end());
-            results[_XPLATSTR("")] = value;
+            results[utility::string_t {}] = value;
         }
         else
         {

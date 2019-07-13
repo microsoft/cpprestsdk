@@ -54,12 +54,12 @@ DeferredTestFailure::DeferredTestFailure(int lineNumber_, const char* failureStr
 }
 
 DeferredTestResult::DeferredTestResult()
-    : suiteName(""), testName(""), failureFile(""), timeElapsed(0.0f), failed(false)
+    : suiteName(), testName(), failureFile(), timeElapsed(0.0f), failed(false)
 {
 }
 
-DeferredTestResult::DeferredTestResult(char const* suite, char const* test)
-    : suiteName(suite), testName(test), failureFile(""), timeElapsed(0.0f), failed(false)
+DeferredTestResult::DeferredTestResult(char const* const suite, char const* const test)
+    : suiteName(suite), testName(test), failureFile(), timeElapsed(0.0f), failed(false)
 {
 }
 

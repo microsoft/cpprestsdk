@@ -470,7 +470,7 @@ _UINT_TRAIT(unsigned long long, ULLONG_MIN, ULLONG_MAX)
     {                                                                                                                  \
         typedef std::true_type _is_integral;                                                                           \
         typedef std::false_type _is_unsigned;                                                                          \
-        static const int64_t _min = std::numeric_limits<_t>::min();                                                    \
+        static const int64_t _min = (std::numeric_limits<_t>::min)();                                                  \
         static const int64_t _max = (std::numeric_limits<_t>::max)();                                                  \
     };
 #define _UINT_TRAIT(_t)                                                                                                \
@@ -1139,8 +1139,8 @@ pplx::task<ReturnType> _type_parser_base<CharType>::_parse_input(concurrency::st
     auto update = [=](pplx::task<int_type> op) -> pplx::task<bool> {
         int_type ch = op.get();
         if (ch == traits::eof()) return pplx::task_from_result(false);
-        bool accptd = accept_character(state, ch);
-        if (!accptd) return pplx::task_from_result(false);
+        bool accepted = accept_character(state, ch);
+        if (!accepted) return pplx::task_from_result(false);
         // We peeked earlier, so now we must advance the position.
         concurrency::streams::streambuf<CharType> buf = buffer;
         return buf.bumpc().then([](int_type) { return true; });
@@ -1308,9 +1308,18 @@ struct _double_state
 template<typename FloatingPoint, typename int_type>
 static std::string create_exception_message(int_type ch, bool exponent)
 {
-    std::ostringstream os;
-    os << "Invalid character '" << char(ch) << "'" << (exponent ? " in exponent" : "");
-    return os.str();
+    std::string result;
+    if (exponent)
+    {
+        result.assign("Invalid character 'X' in exponent");
+    }
+    else
+    {
+        result.assign("Invalid character 'X'");
+    }
+
+    result[19] = static_cast<char>(ch);
+    return result;
 }
 
 template<typename FloatingPoint, typename int_type>

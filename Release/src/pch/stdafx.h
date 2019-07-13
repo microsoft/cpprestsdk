@@ -20,32 +20,29 @@
 #endif
 
 #ifdef _WIN32
-#define NOMINMAX
-#ifdef CPPREST_TARGET_XP
-#include <winsdkver.h>
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT _WIN32_WINNT_WS03 // Windows XP with SP2
-#endif
-#endif
-#include <SDKDDKVer.h>
 // use the debug version of the CRT if _DEBUG is defined
 #ifdef _DEBUG
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
-#include <stdlib.h>
-#endif
+#endif // _DEBUG
 
+#include <SDKDDKVer.h>
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
+
+#if CPPREST_TARGET_XP && _WIN32_WINNT != 0x0501
+#error CPPREST_TARGET_XP implies _WIN32_WINNT == 0x0501
+#endif // CPPREST_TARGET_XP && _WIN32_WINNT != 0x0501
+
 #include <objbase.h>
 
 #include <windows.h>
 
 // Windows Header Files:
-#if !defined(__cplusplus_winrt)
+#ifndef __cplusplus_winrt
 #include <winhttp.h>
+#endif !__cplusplus_winrt
 
-#endif // #if !defined(__cplusplus_winrt)
-#else  // LINUX or APPLE
+#else // LINUX or APPLE
 #define __STDC_LIMIT_MACROS
 #include "pthread.h"
 #include <atomic>
@@ -84,6 +81,7 @@
 #include <exception>
 #include <memory>
 #include <mutex>
+#include <stdlib.h>
 #include <vector>
 
 // json

@@ -404,7 +404,7 @@ public:
         return close(websocket_close_status::normal, _XPLATSTR("Normal"));
     }
 
-    pplx::task<void> close(websocket_close_status status, const utility::string_t& strreason = _XPLATSTR(""))
+    pplx::task<void> close(websocket_close_status status, const utility::string_t& strreason = {})
     {
         // Send a close frame to the server
         m_msg_websocket->Close(static_cast<unsigned short>(status), Platform::StringReference(strreason.c_str()));

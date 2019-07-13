@@ -175,7 +175,7 @@ public:
         auto path_segments = uri::split_path(uri::decode(u.path()));
         for (auto i = static_cast<long>(path_segments.size()); i >= 0; --i)
         {
-            std::string path = "";
+            std::string path;
             for (size_t j = 0; j < static_cast<size_t>(i); ++j)
             {
                 path += "/" + utility::conversions::to_utf8string(path_segments[j]);
@@ -520,9 +520,9 @@ void hostport_listener::start()
     auto& service = crossplat::threadpool::shared_instance().service();
     tcp::resolver resolver(service);
     // #446: boost resolver does not recognize "+" as a host wildchar
-    tcp::resolver::query query = ("+" == m_host) ?
-        tcp::resolver::query(m_port, boost::asio::ip::resolver_query_base::flags()) :
-        tcp::resolver::query(m_host, m_port, boost::asio::ip::resolver_query_base::flags());
+    tcp::resolver::query query =
+        ("+" == m_host) ? tcp::resolver::query(m_port, boost::asio::ip::resolver_query_base::flags())
+                        : tcp::resolver::query(m_host, m_port, boost::asio::ip::resolver_query_base::flags());
 
     tcp::endpoint endpoint = *resolver.resolve(query);
 
@@ -828,7 +828,7 @@ will_deref_and_erase_t asio_server_connection::handle_headers()
         m_read = 0;
         ++m_refs;
         async_read_until_buffersize(
-            std::min(ChunkSize, m_read_size),
+            (std::min)(ChunkSize, m_read_size),
             [this](const boost::system::error_code& ec, size_t) { (will_deref_t) this->handle_body(ec); });
     }
 
@@ -910,7 +910,7 @@ will_deref_t asio_server_connection::handle_body(const boost::system::error_code
         auto writebuf = requestImpl->outstream().streambuf();
         writebuf
             .putn_nocopy(boost::asio::buffer_cast<const uint8_t*>(m_request_buf.data()),
-                         std::min(m_request_buf.size(), m_read_size - m_read))
+                         (std::min)(m_request_buf.size(), m_read_size - m_read))
             .then([this](pplx::task<size_t> writtenSizeTask) -> will_deref_t {
                 size_t writtenSize = 0;
                 try
@@ -926,7 +926,7 @@ will_deref_t asio_server_connection::handle_body(const boost::system::error_code
                 m_request_buf.consume(writtenSize);
 
                 async_read_until_buffersize(
-                    std::min(ChunkSize, m_read_size - m_read),
+                    (std::min)(ChunkSize, m_read_size - m_read),
                     [this](const boost::system::error_code& ec, size_t) { (will_deref_t) this->handle_body(ec); });
                 return will_deref_t {};
             });
@@ -1162,7 +1162,7 @@ will_deref_and_erase_t asio_server_connection::handle_write_large_response(const
     if (readbuf.is_eof())
         return cancel_sending_response_with_error(
             response, std::make_exception_ptr(http_exception("Response stream close early!")));
-    size_t readBytes = std::min(ChunkSize, m_write_size - m_write);
+    size_t readBytes = (std::min)(ChunkSize, m_write_size - m_write);
     readbuf.getn(buffer_cast<uint8_t*>(m_response_buf.prepare(readBytes)), readBytes)
         .then([=](pplx::task<size_t> actualSizeTask) -> will_deref_and_erase_t {
             size_t actualSize = 0;

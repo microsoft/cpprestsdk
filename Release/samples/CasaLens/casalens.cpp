@@ -30,13 +30,13 @@ const utility::string_t casalens_creds::weather_url = U("http://api.openweatherm
 // FILL IN THE API KEYS FOR THE DIFFERENT SERVICES HERE.
 // Refer Readme.txt for details on how to obtain the key for the services.
 const utility::string_t casalens_creds::events_keyname = U("app_key");
-const utility::string_t casalens_creds::events_key = U("");
+const utility::string_t casalens_creds::events_key;
 const utility::string_t casalens_creds::movies_keyname = U("api_key");
-const utility::string_t casalens_creds::movies_key = U("");
+const utility::string_t casalens_creds::movies_key;
 const utility::string_t casalens_creds::images_keyname = U("username");
-const utility::string_t casalens_creds::images_key = U("");
+const utility::string_t casalens_creds::images_key;
 const utility::string_t casalens_creds::bmaps_keyname = U("key");
-const utility::string_t casalens_creds::bmaps_key = U("");
+const utility::string_t casalens_creds::bmaps_key;
 
 const utility::string_t CasaLens::events_json_key = U("events");
 const utility::string_t CasaLens::movies_json_key = U("movies");
