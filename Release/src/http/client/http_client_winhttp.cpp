@@ -256,7 +256,7 @@ static DWORD WinHttpDefaultProxyConstant() CPPREST_NOEXCEPT
 
     // Windows 8.1 or later, use the automatic proxy setting
     return WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
-#else // ^^^ _WIN32_WINNT >= _WIN32_WINNT_VISTA ^^^ // vvv _WIN32_WINNT < _WIN32_WINNT_VISTA vvv
+#else  // ^^^ _WIN32_WINNT >= _WIN32_WINNT_VISTA ^^^ // vvv _WIN32_WINNT < _WIN32_WINNT_VISTA vvv
     return WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 }
@@ -1011,7 +1011,7 @@ protected:
 
         if (m_proxy_auto_config)
         {
-            WINHTTP_AUTOPROXY_OPTIONS autoproxy_options{};
+            WINHTTP_AUTOPROXY_OPTIONS autoproxy_options {};
             if (m_proxy_auto_config_url.empty())
             {
                 autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
