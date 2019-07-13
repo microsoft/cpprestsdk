@@ -3080,12 +3080,37 @@ template<typename _ReturnType, typename _Ty>
 std::false_type _IsValidTaskCtor(_Ty _Param, ...);
 
 template<typename _ReturnType, typename _Ty>
-struct _TaskConstructorArgsValidator
+struct _TaskCtorArgsValidator
+    : decltype(_IsValidTaskCtor<_ReturnType, _Ty>(std::declval<_Ty>(), 0, 0, 0, 0))
+{};
+
+template<typename _ReturnType, typename _Ty, typename = void>
+struct _TaskCallableResultValidator
+    : std::false_type
+{};
+
+template<typename _ReturnType, typename _Ty>
+struct _TaskCallableResultValidator<_ReturnType, _Ty,
+    typename std::enable_if<_IsCallableNoArgs<_Ty>::value &&
+        (
+            std::is_convertible<typename _CallableResult<_Ty>::type, _ReturnType>::value || // unwrapped tasult
+            std::is_convertible<typename _UnwrapTaskType<typename _CallableResult<_Ty>::type>::_Type, _ReturnType>::value // wrapped result
+        )
+    >::type>
+    : std::true_type
+{};
+
+#if defined(__cplusplus_winrt)
+template<typename _ReturnType, typename _Ty>
+struct _AsyncTaskCtorArgsValidator
+    : std::conditional<(std::is_same<_Ty, _ReturnType>::value && details::_IsIAsyncInfo<_Ty>::_Value), std::false_type, std::true_type>::type
+{};
+#endif /* defined (__cplusplus_winrt) */
+
+template<typename _ReturnType, typename _Ty>
+void _ValidateTaskCtorArgs()
 {
-    static_assert(std::is_same<
-        decltype(_IsValidTaskCtor<_ReturnType, _Ty>(std::declval<_Ty>(), 0, 0, 0, 0)),
-        std::true_type
-    >::value,
+    static_assert(_TaskCtorArgsValidator<_ReturnType, _Ty>::value,
 #if defined(__cplusplus_winrt)
                   "incorrect argument for task constructor; can be a callable object, an asynchronous operation, or a "
                   "task_completion_event"
@@ -3093,11 +3118,15 @@ struct _TaskConstructorArgsValidator
                   "incorrect argument for task constructor; can be a callable object or a task_completion_event"
 #endif /* defined (__cplusplus_winrt) */
     );
+
+    static_assert(!_IsCallableNoArgs<_Ty>::value || _TaskCallableResultValidator<_ReturnType, _Ty>::value,
+        "incorrect argument for task constructor; callable result type does not math task the tesult type");
+
 #if defined(__cplusplus_winrt)
-    static_assert(!(std::is_same<_Ty, _ReturnType>::value && details::_IsIAsyncInfo<_Ty>::_Value),
+    static_assert(_AsyncTaskCtorArgsValidator<_ReturnType, _Ty>::value,
                   "incorrect template argument for task; consider using the return type of the async operation");
 #endif /* defined (__cplusplus_winrt) */
-};
+}
 
 #if defined(__cplusplus_winrt)
 // Helpers for create_async validation
@@ -3325,7 +3354,7 @@ public:
         explicit task(_Ty _Param)
     {
         task_options _TaskOptions;
-        details::_TaskConstructorArgsValidator<_ReturnType, _Ty>();
+        details::_ValidateTaskCtorArgs<_ReturnType, _Ty>();
 
         _CreateImpl(_TaskOptions.get_cancellation_token()._GetImplValue(), _TaskOptions.get_scheduler());
         // Do not move the next line out of this function. It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the
@@ -3375,7 +3404,7 @@ public:
     __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
         explicit task(_Ty _Param, const task_options& _TaskOptions)
     {
-        details::_TaskConstructorArgsValidator<_ReturnType, _Ty>();
+        details::_ValidateTaskCtorArgs<_ReturnType, _Ty>();
 
         _CreateImpl(_TaskOptions.get_cancellation_token()._GetImplValue(), _TaskOptions.get_scheduler());
         // Do not move the next line out of this function. It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the
@@ -4405,7 +4434,7 @@ public:
     __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
         explicit task(_Ty _Param, const task_options& _TaskOptions = task_options())
     {
-        details::_TaskConstructorArgsValidator<void, _Ty>();
+        details::_ValidateTaskCtorArgs<void, _Ty>();
 
         _M_unitTask._CreateImpl(_TaskOptions.get_cancellation_token()._GetImplValue(), _TaskOptions.get_scheduler());
         // Do not move the next line out of this function. It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the

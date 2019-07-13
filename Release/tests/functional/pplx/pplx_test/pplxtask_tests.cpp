@@ -1804,6 +1804,45 @@ SUITE(pplxtask_tests)
         VERIFY_IS_TRUE(sum == numiter, "TestInlineChunker: async_for did not return correct result.");
     }
 
+    template<typename _Ret, typename _Ty>
+    void checkTaskCtorResult(bool expected, _Ty&&, const char* errorStr)
+    {
+        const bool isArgsValid = pplx::details::_TaskCtorArgsValidator<_Ret, _Ty>::value;
+        const bool isResultValid = !pplx::details::_IsCallableNoArgs<_Ty>::value || pplx::details::_TaskCallableResultValidator<_Ret, _Ty>::value;
+        VERIFY_IS_TRUE((isArgsValid && isResultValid) == expected, errorStr);
+    }
+
+    TEST(TestTaskCtorArgsStaticValidation)
+    {
+        auto voidLambda = [](){};
+        auto charStrLambda = [](){ return "aaa"; };
+        auto strLambda = []() { return std::string{"bbb"}; };
+        auto intLambda = []() { return 5; };
+        auto paramLambda = [](int) {};
+
+        // fail cases
+        checkTaskCtorResult<int>(false, voidLambda, "TestTaskCtorArgsStaticValidation: void !-> task<int>");
+        checkTaskCtorResult<int>(false, charStrLambda, "TestTaskCtorArgsStaticValidation: const char* !-> task<int>");
+        checkTaskCtorResult<void>(false, strLambda, "TestTaskCtorArgsStaticValidation: std::string !-> task<void>");
+        checkTaskCtorResult<void>(false, paramLambda, "TestTaskCtorArgsStaticValidation: void(int) !-> task<void>");
+        checkTaskCtorResult<int>(false, paramLambda, "TestTaskCtorArgsStaticValidation: void(int) !-> task<int>");
+        checkTaskCtorResult<std::vector<int>>(false, intLambda, "TestTaskCtorArgsStaticValidation: int !-> task<std::vector<int>>"); // explicit conversion
+
+        // ok copy cases
+        checkTaskCtorResult<int>(true, intLambda, "TestTaskCtorArgsStaticValidation: int -> task<int>");
+        checkTaskCtorResult<std::string>(true, strLambda, "TestTaskCtorArgsStaticValidation: std::string -> task<std::string>");
+        checkTaskCtorResult<std::string>(true, charStrLambda, "TestTaskCtorArgsStaticValidation: const char* -> task<std::string>"); // implicit conversion
+        checkTaskCtorResult<void>(true, voidLambda, "TestTaskCtorArgsStaticValidation: void -> task<void>");
+
+        // ok move cases
+        checkTaskCtorResult<int>(true, std::move(intLambda), "TestTaskCtorArgsStaticValidation: move int -> task<int>");
+        checkTaskCtorResult<std::string>(true, std::move(strLambda), "TestTaskCtorArgsStaticValidation: move std::string -> task<std::string>");
+        checkTaskCtorResult<std::string>(true, std::move(charStrLambda), "TestTaskCtorArgsStaticValidation: move const char* -> task<std::string>"); // implicit conversion
+        checkTaskCtorResult<void>(true, std::move(voidLambda), "TestTaskCtorArgsStaticValidation: move void -> task<void>");
+    }
+
+    //TODO: tests for _AsyncTaskCtorArgsValidator
+
 #if defined(_WIN32) && (_MSC_VER >= 1700) && (_MSC_VER < 1800)
 
     TEST(PPL_Conversions_basic)
