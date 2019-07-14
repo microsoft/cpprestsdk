@@ -3197,6 +3197,12 @@ struct _CopyableFunctor<
 {
     typedef _NonCopyableFunctorWrapper<_Ty> _Type;
 };
+
+template<typename _Ty, typename _ReturnType, typename =
+    typename std::enable_if<!std::is_base_of<task<_ReturnType>, _Ty>::value>::type
+>
+struct _EnableIfNotTaskRet
+{};
 } // namespace details
 /// <summary>
 ///     A helper class template that transforms a continuation lambda that either takes or returns void, or both, into a
@@ -3349,9 +3355,9 @@ public:
     ///     Runtime)"/>.</para>
     /// </remarks>
     /**/
-    template<typename _Ty>
+    template<typename _Ty, typename = typename details::_EnableIfNotTaskRet<typename std::decay<_Ty>::type, _ReturnType>>
     __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
-        explicit task(_Ty _Param, const task_options& _TaskOptions = task_options())
+        explicit task(_Ty&& _Param, const task_options& _TaskOptions = task_options())
     {
         details::_ValidateTaskCtorArgs<_ReturnType, _Ty>();
 
@@ -3362,7 +3368,7 @@ public:
                                       ? details::_get_internal_task_options(_TaskOptions)._M_presetCreationCallstack
                                       : PPLX_CAPTURE_CALLSTACK());
 
-        _TaskInitMaybeFunctor(_Param, details::_IsCallableNoArgs<_Ty>());
+        _TaskInitMaybeFunctor(std::forward<_Ty>(_Param), details::_IsCallableNoArgs<_Ty>());
     }
 
     /// <summary>
@@ -4151,6 +4157,13 @@ private:
     /// </summary>
     void _TaskInitNoFunctor(task_completion_event<_ReturnType>& _Event) { _Event._RegisterTask(_M_Impl); }
 
+    // fallback to copying of task_completion_event if _TaskInitNoFunctor() was called with const argument
+    void _TaskInitNoFunctor(const task_completion_event<_ReturnType>& _Event)
+    {
+        auto e = _Event;
+        _TaskInitNoFunctor(e);
+    }
+
 #if defined(__cplusplus_winrt)
     /// <summary>
     ///     Initializes a task using an asynchronous operation IAsyncOperation<T>^
@@ -4196,18 +4209,18 @@ private:
     ///     Initializes a task using a callable object.
     /// </summary>
     template<typename _Function>
-    void _TaskInitMaybeFunctor(_Function& _Func, std::true_type)
+    void _TaskInitMaybeFunctor(_Function&& _Func, std::true_type)
     {
-        _TaskInitWithFunctor<_ReturnType, _Function>(_Func);
+        _TaskInitWithFunctor<_ReturnType, _Function>(std::forward<_Function>(_Func));
     }
 
     /// <summary>
     ///     Initializes a task using a non-callable object.
     /// </summary>
     template<typename _Ty>
-    void _TaskInitMaybeFunctor(_Ty& _Param, std::false_type)
+    void _TaskInitMaybeFunctor(_Ty&& _Param, std::false_type)
     {
-        _TaskInitNoFunctor(_Param);
+        _TaskInitNoFunctor(std::forward<_Ty>(_Param));
     }
 
     template<typename _InternalReturnType, typename _Function>
@@ -4382,9 +4395,9 @@ public:
     ///     Runtime)"/>.</para>
     /// </remarks>
     /**/
-    template<typename _Ty>
+    template<typename _Ty, typename = typename details::_EnableIfNotTaskRet<typename std::decay<_Ty>::type, void>>
     __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
-        explicit task(_Ty _Param, const task_options& _TaskOptions = task_options())
+        explicit task(_Ty&& _Param, const task_options& _TaskOptions = task_options())
     {
         details::_ValidateTaskCtorArgs<void, _Ty>();
 
@@ -4396,7 +4409,7 @@ public:
                 ? details::_get_internal_task_options(_TaskOptions)._M_presetCreationCallstack
                 : PPLX_CAPTURE_CALLSTACK());
 
-        _TaskInitMaybeFunctor(_Param, details::_IsCallableNoArgs<_Ty>());
+        _TaskInitMaybeFunctor(std::forward<_Ty>(_Param), details::_IsCallableNoArgs<_Ty>());
     }
 
     /// <summary>
@@ -4717,6 +4730,13 @@ private:
         _M_unitTask._TaskInitNoFunctor(_Event._M_unitEvent);
     }
 
+    // fallback to copying of task_completion_event if _TaskInitNoFunctor() was called with const argument
+    void _TaskInitNoFunctor(const task_completion_event<void>& _Event)
+    {
+        auto e = _Event;
+        _TaskInitNoFunctor(e);
+    }
+
 #if defined(__cplusplus_winrt)
     /// <summary>
     ///     Initializes a task using an asynchronous action IAsyncAction^
@@ -4741,18 +4761,18 @@ private:
     ///     Initializes a task using a callable object.
     /// </summary>
     template<typename _Function>
-    void _TaskInitMaybeFunctor(_Function& _Func, std::true_type)
+    void _TaskInitMaybeFunctor(_Function&& _Func, std::true_type)
     {
-        _M_unitTask._TaskInitWithFunctor<void, _Function>(_Func);
+        _M_unitTask._TaskInitWithFunctor<void, _Function>(std::forward<_Function>(_Func));
     }
 
     /// <summary>
     ///     Initializes a task using a non-callable object.
     /// </summary>
     template<typename _T>
-    void _TaskInitMaybeFunctor(_T& _Param, std::false_type)
+    void _TaskInitMaybeFunctor(_T&& _Param, std::false_type)
     {
-        _TaskInitNoFunctor(_Param);
+        _TaskInitNoFunctor(std::forward<_T>(_Param));
     }
 
     // The void task contains a task of a dummy type so common code can be used for tasks with void and non-void
@@ -4826,6 +4846,13 @@ struct _TaskTypeFromParam
 {
     typedef decltype(_FilterValidTaskType(stdx::declval<_Ty>(), 0)) _Type;
 };
+
+template<typename _Ty,
+    typename _ReturnType = decltype(details::_GetTaskType(std::declval<_Ty>(), details::_IsCallableNoArgs<_Ty>())),
+    typename = _EnableIfNotTaskRet<_Ty, _ReturnType>
+>
+struct _EnableIfNotTask
+{};
 } // namespace details
 
 /// <summary>
@@ -4861,8 +4888,8 @@ struct _TaskTypeFromParam
 /// <seealso cref="task Class"/>
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
-template<typename _Ty>
-__declspec(noinline) auto create_task(_Ty _Param, task_options _TaskOptions = task_options())
+template<typename _Ty, typename = typename details::_EnableIfNotTask<typename std::decay<_Ty>::type>>
+__declspec(noinline) auto create_task(_Ty&& _Param, task_options _TaskOptions = task_options())
     -> task<typename details::_TaskTypeFromParam<_Ty>::_Type>
 {
     static_assert(!std::is_same<typename details::_TaskTypeFromParam<_Ty>::_Type, details::_BadArgType>::value,
@@ -4874,7 +4901,7 @@ __declspec(noinline) auto create_task(_Ty _Param, task_options _TaskOptions = ta
 #endif /* defined (__cplusplus_winrt) */
     );
     details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(PPLX_CAPTURE_CALLSTACK());
-    task<typename details::_TaskTypeFromParam<_Ty>::_Type> _CreatedTask(_Param, _TaskOptions);
+    task<typename details::_TaskTypeFromParam<_Ty>::_Type> _CreatedTask(std::forward<_Ty>(_Param), std::move(_TaskOptions));
     return _CreatedTask;
 }
 
