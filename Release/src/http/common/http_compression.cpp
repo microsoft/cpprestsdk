@@ -97,7 +97,7 @@ public:
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-constant-compare"
 #endif // __clang__
-        if (input_size > std::numeric_limits<uInt>::max() || output_size > std::numeric_limits<uInt>::max())
+        if (input_size > (std::numeric_limits<uInt>::max)() || output_size > (std::numeric_limits<uInt>::max)())
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif // __clang__
@@ -198,7 +198,7 @@ public:
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-constant-compare"
 #endif // __clang__
-        if (input_size > std::numeric_limits<uInt>::max() || output_size > std::numeric_limits<uInt>::max())
+        if (input_size > (std::numeric_limits<uInt>::max)() || output_size > (std::numeric_limits<uInt>::max)())
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif // __clang__

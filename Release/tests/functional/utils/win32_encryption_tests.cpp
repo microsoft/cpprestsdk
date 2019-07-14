@@ -21,7 +21,7 @@ namespace functional
 {
 namespace utils_tests
 {
-#if defined(_WIN32) && !defined(CPPREST_TARGET_XP) && !defined(__cplusplus_winrt)
+#if defined(_WIN32) && _WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt)
 SUITE(win32_encryption)
 {
     TEST(win32_encryption_random_string)
@@ -42,7 +42,7 @@ SUITE(win32_encryption)
 
 } // SUITE(win32_encryption)
 
-#endif
+#endif // defined(_WIN32) && _WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt)
 
 } // namespace utils_tests
 } // namespace functional

@@ -188,7 +188,7 @@ class IRequestStream final
 {
 public:
     IRequestStream(const std::weak_ptr<winrt_request_context>& context,
-                   size_t read_length = std::numeric_limits<size_t>::max())
+                   size_t read_length = (std::numeric_limits<size_t>::max)())
         : m_context(context), m_read_length(read_length)
     {
         // read_length is the initial length of the ISequentialStream that is available for read
@@ -253,9 +253,9 @@ public:
                                             _In_ ULONG cb,
                                             _Out_opt_ ULONG* pcbWritten)
     {
-        CASABLANCA_UNREFERENCED_PARAMETER(pv);
-        CASABLANCA_UNREFERENCED_PARAMETER(cb);
-        CASABLANCA_UNREFERENCED_PARAMETER(pcbWritten);
+        (void)pv;
+        (void)cb;
+        (void)pcbWritten;
         return E_NOTIMPL;
     }
 
@@ -345,9 +345,9 @@ public:
                                            _In_ ULONG cb,
                                            _Out_ ULONG* pcbRead)
     {
-        CASABLANCA_UNREFERENCED_PARAMETER(pv);
-        CASABLANCA_UNREFERENCED_PARAMETER(cb);
-        CASABLANCA_UNREFERENCED_PARAMETER(pcbRead);
+        (void)pv;
+        (void)cb;
+        (void)pcbRead;
         return E_NOTIMPL;
     }
 
@@ -403,7 +403,7 @@ protected:
         }
 
         const size_t content_length = msg._get_impl()->_get_content_length();
-        if (content_length == std::numeric_limits<size_t>::max())
+        if (content_length == (std::numeric_limits<size_t>::max)())
         {
             // IXHR2 does not allow transfer encoding chunked. So the user is expected to set the content length
             request->report_exception(http_exception(L"Content length is not specified in the http headers"));
@@ -478,7 +478,7 @@ protected:
 
         // Set timeout.
         ULONGLONG timeout = static_cast<ULONGLONG>(config.timeout<std::chrono::milliseconds>().count());
-        timeout = std::max<decltype(timeout)>(timeout, std::numeric_limits<decltype(timeout)>::min() + 1);
+        timeout = (std::max<decltype(timeout)>)(timeout, (std::numeric_limits<decltype(timeout)>::min)() + 1);
         hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_TIMEOUT, timeout);
         if (FAILED(hr))
         {

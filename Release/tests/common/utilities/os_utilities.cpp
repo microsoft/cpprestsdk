@@ -12,7 +12,6 @@
 #include "os_utilities.h"
 
 #ifdef WIN32
-#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
 #include <SDKDDKVer.h>
 

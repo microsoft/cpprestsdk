@@ -1333,7 +1333,7 @@ SUITE(istream_tests)
             const auto actual = istream_double.extract<double>().get();
             compare_double(expected, actual);
 
-            if (actual <= std::numeric_limits<float>::max())
+            if (actual <= (std::numeric_limits<float>::max)())
                 compare_float(float(expected), istream_float.extract<float>().get());
             else
                 VERIFY_THROWS(istream_float.extract<float>().get(), std::exception);

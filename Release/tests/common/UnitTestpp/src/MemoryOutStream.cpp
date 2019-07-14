@@ -174,7 +174,7 @@ void MemoryOutStream::GrowBuffer(int const desiredCapacity)
     if (m_buffer)
         strcpy(buffer, m_buffer);
     else
-        strcpy(buffer, "");
+        *buffer = '\0';
 
     delete[] m_buffer;
     m_buffer = buffer;

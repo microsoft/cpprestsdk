@@ -352,7 +352,7 @@ SUITE(outside_tests)
                         throw;
                     }
 #else
-                    CASABLANCA_UNREFERENCED_PARAMETER(e);
+                    (void)e;
                     throw;
 #endif
                     os_utilities::sleep(1000);

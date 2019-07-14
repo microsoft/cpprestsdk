@@ -325,34 +325,32 @@ public:
                 }
             });
 
-        client.set_ping_handler(
-            [this](websocketpp::connection_hdl, const std::string& msg) {
-                if (m_external_message_handler)
-                {
-                    _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
-                    websocket_incoming_message incoming_msg;
+        client.set_ping_handler([this](websocketpp::connection_hdl, const std::string& msg) {
+            if (m_external_message_handler)
+            {
+                _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
+                websocket_incoming_message incoming_msg;
 
-                    incoming_msg.m_msg_type = websocket_message_type::ping;
-                    incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(msg);
+                incoming_msg.m_msg_type = websocket_message_type::ping;
+                incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(msg);
 
-                    m_external_message_handler(incoming_msg);
-                }
-                return true;
-            });
+                m_external_message_handler(incoming_msg);
+            }
+            return true;
+        });
 
-        client.set_pong_handler(
-            [this](websocketpp::connection_hdl, const std::string& msg) {
-                if (m_external_message_handler)
-                {
-                    _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
-                    websocket_incoming_message incoming_msg;
+        client.set_pong_handler([this](websocketpp::connection_hdl, const std::string& msg) {
+            if (m_external_message_handler)
+            {
+                _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
+                websocket_incoming_message incoming_msg;
 
-                    incoming_msg.m_msg_type = websocket_message_type::pong;
-                    incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(msg);
+                incoming_msg.m_msg_type = websocket_message_type::pong;
+                incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(msg);
 
-                    m_external_message_handler(incoming_msg);
-                }
-            });
+                m_external_message_handler(incoming_msg);
+            }
+        });
 
         client.set_close_handler([this](websocketpp::connection_hdl con_hdl) {
             _ASSERTE(m_state != CLOSED);
@@ -469,7 +467,8 @@ public:
         }
 
         const auto length = msg.m_length;
-        if (length == 0 && msg.m_msg_type != websocket_message_type::ping && msg.m_msg_type != websocket_message_type::pong)
+        if (length == 0 && msg.m_msg_type != websocket_message_type::ping &&
+            msg.m_msg_type != websocket_message_type::pong)
         {
             return pplx::task_from_exception<void>(websocket_exception("Cannot send empty message."));
         }
@@ -689,9 +688,6 @@ private:
                 }
             } // unlock
 
-            // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
-            m_client.reset();
-
             if (connecting)
             {
                 websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
@@ -801,8 +797,6 @@ private:
         websocketpp::client<websocketpp::config::asio_tls_client> m_client;
     };
 
-    websocketpp::connection_hdl m_con;
-
     pplx::task_completion_event<void> m_connect_tce;
     pplx::task_completion_event<void> m_close_tce;
 
@@ -810,6 +804,7 @@ private:
     std::mutex m_wspp_client_lock;
     State m_state;
     std::unique_ptr<websocketpp_client_base> m_client;
+    websocketpp::connection_hdl m_con;
 
     // Queue to track pending sends
     outgoing_msg_queue m_out_queue;

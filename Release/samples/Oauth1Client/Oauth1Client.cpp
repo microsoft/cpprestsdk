@@ -49,11 +49,11 @@ using namespace web::http::experimental::listener;
 //
 // Set key & secret pair to enable session for that service.
 //
-static const utility::string_t s_linkedin_key(U(""));
-static const utility::string_t s_linkedin_secret(U(""));
+static const utility::string_t s_linkedin_key;
+static const utility::string_t s_linkedin_secret;
 
-static const utility::string_t s_twitter_key(U(""));
-static const utility::string_t s_twitter_secret(U(""));
+static const utility::string_t s_twitter_key;
+static const utility::string_t s_twitter_secret;
 
 //
 // Utility method to open browser on Windows, OS X and Linux systems.

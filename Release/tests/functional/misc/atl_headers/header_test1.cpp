@@ -11,7 +11,6 @@
 
 // Include ATL headers before casablanca headers
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
-#define NOMINMAX
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS // some CString constructors will be explicit
 
 #ifndef VC_EXTRALEAN

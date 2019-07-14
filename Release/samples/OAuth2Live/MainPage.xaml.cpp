@@ -29,8 +29,8 @@ using namespace web::http::oauth2::experimental;
 //
 // NOTE: You must set this Live key and secret for app to work.
 //
-static const utility::string_t s_live_key(U(""));
-static const utility::string_t s_live_secret(U(""));
+static const utility::string_t s_live_key;
+static const utility::string_t s_live_secret;
 
 MainPage::MainPage()
     : m_live_oauth2_config(s_live_key,
@@ -69,7 +69,7 @@ void OAuth2Live::MainPage::_GetToken()
 
     // Start over, clear tokens and button state.
     m_live_oauth2_config.set_token(oauth2_token());
-    AccessToken->Text = "";
+    AccessToken->Text.clear();
     _UpdateButtonState();
 
     String ^ authURI = ref new String(m_live_oauth2_config.build_authorization_uri(true).c_str());

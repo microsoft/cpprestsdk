@@ -386,7 +386,7 @@ http_client::http_client(const uri& base_uri, const http_client_config& client_c
 
     m_pipeline = std::make_shared<http_pipeline>(std::move(final_pipeline_stage));
 
-#if !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
         std::make_shared<oauth1::details::oauth1_handler>(client_config.oauth1())));
 #endif

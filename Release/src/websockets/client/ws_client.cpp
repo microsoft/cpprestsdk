@@ -51,8 +51,7 @@ void websocket_client_task_impl::set_handler()
     });
 
     m_callback_client->set_close_handler(
-        [=](websocket_close_status status, const utility::string_t& reason, const std::error_code& error_code) {
-            CASABLANCA_UNREFERENCED_PARAMETER(status);
+        [=](websocket_close_status, const utility::string_t& reason, const std::error_code& error_code) {
             close_pending_tasks_with_error(websocket_exception(error_code, reason));
         });
 }

@@ -49,14 +49,14 @@ using namespace web::http::experimental::listener;
 //
 // Set key & secret pair to enable session for that service.
 //
-static const utility::string_t s_dropbox_key(U(""));
-static const utility::string_t s_dropbox_secret(U(""));
+static const utility::string_t s_dropbox_key;
+static const utility::string_t s_dropbox_secret;
 
-static const utility::string_t s_linkedin_key(U(""));
-static const utility::string_t s_linkedin_secret(U(""));
+static const utility::string_t s_linkedin_key;
+static const utility::string_t s_linkedin_secret;
 
-static const utility::string_t s_live_key(U(""));
-static const utility::string_t s_live_secret(U(""));
+static const utility::string_t s_live_key;
+static const utility::string_t s_live_secret;
 
 //
 // Utility method to open browser on Windows, OS X and Linux systems.
@@ -89,7 +89,7 @@ public:
         : m_listener(new http_listener(listen_uri)), m_config(config)
     {
         m_listener->support([this](http::http_request request) -> void {
-            if (request.request_uri().path() == U("/") && request.request_uri().query() != U(""))
+            if (request.request_uri().path() == U("/") && !request.request_uri().query().empty())
             {
                 m_resplock.lock();
 

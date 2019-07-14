@@ -470,7 +470,7 @@ _UINT_TRAIT(unsigned long long, ULLONG_MIN, ULLONG_MAX)
     {                                                                                                                  \
         typedef std::true_type _is_integral;                                                                           \
         typedef std::false_type _is_unsigned;                                                                          \
-        static const int64_t _min = std::numeric_limits<_t>::min();                                                    \
+        static const int64_t _min = (std::numeric_limits<_t>::min)();                                                  \
         static const int64_t _max = (std::numeric_limits<_t>::max)();                                                  \
     };
 #define _UINT_TRAIT(_t)                                                                                                \
@@ -528,24 +528,18 @@ class type_parser
 public:
     static pplx::task<T> parse(streams::streambuf<CharType> buffer)
     {
-        typename _type_parser_integral_traits<T>::_is_integral ii;
-        typename _type_parser_integral_traits<T>::_is_unsigned ui;
-        return _parse(buffer, ii, ui);
+        typedef typename _type_parser_integral_traits<T>::_is_integral ii;
+        typedef typename _type_parser_integral_traits<T>::_is_unsigned ui;
+
+        static_assert(ii::value || !ui::value, "type is not supported for extraction from a stream");
+
+        return _parse(buffer, ii {}, ui {});
     }
 
 private:
     static pplx::task<T> _parse(streams::streambuf<CharType> buffer, std::false_type, std::false_type)
     {
         _parse_floating_point(buffer);
-    }
-
-    static pplx::task<T> _parse(streams::streambuf<CharType>, std::false_type, std::true_type)
-    {
-#ifdef _WIN32
-        static_assert(false, "type is not supported for extraction from a stream");
-#else
-        throw std::runtime_error("type is not supported for extraction from a stream");
-#endif
     }
 
     static pplx::task<T> _parse(streams::streambuf<CharType> buffer, std::true_type, std::false_type)
@@ -1145,8 +1139,8 @@ pplx::task<ReturnType> _type_parser_base<CharType>::_parse_input(concurrency::st
     auto update = [=](pplx::task<int_type> op) -> pplx::task<bool> {
         int_type ch = op.get();
         if (ch == traits::eof()) return pplx::task_from_result(false);
-        bool accptd = accept_character(state, ch);
-        if (!accptd) return pplx::task_from_result(false);
+        bool accepted = accept_character(state, ch);
+        if (!accepted) return pplx::task_from_result(false);
         // We peeked earlier, so now we must advance the position.
         concurrency::streams::streambuf<CharType> buf = buffer;
         return buf.bumpc().then([](int_type) { return true; });
@@ -1314,9 +1308,18 @@ struct _double_state
 template<typename FloatingPoint, typename int_type>
 static std::string create_exception_message(int_type ch, bool exponent)
 {
-    std::ostringstream os;
-    os << "Invalid character '" << char(ch) << "'" << (exponent ? " in exponent" : "");
-    return os.str();
+    std::string result;
+    if (exponent)
+    {
+        result.assign("Invalid character 'X' in exponent");
+    }
+    else
+    {
+        result.assign("Invalid character 'X'");
+    }
+
+    result[19] = static_cast<char>(ch);
+    return result;
 }
 
 template<typename FloatingPoint, typename int_type>

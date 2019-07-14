@@ -15,7 +15,7 @@
 
 #include "cpprest/asyncrt_utils.h"
 
-#if !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
 using namespace utility;
 using web::http::client::http_client;
@@ -455,4 +455,4 @@ const oauth1_token& oauth1_config::token() const
 } // namespace http
 } // namespace web
 
-#endif
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
