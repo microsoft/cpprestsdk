@@ -3326,58 +3326,6 @@ public:
     ///     <c>std::function&lt;X(void)&gt;</c>, where X can be a variable of type <c>result_type</c>,
     ///     <c>task&lt;result_type&gt;</c>, or a Windows::Foundation::IAsyncInfo in Windows Store apps.
     /// </param>
-    /// <param name="_Token">
-    ///     The cancellation token to associate with this task. A task created without a cancellation token cannot be
-    ///     canceled. It implicitly receives the token <c>cancellation_token::none()</c>.
-    /// </param>
-    /// <remarks>
-    ///     The default constructor for a <c>task</c> is only present in order to allow tasks to be used within
-    ///     containers. A default constructed task cannot be used until you assign a valid task to it. Methods such as
-    ///     <c>get</c>, <c>wait</c> or <c>then</c> will throw an <see cref="invalid_argument
-    ///     Class">invalid_argument</see> exception when called on a default constructed task. <para>A task that is
-    ///     created from a <c>task_completion_event</c> will complete (and have its continuations scheduled) when the
-    ///     task completion event is set.</para> <para>The version of the constructor that takes a cancellation token
-    ///     creates a task that can be canceled using the <c>cancellation_token_source</c> the token was obtained from.
-    ///     Tasks created without a cancellation token are not cancelable.</para> <para>Tasks created from a
-    ///     <c>Windows::Foundation::IAsyncInfo</c> interface or a lambda that returns an <c>IAsyncInfo</c> interface
-    ///     reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes.
-    ///     Similarly, tasks created from a lambda that returns a <c>task&lt;result_type&gt;</c> reach their terminal
-    ///     state when the inner task reaches its terminal state, and not when the lambda returns.</para>
-    ///     <para><c>task</c> behaves like a smart pointer and is safe to pass around by value. It can be accessed by
-    ///     multiple threads without the need for locks.</para> <para>The constructor overloads that take a
-    ///     Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available to
-    ///     Windows Store apps.</para> <para>For more information, see <see cref="Task Parallelism (Concurrency
-    ///     Runtime)"/>.</para>
-    /// </remarks>
-    /**/
-    template<typename _Ty>
-    __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
-        explicit task(_Ty _Param)
-    {
-        task_options _TaskOptions;
-        details::_ValidateTaskCtorArgs<_ReturnType, _Ty>();
-
-        _CreateImpl(_TaskOptions.get_cancellation_token()._GetImplValue(), _TaskOptions.get_scheduler());
-        // Do not move the next line out of this function. It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the
-        // the call site of the task constructor.
-        _SetTaskCreationCallstack(PPLX_CAPTURE_CALLSTACK());
-
-        _TaskInitMaybeFunctor(_Param, details::_IsCallableNoArgs<_Ty>());
-    }
-
-    /// <summary>
-    ///     Constructs a <c>task</c> object.
-    /// </summary>
-    /// <typeparam name="_Ty">
-    ///     The type of the parameter from which the task is to be constructed.
-    /// </typeparam>
-    /// <param name="_Param">
-    ///     The parameter from which the task is to be constructed. This could be a lambda, a function object, a
-    ///     <c>task_completion_event&lt;result_type&gt;</c> object, or a Windows::Foundation::IAsyncInfo if you are
-    ///     using tasks in your Windows Store app. The lambda or function object should be a type equivalent to
-    ///     <c>std::function&lt;X(void)&gt;</c>, where X can be a variable of type <c>result_type</c>,
-    ///     <c>task&lt;result_type&gt;</c>, or a Windows::Foundation::IAsyncInfo in Windows Store apps.
-    /// </param>
     /// <param name="_TaskOptions">
     ///     The task options include cancellation token, scheduler etc
     /// </param>
@@ -3403,7 +3351,7 @@ public:
     /**/
     template<typename _Ty>
     __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
-        explicit task(_Ty _Param, const task_options& _TaskOptions)
+        explicit task(_Ty _Param, const task_options& _TaskOptions = task_options())
     {
         details::_ValidateTaskCtorArgs<_ReturnType, _Ty>();
 
@@ -4410,6 +4358,9 @@ public:
     ///     using tasks in your Windows Store app. The lambda or function object should be a type equivalent to
     ///     <c>std::function&lt;X(void)&gt;</c>, where X can be a variable of type <c>result_type</c>,
     ///     <c>task&lt;result_type&gt;</c>, or a Windows::Foundation::IAsyncInfo in Windows Store apps.
+    /// </param>
+    /// <param name="_TaskOptions">
+    ///     The task options include cancellation token, scheduler etc
     /// </param>
     /// <remarks>
     ///     The default constructor for a <c>task</c> is only present in order to allow tasks to be used within
