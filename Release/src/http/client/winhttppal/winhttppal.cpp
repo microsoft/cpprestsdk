@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string>
 #include <memory>
+#include <codecvt>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
@@ -42,41 +43,6 @@ extern "C"
 
 class WinHttpSessionImp;
 class WinHttpRequestImp;
-
-#ifdef min
-#define MIN min
-#define MAX max
-#else
-#define MIN std::min
-#define MAX std::max
-#endif
-
-#ifdef UNICODE
-#define WCTLEN wcslen
-#define WCTCMP wcscmp
-#define WCTCPY wcscpy
-#define WCTNCPY wcsncpy
-#define STNPRINTF swprintf
-#define TSTRING std::wstring
-#define STRING_LITERAL "%S"
-#define TO_STRING std::to_wstring
-#define TREGEX std::wregex
-#define TREGEX_SEARCH std::regex_search
-#define TREGEX_MATCH std::wsmatch
-#else
-#define WCTLEN strlen
-#define WCTCMP strcmp
-#define WCTCPY strcpy
-#define WCTNCPY strncpy
-#define STNPRINTF snprintf
-#define TEXT(T) T
-#define TSTRING std::string
-#define STRING_LITERAL "%s"
-#define TO_STRING std::to_string
-#define TREGEX std::regex
-#define TREGEX_SEARCH std::regex_search
-#define TREGEX_MATCH std::smatch
-#endif
 
 #ifdef _MSC_VER
 #pragma comment(lib, "Ws2_32.lib")
@@ -180,8 +146,8 @@ static void TRACE_INTERNAL(const char *fmt, ...)
 typedef void (*CompletionCb)(std::shared_ptr<WinHttpRequestImp>, DWORD status);
 
 #define MUTEX_TYPE                              std::mutex
-#define MUTEX_SETUP(x)   
-#define MUTEX_CLEANUP(x) 
+#define MUTEX_SETUP(x)
+#define MUTEX_CLEANUP(x)
 #define MUTEX_LOCK(x)                           x.lock()
 #define MUTEX_UNLOCK(x)                         x.unlock()
 #ifdef WIN32
@@ -209,7 +175,7 @@ typedef void (*CompletionCb)(std::shared_ptr<WinHttpRequestImp>, DWORD status);
 typedef void* (*LPTHREAD_START_ROUTINE)(void *);
 static inline THREAD_HANDLE CREATETHREAD(LPTHREAD_START_ROUTINE func, LPVOID param, pthread_t *id)
 {
-    pthread_t inc_x_thread;    
+    pthread_t inc_x_thread;
     pthread_create(&inc_x_thread, NULL, func, param);
     return inc_x_thread;
 }
@@ -343,14 +309,8 @@ static void ConvertCstrAssign(const TCHAR *lpstr, size_t cLen, std::string &targ
     size_t bLen = cLen;
 
 #ifdef UNICODE
-    char *nstring = new char[bLen + 1];
-    if (!nstring)
-        return;
-
-    cLen = MIN(WCTLEN(lpstr), cLen);
-    WideCharToMultiByte(CP_UTF8, 0, &lpstr[0], cLen, &nstring[0], bLen, NULL, NULL);
-    target.assign(nstring, bLen);
-    delete [] nstring;
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+    target = conv.to_bytes(std::wstring(lpstr, cLen));
 #else
     target.assign(lpstr, cLen);
 #endif
@@ -990,7 +950,7 @@ public:
         thread_setup();
 
         m_curlm = curl_multi_init();
-        
+
         DWORD thread_id;
         m_hAsyncThread = CREATETHREAD(
             AsyncThreadFunction,       // thread function name
@@ -3062,11 +3022,10 @@ BOOLAPI WinHttpQueryHeaders(
 #ifdef UNICODE
         TSTRING subject;
 
-        length = request->GetHeaderString().length();
-        subject.resize(length + 1);
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+        subject = conv.from_bytes(request->GetHeaderString());
+        subject[request->GetHeaderString().length()] = TEXT('\0');
 
-        MultiByteToWideChar(CP_UTF8, 0, request->GetHeaderString().c_str(), -1, &subject[0], length);
-        subject[length] = TEXT('\0');
 #else
         TSTRING &subject = request->GetHeaderString();
 #endif
@@ -3137,7 +3096,10 @@ BOOLAPI WinHttpQueryHeaders(
         length = header.size();
 
 #ifdef UNICODE
-        MultiByteToWideChar(CP_UTF8, 0, header.c_str(), length + 1, wbuffer, length + 1);
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+        std::wstring wc = conv.from_bytes(header);
+        std::copy(wc.begin(), wc.end(), wbuffer);
+        wbuffer[header.length()] = TEXT('\0');
 #else
         strncpy(wbuffer, header.c_str(), length);
 #endif
@@ -3179,7 +3141,11 @@ BOOLAPI WinHttpQueryHeaders(
             return FALSE;
 
 #ifdef UNICODE
-        MultiByteToWideChar(CP_UTF8, 0, request->GetHeaderString().c_str(), -1, wbuffer, length);
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+        std::wstring wc = conv.from_bytes(request->GetHeaderString());
+        std::copy(wc.begin(), wc.end(), wbuffer);
+        wbuffer[request->GetHeaderString().length()] = TEXT('\0');
+
 #else
         strncpy(wbuffer, request->GetHeaderString().c_str(), length);
 #endif
@@ -3470,7 +3436,10 @@ WinHttpQueryOption
         TCHAR *wbuffer = reinterpret_cast<TCHAR*>(lpBuffer);
         size_t length = strlen(url);
 #ifdef UNICODE
-        MultiByteToWideChar(CP_UTF8, 0, url, length + 1, wbuffer, length + 1);
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+        std::wstring wc = conv.from_bytes(std::string(url));
+        std::copy(wc.begin(), wc.end(), wbuffer);
+        wbuffer[strlen(url)] = TEXT('\0');
 #else
         strncpy(wbuffer, url, length);
 #endif

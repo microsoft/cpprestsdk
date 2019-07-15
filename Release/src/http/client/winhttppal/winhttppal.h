@@ -1,29 +1,35 @@
-typedef void VOID;
-typedef void *LPVOID;
+typedef void                VOID;
+typedef void*               LPVOID;
 typedef unsigned long       DWORD;
-typedef const void* LPCVOID;
-typedef long LONG;
-typedef unsigned char BYTE;
+typedef const void*         LPCVOID;
+typedef long                LONG;
+typedef unsigned char       BYTE;
 #define  __int3264 long int
-typedef unsigned __int3264 ULONG_PTR;
-typedef ULONG_PTR DWORD_PTR;
-typedef DWORD *PDWORD;
-typedef DWORD *LPDWORD;
-typedef char *LPSTR;
-typedef const char *LPCSTR;
+typedef unsigned __int3264  ULONG_PTR;
+typedef ULONG_PTR           DWORD_PTR;
+typedef DWORD*              PDWORD;
+typedef DWORD*              LPDWORD;
+typedef char*               LPSTR;
+typedef const char*         LPCSTR;
 
 #ifdef UNICODE
-typedef wchar_t TCHAR;
-typedef const wchar_t* LPCTSTR;
-typedef wchar_t* LPTSTR, *PTSTR;
-typedef const wchar_t* LPCTSTR, *PCTSTR;
+typedef wchar_t             TCHAR;
+typedef const wchar_t*      LPCTSTR;
+typedef wchar_t*            LPTSTR;
+typedef wchar_t*            PTSTR;
+typedef const wchar_t*      LPCTSTR;
+typedef const wchar_t*      PCTSTR;
+#define TEXT(a)              L##a
 #else
-typedef char TCHAR;
-typedef const char* LPCTSTR;
-typedef char* LPTSTR, *PTSTR;    
-typedef const char* LPCTSTR, *PCTSTR;    
+typedef char                TCHAR;
+typedef const char*         LPCTSTR;
+typedef char*               LPTSTR;
+typedef char*               PTSTR;
+typedef const char*         LPCTSTR;
+typedef const char*         PCTSTR;
+#define TEXT(a)              a
 #endif
- 
+
 typedef LPVOID HINTERNET;
 typedef bool BOOL;
 
@@ -58,8 +64,6 @@ typedef struct
 }
 HTTP_VERSION_INFO;
 
-#define WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH 0
-
 enum
 {
     WINHTTP_QUERY_RAW_HEADERS,
@@ -81,21 +85,81 @@ enum
     WINHTTP_AUTH_TARGET_SERVER,
 };
 
-#define WINHTTP_INVALID_STATUS_CALLBACK (WINHTTP_STATUS_CALLBACK)-1
+#define WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH             0
+#define WINHTTP_INVALID_STATUS_CALLBACK                 (WINHTTP_STATUS_CALLBACK)-1
 
-#define WINHTTP_NO_REFERER              NULL
-#define WINHTTP_DEFAULT_ACCEPT_TYPES    NULL
-#define WINHTTP_NO_ADDITIONAL_HEADERS   NULL
-#define WINHTTP_NO_REQUEST_DATA         NULL
-#define WINHTTP_NO_PROXY_NAME           NULL
-#define WINHTTP_NO_PROXY_BYPASS         NULL
-#define WINHTTP_NO_HEADER_INDEX         NULL
-#define WINHTTP_HEADER_NAME_BY_INDEX    NULL
-#define WINHTTP_NO_OUTPUT_BUFFER        NULL
+#define WINHTTP_NO_REFERER                              NULL
+#define WINHTTP_DEFAULT_ACCEPT_TYPES                    NULL
+#define WINHTTP_NO_ADDITIONAL_HEADERS                   NULL
+#define WINHTTP_NO_REQUEST_DATA                         NULL
+#define WINHTTP_NO_PROXY_NAME                           NULL
+#define WINHTTP_NO_PROXY_BYPASS                         NULL
+#define WINHTTP_NO_HEADER_INDEX                         NULL
+#define WINHTTP_HEADER_NAME_BY_INDEX                    NULL
+#define WINHTTP_NO_OUTPUT_BUFFER                        NULL
 
-#define WINHTTP_AUTOLOGON_SECURITY_LEVEL_HIGH 0
-#define WINHTTP_ADDREQ_FLAG_ADD 0
-#define WINHTTP_ENABLE_SSL_REVOCATION 0
+#define WINHTTP_AUTOLOGON_SECURITY_LEVEL_HIGH           0
+#define WINHTTP_ADDREQ_FLAG_ADD                         0
+#define WINHTTP_ENABLE_SSL_REVOCATION                   0
+
+#define INTERNET_DEFAULT_HTTP_PORT                      80
+#define ARRAYSIZE(n)                                    sizeof(n)/sizeof(n[0])
+
+#define GetLastError()                                  errno
+#define CALLBACK
+
+#define FALSE                                           0
+#define TRUE                                            1
+
+#define INTERNET_DEFAULT_HTTPS_PORT                     443
+#define S_OK                                            0
+
+#define ERROR_INSUFFICIENT_BUFFER 	                    ENOMEM
+#define ERROR_WINHTTP_RESEND_REQUEST 	                EBUSY
+#define ERROR_SUCCESS 			                        0
+#define ERROR_OPERATION_ABORTED		                    EINVAL
+#define ERROR_NOT_ENOUGH_MEMORY		                    ENOMEM
+#define ERROR_WINHTTP_TIMEOUT		                    ETIMEDOUT
+#define ERROR_INVALID_PARAMETER		                    EINVAL
+
+#define BOOLAPI                                         BOOL
+#define SetLastError(val)                               errno = val
+#define WINHTTPAPI
+#define WINAPI
+
+#ifdef min
+#define MIN                                             min
+#define MAX                                             max
+#else
+#define MIN                                             std::min
+#define MAX                                             std::max
+#endif
+
+#ifdef UNICODE
+#define WCTLEN                                          wcslen
+#define WCTCMP                                          wcscmp
+#define WCTCPY                                          wcscpy
+#define WCTNCPY                                         wcsncpy
+#define STNPRINTF                                       swprintf
+#define TSTRING                                         std::wstring
+#define STRING_LITERAL                                  "%S"
+#define TO_STRING                                       std::to_wstring
+#define TREGEX                                          std::wregex
+#define TREGEX_SEARCH                                   std::regex_search
+#define TREGEX_MATCH                                    std::wsmatch
+#else
+#define WCTLEN                                          strlen
+#define WCTCMP                                          strcmp
+#define WCTCPY                                          strcpy
+#define WCTNCPY                                         strncpy
+#define STNPRINTF                                       snprintf
+#define TSTRING                                         std::string
+#define STRING_LITERAL                                  "%s"
+#define TO_STRING                                       std::to_string
+#define TREGEX                                          std::regex
+#define TREGEX_SEARCH                                   std::regex_search
+#define TREGEX_MATCH                                    std::smatch
+#endif
 
 enum
 {
@@ -132,6 +196,7 @@ enum
     WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED = (1 << 17),
     WINHTTP_CALLBACK_STATUS_REQUEST_SENT = (1 << 18),
     WINHTTP_CALLBACK_STATUS_REDIRECT = (1 << 19),
+    WINHTTP_CALLBACK_STATUS_RESOLVING_NAME = (1 << 20),
     WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS = (1 << 24),
     WINHTTP_CALLBACK_FLAG_HANDLES = (1 << 25),
     WINHTTP_CALLBACK_FLAG_SECURE_FAILURE = (1 << 26),
@@ -179,9 +244,6 @@ enum
 };
 
 typedef unsigned int INTERNET_PORT;
-
-#define INTERNET_DEFAULT_HTTP_PORT 80
-
 
 BOOL WinHttpCloseHandle(
     HINTERNET hInternet
@@ -313,11 +375,6 @@ BOOL WinHttpWriteData(
     LPDWORD  lpdwNumberOfBytesWritten
 );
 
-#define ARRAYSIZE(n) sizeof(n)/sizeof(n[0])
-
-#define GetLastError() errno
-#define CALLBACK
-
 
 typedef struct {
     DWORD  dwAccessType;
@@ -372,35 +429,6 @@ enum
     WINHTTP_AUTO_DETECT_TYPE_DNS_A,
     WINHTTP_AUTOPROXY_CONFIG_URL,
 };
-
-
-#define GlobalFree free
-
-#define FALSE 0
-#define TRUE 1
-
-#define INTERNET_DEFAULT_HTTPS_PORT 443
-#define S_OK 0
-
-#define ERROR_INSUFFICIENT_BUFFER 	ENOMEM
-#define ERROR_WINHTTP_RESEND_REQUEST 	EBUSY
-#define ERROR_SUCCESS 			0
-#define ERROR_OPERATION_ABORTED		EINVAL
-#define ERROR_NOT_ENOUGH_MEMORY		ENOMEM
-#define ERROR_WINHTTP_TIMEOUT		ETIMEDOUT
-#define ERROR_INVALID_PARAMETER		EINVAL
-
-#include <memory>
-
-template<typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args) {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
-#define BOOLAPI BOOL
-#define SetLastError(val) errno = val
-#define WINHTTPAPI
-#define WINAPI
 
 typedef enum {
 	INTERNET_SCHEME_HTTP = 1,
