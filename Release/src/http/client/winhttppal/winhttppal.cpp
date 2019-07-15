@@ -434,7 +434,7 @@ public:
 struct BufferRequest
 {
     LPCVOID m_Buffer = NULL;
-    DWORD  m_Length = 0;
+    size_t  m_Length = 0;
 };
 
 class WinHttpRequestImp :public WinHttpBase, public std::enable_shared_from_this<WinHttpRequestImp>
@@ -442,12 +442,12 @@ class WinHttpRequestImp :public WinHttpBase, public std::enable_shared_from_this
     CURL *m_curl = NULL;
     std::vector<BYTE> m_ResponseString;
     std::string m_HeaderString = "";
-    DWORD m_TotalHeaderStringLength = 0;
+    size_t m_TotalHeaderStringLength = 0;
     std::string m_Header = "";
     std::string m_FullPath = "";
     std::string m_OptionalData = "";
-    DWORD m_TotalSize = 0;
-    DWORD m_TotalReceiveSize = 0;
+    size_t m_TotalSize = 0;
+    size_t m_TotalReceiveSize = 0;
     std::vector<BYTE> m_ReadData;
 
     std::mutex m_ReadDataEventMtx;
@@ -503,7 +503,7 @@ class WinHttpRequestImp :public WinHttpBase, public std::enable_shared_from_this
     std::vector<BufferRequest> m_OutstandingWrites;
 
 public:
-    void QueueWriteRequest(LPCVOID buffer, DWORD length)
+    void QueueWriteRequest(LPCVOID buffer, size_t length)
     {
         BufferRequest shr;
         shr.m_Buffer = buffer;
@@ -544,12 +544,12 @@ public:
     std::mutex &GetQueryDataEventMtx() { return m_QueryDataEventMtx; }
     std::condition_variable &GetQueryDataEvent() { return m_QueryDataEvent; }
 
-    bool HandleQueryDataNotifications(std::shared_ptr<WinHttpRequestImp>, DWORD available);
+    bool HandleQueryDataNotifications(std::shared_ptr<WinHttpRequestImp>, size_t available);
     void WaitAsyncQueryDataCompletion(std::shared_ptr<WinHttpRequestImp>);
 
     void HandleReceiveNotifications(std::shared_ptr<WinHttpRequestImp>);
     void WaitAsyncReceiveCompletion(std::shared_ptr<WinHttpRequestImp> srequest);
-    DWORD WaitDataAvailable();
+    size_t WaitDataAvailable();
 
     CURLcode &GetCompletionCode() { return m_CompletionCode; }
     bool &GetCompletionStatus() { return m_Completion; }
@@ -684,7 +684,7 @@ public:
     }
 
     std::vector<BYTE> &GetResponseString() { return m_ResponseString; }
-    DWORD &GetTotalHeaderStringLength() { return m_TotalHeaderStringLength; }
+    size_t &GetTotalHeaderStringLength() { return m_TotalHeaderStringLength; }
     std::string &GetHeaderString() { return m_HeaderString; }
     CURL *GetCurl() { return m_curl; }
 
@@ -720,18 +720,18 @@ public:
         return TRUE;
     }
 
-    DWORD &GetTotalLength() { return m_TotalSize; }
-    DWORD &GetReadLength() { return m_TotalReceiveSize; }
+    size_t &GetTotalLength() { return m_TotalSize; }
+    size_t &GetReadLength() { return m_TotalReceiveSize; }
 
     std::string &GetOptionalData() { return m_OptionalData; }
-    void SetOptionalData(void *lpOptional, DWORD dwOptionalLength)
+    void SetOptionalData(void *lpOptional, size_t dwOptionalLength)
     {
         m_OptionalData.assign(&(reinterpret_cast<char*>(lpOptional))[0], dwOptionalLength);
     }
 
     std::vector<BYTE> &GetReadData() { return m_ReadData; }
 
-    void AppendReadData(const void *data, DWORD len)
+    void AppendReadData(const void *data, size_t len)
     {
         std::lock_guard<std::mutex> lck(GetReadDataEventMtx());
         m_ReadData.insert(m_ReadData.end(), reinterpret_cast<const BYTE*>(data), reinterpret_cast<const BYTE*>(data) + len);
@@ -1835,7 +1835,7 @@ size_t WinHttpRequestImp::ReadCallback(void *ptr, size_t size, size_t nmemb, voi
     {
         DWORD dwInternetStatus;
         DWORD result;
-        DWORD written = 0;
+        size_t written = 0;
 
         {
             request->GetReadDataEventMtx().lock();
@@ -2657,7 +2657,7 @@ WinHttpReceiveResponse
 
             return TRUE;
         }
-        DWORD headerLength;
+        size_t headerLength;
         {
             std::lock_guard<std::mutex> lck(request->GetHeaderStringMutex());
             headerLength = request->GetHeaderString().length();
@@ -2668,7 +2668,7 @@ WinHttpReceiveResponse
     return TRUE;
 }
 
-bool WinHttpRequestImp::HandleQueryDataNotifications(std::shared_ptr<WinHttpRequestImp> srequest, DWORD available)
+bool WinHttpRequestImp::HandleQueryDataNotifications(std::shared_ptr<WinHttpRequestImp> srequest, size_t available)
 {
     bool expected = true;
     bool result = std::atomic_compare_exchange_strong(&GetQueryDataPending(), &expected, false);
@@ -2680,11 +2680,11 @@ bool WinHttpRequestImp::HandleQueryDataNotifications(std::shared_ptr<WinHttpRequ
 
             GetBodyStringMutex().lock();
             length = GetResponseString().size();
-            available = (DWORD)(length);
+            available = length;
             GetBodyStringMutex().unlock();
         }
 
-        DWORD lpvStatusInformation = available;
+        DWORD lpvStatusInformation = static_cast<DWORD>(available);
         TRACE("%s:%d WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE:%lu\n", __func__, __LINE__, lpvStatusInformation);
         AsyncQueue(srequest, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, sizeof(lpvStatusInformation),
             (LPVOID)&lpvStatusInformation, sizeof(lpvStatusInformation), true);
@@ -2733,7 +2733,7 @@ WinHttpQueryDataAvailable
 
     request->GetBodyStringMutex().lock();
     length = request->GetResponseString().size();
-    DWORD available = (DWORD)(length);
+    size_t available = length;
     request->GetBodyStringMutex().unlock();
 
     if (request->GetAsync())
@@ -2744,7 +2744,7 @@ WinHttpQueryDataAvailable
             request->WaitAsyncQueryDataCompletion(srequest);
             request->GetBodyStringMutex().lock();
             length = request->GetResponseString().size();
-            available = (DWORD)(length);
+            available = length;
             TRACE("%s:%d available = %lu\n", __func__, __LINE__, available);
             request->GetBodyStringMutex().unlock();
         }
@@ -2767,9 +2767,9 @@ WinHttpQueryDataAvailable
     return TRUE;
 }
 
-DWORD WinHttpRequestImp::WaitDataAvailable()
+size_t WinHttpRequestImp::WaitDataAvailable()
 {
-    DWORD length, remainingLength, readLength;
+    size_t length, remainingLength, readLength;
 
     GetBodyStringMutex().lock();
     length = GetResponseString().size();
@@ -3044,7 +3044,7 @@ BOOLAPI WinHttpQueryHeaders(
     {
         CURLcode res;
         DWORD responseCode;
-        DWORD length;
+        size_t length;
 
         res = curl_easy_getinfo(request->GetCurl(), CURLINFO_RESPONSE_CODE, &responseCode);
         if (res != CURLE_OK)
