@@ -243,6 +243,24 @@ enum msg_body_type
     transfer_encoding_chunked
 };
 
+static DWORD WinHttpDefaultProxyConstant() CPPREST_NOEXCEPT
+{
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#if _WIN32_WINNT < _WIN32_WINNT_WINBLUE
+    if (!IsWindows8Point1OrGreater())
+    {
+        // Not Windows 8.1 or later, use the default proxy setting
+        return WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+    }
+#endif // _WIN32_WINNT < _WIN32_WINNT_WINBLUE
+
+    // Windows 8.1 or later, use the automatic proxy setting
+    return WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
+#else  // ^^^ _WIN32_WINNT >= _WIN32_WINNT_VISTA ^^^ // vvv _WIN32_WINNT < _WIN32_WINNT_VISTA vvv
+    return WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
+}
+
 // Additional information necessary to track a WinHTTP request.
 class winhttp_request_context final : public request_context
 {
@@ -818,38 +836,30 @@ protected:
         ie_proxy_config proxyIE;
 
         DWORD access_type;
-        LPCWSTR proxy_name;
+        LPCWSTR proxy_name = WINHTTP_NO_PROXY_NAME;
         LPCWSTR proxy_bypass = WINHTTP_NO_PROXY_BYPASS;
+        m_proxy_auto_config = false;
         utility::string_t proxy_str;
         http::uri uri;
 
         const auto& config = client_config();
-
-        if (config.proxy().is_disabled())
+        const auto& proxy = config.proxy();
+        if (proxy.is_default())
+        {
+            access_type = WinHttpDefaultProxyConstant();
+        }
+        else if (proxy.is_disabled())
         {
             access_type = WINHTTP_ACCESS_TYPE_NO_PROXY;
-            proxy_name = WINHTTP_NO_PROXY_NAME;
         }
-        else if (config.proxy().is_default() || config.proxy().is_auto_discovery())
+        else if (proxy.is_auto_discovery())
         {
-            // Use the default WinHTTP proxy by default.
-            access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-            proxy_name = WINHTTP_NO_PROXY_NAME;
-
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-            if (config.proxy().is_auto_discovery())
+            access_type = WinHttpDefaultProxyConstant();
+            if (access_type != WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY)
             {
+                // Windows 8 or earlier, do proxy autodetection ourselves
                 m_proxy_auto_config = true;
-            }
-#else  // ^^^ _WIN32_WINNT < _WIN32_WINNT_VISTA ^^^ // vvv _WIN32_WINNT >= _WIN32_WINNT_VISTA vvv
-            if (IsWindows8Point1OrGreater())
-            {
-                // Windows 8.1 and newer supports automatic proxy discovery and auto-fallback to IE proxy settings
-                access_type = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
-            }
-            else
-            {
-                // However, if it is not configured...
+
                 proxy_info proxyDefault;
                 if (!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
                     proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
@@ -881,13 +891,7 @@ protected:
                         }
                     }
                 }
-
-                if (config.proxy().is_auto_discovery())
-                {
-                    m_proxy_auto_config = true;
-                }
             }
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
         }
         else
         {
@@ -1007,9 +1011,7 @@ protected:
 
         if (m_proxy_auto_config)
         {
-            WINHTTP_AUTOPROXY_OPTIONS autoproxy_options;
-            memset(&autoproxy_options, 0, sizeof(WINHTTP_AUTOPROXY_OPTIONS));
-
+            WINHTTP_AUTOPROXY_OPTIONS autoproxy_options {};
             if (m_proxy_auto_config_url.empty())
             {
                 autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
