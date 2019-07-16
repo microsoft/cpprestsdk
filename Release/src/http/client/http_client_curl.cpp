@@ -733,7 +733,6 @@ protected:
         m_hSession = WinHttpOpen(NULL, access_type, proxy_name, proxy_bypass, WINHTTP_FLAG_ASYNC);
         if (!m_hSession)
         {
-            printf("%s:%d\n", __func__, __LINE__);
             return GetLastError();
         }
 
@@ -742,7 +741,6 @@ protected:
         milliseconds = std::max<decltype(milliseconds)>(milliseconds, 1);
         if (!WinHttpSetTimeouts(m_hSession, milliseconds, milliseconds, milliseconds, milliseconds))
         {
-            printf("%s:%d\n", __func__, __LINE__);
             return GetLastError();
         }
 
@@ -753,7 +751,6 @@ protected:
             if (!WinHttpSetOption(
                     m_hSession, WINHTTP_OPTION_MAX_CONNS_PER_SERVER, &maxConnections, sizeof(maxConnections)))
             {
-                printf("%s:%d\n", __func__, __LINE__);
                 return GetLastError();
             }
         }
@@ -767,7 +764,6 @@ protected:
             m_hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols));
         if (FALSE == win32_result)
         {
-            printf("%s:%d\n", __func__, __LINE__);
             return GetLastError();
         }
 
@@ -781,7 +777,6 @@ protected:
                                          WINHTTP_CALLBACK_FLAG_SECURE_FAILURE | WINHTTP_CALLBACK_FLAG_SEND_REQUEST,
                                      0))
         {
-            printf("%s:%d\n", __func__, __LINE__);
             return GetLastError();
         }
 
@@ -793,7 +788,6 @@ protected:
 
         if (m_hConnection == nullptr)
         {
-            printf("%s:%d\n", __func__, __LINE__);
             return GetLastError();
         }
 
@@ -872,7 +866,6 @@ protected:
                                WINHTTP_FLAG_ESCAPE_DISABLE | (m_secure ? WINHTTP_FLAG_SECURE : 0));
         if (curl_context->m_request_handle == nullptr)
         {
-	    printf("%s:%d\n", __func__, __LINE__);
             auto errorCode = GetLastError();
             delete curl_context->m_request_handle_context;
             curl_context->m_request_handle_context = 0;
@@ -885,7 +878,6 @@ protected:
                               &curl_context->m_request_handle_context,
                               sizeof(void*)))
         {
-	    printf("%s:%d\n", __func__, __LINE__);
             auto errorCode = GetLastError();
             delete curl_context->m_request_handle_context;
             curl_context->m_request_handle_context = 0;
@@ -899,7 +891,6 @@ protected:
                 curl_context->m_request_handle, WINHTTP_OPTION_PROXY, &info, sizeof(WINHTTP_PROXY_INFO));
             if (!result)
             {
-		printf("%s:%d\n", __func__, __LINE__);
                 auto errorCode = GetLastError();
                 request->report_error(errorCode, build_error_msg(errorCode, "Setting proxy options"));
                 return;
@@ -917,7 +908,6 @@ protected:
                 curl_context->m_request_handle, WINHTTP_OPTION_AUTOLOGON_POLICY, &data, sizeof(data));
             if (!result)
             {
-		printf("%s:%d\n", __func__, __LINE__);
                 auto errorCode = GetLastError();
                 request->report_error(
                     errorCode,
@@ -955,7 +945,6 @@ protected:
                                                                    &ignoredCertificateValidationSteps,
                                                                    sizeof(ignoredCertificateValidationSteps)))
         {
-	    printf("%s:%d\n", __func__, __LINE__);
             auto errorCode = GetLastError();
             request->report_error(errorCode,
                                   build_error_msg(errorCode, "Setting ignore server certificate verification"));
@@ -1012,7 +1001,6 @@ protected:
                                           static_cast<DWORD>(flattened_headers.length()),
                                           WINHTTP_ADDREQ_FLAG_ADD))
             {
-		printf("%s:%d\n", __func__, __LINE__);
                 auto errorCode = GetLastError();
                 request->report_error(errorCode, build_error_msg(errorCode, "WinHttpAddRequestHeaders"));
                 return;
@@ -1089,7 +1077,6 @@ private:
                                                        (DWORD_PTR)curl_context->m_request_handle_context);
         if (!requestSuccess)
         {
-	    printf("%s:%d\n", __func__, __LINE__);
             auto errorCode = GetLastError();
             curl_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpSendRequest"));
         }
@@ -1141,7 +1128,6 @@ private:
 
                 if (!WinHttpReadData(pContext->m_request_handle, buffer, static_cast<DWORD>(chunkSize), nullptr))
                 {
-		    printf("%s:%d\n", __func__, __LINE__);
                     auto errorCode = GetLastError();
                     pContext->report_error(errorCode, build_error_msg(errorCode, "WinHttpReadData"));
                 }
@@ -1256,7 +1242,6 @@ private:
                                   static_cast<DWORD>(length),
                                   nullptr))
             {
-		printf("%s:%d\n", __func__, __LINE__);
                 auto errorCode = GetLastError();
                 p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpWriteData"));
             }
@@ -1500,7 +1485,6 @@ private:
                                   static_cast<DWORD>(to_write),
                                   nullptr))
             {
-		printf("%s:%d\n", __func__, __LINE__);
                 auto errorCode = GetLastError();
                 p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpWriteData"));
             }
@@ -1543,7 +1527,6 @@ private:
                                           static_cast<DWORD>(read),
                                           nullptr))
                     {
-			printf("%s:%d\n", __func__, __LINE__);
                         auto errorCode = GetLastError();
                         p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpWriteData"));
                     }
@@ -1739,7 +1722,6 @@ private:
                 {
                     if (!WinHttpReceiveResponse(hRequestHandle, nullptr))
                     {
-			printf("%s:%d\n", __func__, __LINE__);
                         auto errorCode = GetLastError();
                         p_request_context->report_error(errorCode,
                                                         build_error_msg(errorCode, "WinHttpReceiveResponse"));
@@ -1792,7 +1774,6 @@ private:
                 {
                     if (!WinHttpReceiveResponse(hRequestHandle, nullptr))
                     {
-			printf("%s:%d\n", __func__, __LINE__);
                         auto errorCode = GetLastError();
                         p_request_context->report_error(errorCode,
                                                         build_error_msg(errorCode, "WinHttpReceiveResponse"));
@@ -1817,7 +1798,6 @@ private:
                                          &headerBufferLength,
                                          WINHTTP_NO_HEADER_INDEX))
                 {
-	            printf("%s:%d\n", __func__, __LINE__);
                     auto errorCode = GetLastError();
                     p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpQueryHeaders"));
                     ;
@@ -1901,7 +1881,6 @@ private:
                     // Read in available body data all at once.
                     if (!WinHttpReadData(hRequestHandle, buffer, num_bytes, nullptr))
                     {
-			printf("%s:%d\n", __func__, __LINE__);
                         auto errorCode = GetLastError();
                         p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReadData"));
                     }
