@@ -1,3 +1,22 @@
+cpprestsdk (2.10.14)
+* Potential breaking change warning: This release changes the "default" proxy for the WinHTTP backend to go back to WINHTTP_ACCESS_TYPE_DEFAULT_PROXY. See https://github.com/microsoft/cpprestsdk/commit/60e067e71aebebdda5d82955060f5f0821c9df1d for more details. To get automatic WPAD behavior, set the proxy to auto detect.
+* macOS with Brew and iOS builds have been disabled and are no longer being tested because our dependency boost for ios project appears to be broken with current releases of XCode as on the Azure Pipelines machines. We are interested in macOS / iOS folks who know what's going on here in contributing a repair to turn this back on.
+* PR##1133 Add switches to make apiscan happy.
+* PR##1130 json: {"meow"} is not a valid object
+* PR##1150 Undefine compress if it is defined by zconf.h
+* PR##1156 Fix broken CI Builds
+* PR##1155 Use EVP_MAX_MD_SIZE instead of HMAC_MAX_MD_CBLOCK
+* PR##1145 Remove the address_configured flag on tcp::resolver::query
+* PR##1143 add ping and pong to message handler
+* PR##539 Fix reusing ASIO http_client connecting to HTTPS server via proxy
+* PR##1175 Fix issue #1171: Order of object destruction
+* PR##1183 FIX: SSL proxy tunnel support with basic auth
+* PR##1184 Fix profile being set on the compiler instead of the linker.
+* PR##1185 Update boost-for-android for Android NDK r20 and disable macOS Homebrew.
+* PR##1187 Replace CPPREST_TARGET_XP with version checks, remove ""s, and other cleanup
+* PR##1188 Remove proxy settings detection behavior in "default proxy mode."
+-- cpprestsdk team <askcasablanca@microsoft.com>  TUE, 16 Jul 2019 09:06:00 +0200
+
 cpprestsdk (2.10.13)
 * PR#1120 Fix off by one error in leap years before year 2000, and bad day names
 * PR#1117 Parse and emit years from 1900 to 9999, and remove environment variable dependence on Android
