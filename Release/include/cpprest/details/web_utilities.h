@@ -10,10 +10,6 @@
  ****/
 #pragma once
 
-#ifdef _WIN32
-#include <Windows.h>
-#endif // _WIN32
-
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/uri.h"
 
