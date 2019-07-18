@@ -317,6 +317,7 @@ jobs:
       vmImage: 'Ubuntu 16.04'
     steps:
     - script: |
+        set -e
         sudo apt -y remove php*
         sudo apt install -y ppa-purge
         sudo ppa-purge -y ppa:ondrej/php
