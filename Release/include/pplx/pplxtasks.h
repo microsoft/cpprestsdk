@@ -2630,14 +2630,22 @@ public:
     std::atomic<bool> _M_fIsCanceled;
 };
 
-// Utility method for dealing with void functions
-inline std::function<_Unit_type(void)> _MakeVoidToUnitFunc(const std::function<void(void)>& _Func)
+// Utility functor for dealing with void functions
+// void(void) -> Unit_type(void)
+template<typename _Function>
+struct _VoidToUnitFuncRefWrapper
 {
-    return [=]() -> _Unit_type {
-        _Func();
+    static_assert(_IsCallableNoArgs<_Function>::value, "_VoidToUnitFuncRefWrapper() expects a callable without any parameters");
+    static_assert(std::is_same<typename _CallableResult<_Function>::type, void>::value, "_VoidToUnitFuncRefWrapper() expects a callable which not return any data");
+
+    _VoidToUnitFuncRefWrapper(const _Function& f) : _M_functor(f) {}
+    _Unit_type operator()() const
+    {
+        _M_functor();
         return _Unit_type();
-    };
-}
+    }
+    const _Function& _M_functor;
+};
 
 template<typename _Type>
 std::function<_Type(_Unit_type)> _MakeUnitToTFunc(const std::function<_Type(void)>& _Func)
@@ -3252,16 +3260,21 @@ template<typename _RetType>
 class _Init_func_transformer
 {
 public:
-    static auto _Perform(std::function<_RetType(void)> _Func) -> decltype(_Func) { return _Func; }
+    template<typename _FunctionType>
+    static const _FunctionType& _Perform(const _FunctionType& _Func)
+    {
+        return _Func;
+    }
 };
 
 template<>
 class _Init_func_transformer<void>
 {
 public:
-    static auto _Perform(std::function<void(void)> _Func) -> decltype(details::_MakeVoidToUnitFunc(_Func))
+    template<typename _FunctionType>
+    static details::_VoidToUnitFuncRefWrapper<const _FunctionType&> _Perform(const _FunctionType& _Func)
     {
-        return details::_MakeVoidToUnitFunc(_Func);
+        return _Func;
     }
 };
 
@@ -3778,23 +3791,23 @@ private:
                                   _InitialTaskHandle<_InternalReturnType, _Function, _TypeSelection>,
                                   details::_UnrealizedChore_t>
     {
-        _Function _M_function;
-        _InitialTaskHandle(const typename details::_Task_ptr<_ReturnType>::_Type& _TaskImpl, const _Function& _func)
+        typename std::decay<_Function>::type _M_function;
+        _InitialTaskHandle(const typename details::_Task_ptr<_ReturnType>::_Type& _TaskImpl, _Function&& _func)
             : details::_PPLTaskHandle<_ReturnType,
                                       _InitialTaskHandle<_InternalReturnType, _Function, _TypeSelection>,
                                       details::_UnrealizedChore_t>::_PPLTaskHandle(_TaskImpl)
-            , _M_function(_func)
+            , _M_function(std::forward<_Function>(_func))
         {
         }
 
         virtual ~_InitialTaskHandle() {}
 
         template<typename _Func>
-        auto _LogWorkItemAndInvokeUserLambda(_Func&& _func) const -> decltype(_func())
+        auto _LogWorkItemAndInvokeUserLambda(_Func&& _func) const -> decltype(std::forward<_Func>(_func)())
         {
             details::_TaskWorkItemRAIILogger _LogWorkItem(this->_M_pTask->_M_taskEventLogger);
             (void)_LogWorkItem;
-            return _func();
+            return std::forward<_Func>(_func)();
         }
 
         void _Perform() const { _Init(_TypeSelection()); }
@@ -4139,7 +4152,7 @@ private:
     ///     Initializes a task using a lambda, function pointer or function object.
     /// </summary>
     template<typename _InternalReturnType, typename _Function>
-    void _TaskInitWithFunctor(const _Function& _Func)
+    void _TaskInitWithFunctor(_Function&& _Func)
     {
         typedef typename details::_InitFunctorTypeTraits<_InternalReturnType, decltype(_Func())> _Async_type_traits;
 
@@ -4148,7 +4161,7 @@ private:
         _M_Impl->_M_taskEventLogger._LogScheduleTask(false);
         _M_Impl->_ScheduleTask(
             new _InitialTaskHandle<_InternalReturnType, _Function, typename _Async_type_traits::_AsyncKind>(_GetImpl(),
-                                                                                                            _Func),
+                                                                                                            std::forward<_Function>(_Func)),
             details::_NoInline);
     }
 
