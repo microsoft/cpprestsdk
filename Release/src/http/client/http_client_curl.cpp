@@ -20,6 +20,14 @@
 #include "http_client_impl.h"
 #include "winhttppal/winhttppal.h"
 #include <atomic>
+#include <memory>
+
+#define GlobalFree free
+
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args) {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
 
 namespace
 {
