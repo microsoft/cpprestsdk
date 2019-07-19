@@ -317,10 +317,10 @@ SUITE(pplxtask_tests)
 #ifndef _MSC_VER
         struct NoParamFunctor : public MoveOnlyBase
         {
-            char operator()() { return 'c'; }
+            char operator()() const { return 'c'; }
         } a;
 
-        const auto f = create_task([](){}).then(std::move(a));
+        const auto f = create_task(std::move(a)).then([](char c) { return c; });
         IsTrue(f.get() == 'c', L"initial task failed to accept move-only functor");
 #endif // _MSC_VER
     }
