@@ -15,8 +15,11 @@
 #ifndef CASA_JSON_H
 #define CASA_JSON_H
 
-#include "cpprest/asyncrt_utils.h"
 #include "cpprest/details/basic_types.h"
+#include "cpprest/memory_utils.h"
+#include "cpprest/string_utils.h"
+
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <sstream>
@@ -957,7 +960,7 @@ private:
     {
         if (!keep_order)
         {
-            sort(m_elements.begin(), m_elements.end(), compare_pairs);
+            std::sort(m_elements.begin(), m_elements.end(), compare_pairs);
         }
     }
 

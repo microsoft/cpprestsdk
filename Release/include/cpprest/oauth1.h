@@ -15,8 +15,10 @@
 #ifndef CASA_OAUTH1_H
 #define CASA_OAUTH1_H
 
+#include "cpprest/base64_utils.h"
 #include "cpprest/details/web_utilities.h"
 #include "cpprest/http_msg.h"
+#include "cpprest/string_utils.h"
 
 namespace web
 {

@@ -10,7 +10,10 @@
  ****/
 #include "stdafx.h"
 
-using namespace web;
+#include "cpprest/base64_utils.h"
+
+#include <array>
+
 using namespace utility;
 
 std::vector<unsigned char> _from_base64(const utility::string_t& str);
