@@ -285,20 +285,23 @@ SUITE(pplxtask_tests)
         }
     }
 
-    TEST(TestTasks_movable_then)
+    struct MoveOnlyBase
+    {
+        MoveOnlyBase() = default;
+        MoveOnlyBase(MoveOnlyBase&&) = default;
+        MoveOnlyBase& operator=(MoveOnlyBase&&) = default;
+
+        // explicitly delete copy functions
+        MoveOnlyBase(const MoveOnlyBase&) = delete;
+        MoveOnlyBase& operator=(const MoveOnlyBase&) = delete;
+    };
+
+    TEST(TestTasks_move_only_then)
     {
 #ifndef _MSC_VER
-        // create movable only type
-        struct A
+        // create move-only type
+        struct IntParamFunctor : public MoveOnlyBase
         {
-            A() = default;
-            A(A&&) = default;
-            A& operator=(A&&) = default;
-
-            // explicitly delete copy functions
-            A(const A&) = delete;
-            A& operator=(const A&) = delete;
-
             char operator()(int) { return 'c'; }
         } a;
 
@@ -306,6 +309,19 @@ SUITE(pplxtask_tests)
         auto f = task.then(std::move(a));
 
         IsTrue(f.get() == 'c', L".then should be able to work with movable functors");
+#endif // _MSC_VER
+    }
+
+    TEST(TestTasks_move_only_initial_task)
+    {
+#ifndef _MSC_VER
+        struct NoParamFunctor : public MoveOnlyBase
+        {
+            char operator()() { return 'c'; }
+        } a;
+
+        const auto f = create_task([](){}).then(std::move(a));
+        IsTrue(f.get() == 'c', L"initial task failed to accept move-only functor");
 #endif // _MSC_VER
     }
 

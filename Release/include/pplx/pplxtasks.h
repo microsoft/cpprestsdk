@@ -4849,10 +4849,10 @@ struct _BadArgType
 };
 
 template<typename _Ty>
-auto _FilterValidTaskType(_Ty _Param, int) -> decltype(_GetTaskType(_Param, _IsCallableNoArgs<_Ty>()));
+auto _FilterValidTaskType(_Ty, int) -> decltype(_GetTaskType(std::declval<_Ty>(), _IsCallableNoArgs<_Ty>()));
 
 template<typename _Ty>
-_BadArgType _FilterValidTaskType(_Ty _Param, ...);
+_BadArgType _FilterValidTaskType(_Ty, ...);
 
 template<typename _Ty>
 struct _TaskTypeFromParam
