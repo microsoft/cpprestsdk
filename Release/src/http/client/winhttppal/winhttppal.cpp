@@ -329,22 +329,6 @@ static std::vector<std::string> Split(std::string &str, char delimiter) {
     return internal;
 }
 
-static void ReplaceStr(std::string &str, const char *searchStr, const char *replaceStr)
-{
-    size_t index = 0;
-    while (true) {
-        /* Locate the substring to replace. */
-        index = str.find(searchStr, index);
-        if (index == std::string::npos) break;
-
-        /* Make the replacement. */
-        str.replace(index, strlen(searchStr), replaceStr);
-
-        /* Advance index forward so the next iteration doesn't pick it up as well. */
-        index += strlen(searchStr);
-    }
-}
-
 static BOOL SizeCheck(LPVOID lpBuffer, LPDWORD lpdwBufferLength, DWORD Required)
 {
     if (!lpBuffer)
@@ -2911,6 +2895,31 @@ static TSTRING FindRegex(const TSTRING &subject,const TSTRING &regstr)
     return result;
 }
 
+bool is_newline(char i)
+{
+	return (i == '\n') || (i == '\r');
+}
+
+template<class CharT>
+std::basic_string<CharT> nullize_newlines(const std::basic_string<CharT>& str) {
+	std::basic_string<CharT> result;
+	result.reserve(str.size());
+
+	auto cursor = str.begin();
+	const auto end = str.end();
+	for (;;) {
+		cursor = std::find_if_not(cursor, end, is_newline);
+		if (cursor == end) {
+			return result;
+		}
+
+		const auto nextNewline = std::find_if(cursor, end, is_newline);
+		result.append(cursor, nextNewline);
+		result.push_back(CharT{});
+		cursor = nextNewline;
+	}
+}
+
 BOOLAPI WinHttpQueryHeaders(
     HINTERNET   hRequest,
     DWORD       dwInfoLevel,
@@ -3093,11 +3102,7 @@ BOOLAPI WinHttpQueryHeaders(
         if (!wbuffer)
             return FALSE;
 
-        ReplaceStr(header, "\r\n", "\n");
-        ReplaceStr(header, "\n\r", "\n");
-        ReplaceStr(header, "\r", "\n");
-        ReplaceStr(header, "\n\n", "\n");
-        std::replace(header.begin(), header.end(), '\n', '\0');
+        header = nullize_newlines(header);
         header.resize(header.size() + 1);
         length = header.size();
 
