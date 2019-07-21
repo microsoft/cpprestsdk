@@ -24,11 +24,6 @@
 
 #define GlobalFree free
 
-template<typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args) {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
 namespace
 {
 struct security_failure_message
@@ -1836,7 +1831,7 @@ private:
                     !p_request_context->m_http_client->client_config().request_compressed_response())
                 {
                     p_request_context->m_compression_state.m_chunk =
-                        make_unique<curl_request_context::compression_state::_chunk_helper>();
+                        ::utility::details::make_unique<curl_request_context::compression_state::_chunk_helper>();
                     p_request_context->m_compression_state.m_chunked = true;
                 }
 
