@@ -202,7 +202,7 @@ static void locking_function(int mode, int n, const char *file, int line)
 
 static unsigned long id_function(void)
 {
-    return ((unsigned long)(THREAD_ID));
+    return static_cast<unsigned long>(THREAD_ID);
 }
 #endif
 
@@ -289,9 +289,9 @@ public:
     ~UserCallbackContext();
     std::shared_ptr<WinHttpRequestImp> GetRequestRef() { return m_request; }
     WinHttpRequestImp *GetRequest() { return m_request.get(); }
-    DWORD GetInternetStatus() { return m_dwInternetStatus; }
-    DWORD GetStatusInformationLength() { return m_dwStatusInformationLength; }
-    DWORD GetNotificationFlags() { return m_dwNotificationFlags; }
+    DWORD GetInternetStatus() const { return m_dwInternetStatus; }
+    DWORD GetStatusInformationLength() const { return m_dwStatusInformationLength; }
+    DWORD GetNotificationFlags() const { return m_dwNotificationFlags; }
     WINHTTP_STATUS_CALLBACK &GetCb() { return m_cb; }
     CompletionCb &GetRequestCompletionCb() { return m_requestCompletionCb; }
     LPVOID GetUserdata() { return m_userdata; }
@@ -301,7 +301,7 @@ public:
         else
             return m_StatusInformationVal;
     }
-    BOOL GetStatusInformationValid() { return m_AsyncResultValid; }
+    BOOL GetStatusInformationValid() const { return m_AsyncResultValid; }
 };
 
 static void ConvertCstrAssign(const TCHAR *lpstr, size_t cLen, std::string &target)
@@ -686,7 +686,7 @@ public:
     std::string &GetOptionalData() { return m_OptionalData; }
     void SetOptionalData(void *lpOptional, size_t dwOptionalLength)
     {
-        m_OptionalData.assign(&(reinterpret_cast<char*>(lpOptional))[0], dwOptionalLength);
+        m_OptionalData.assign(&(static_cast<char*>(lpOptional))[0], dwOptionalLength);
     }
 
     std::vector<BYTE> &GetReadData() { return m_ReadData; }
@@ -694,7 +694,7 @@ public:
     void AppendReadData(const void *data, size_t len)
     {
         std::lock_guard<std::mutex> lck(GetReadDataEventMtx());
-        m_ReadData.insert(m_ReadData.end(), reinterpret_cast<const BYTE*>(data), reinterpret_cast<const BYTE*>(data) + len);
+        m_ReadData.insert(m_ReadData.end(), static_cast<const BYTE*>(data), static_cast<const BYTE*>(data) + len);
     }
 
     static int SocketCallback(CURL *handle, curl_infotype type,
@@ -728,7 +728,7 @@ class UserCallbackContainer
 
 public:
 
-    bool GetClosing() { return m_closing; }
+    bool GetClosing() const { return m_closing; }
 
     UserCallbackContext* GetNext()
     {
@@ -802,6 +802,9 @@ public:
         static UserCallbackContainer the_instance;
         return the_instance;
     }
+private:
+	UserCallbackContainer(const UserCallbackContainer&);
+	UserCallbackContainer& operator=(const UserCallbackContainer&);
 };
 
 class EnvInit
@@ -835,7 +838,7 @@ class ComContainer
     BOOL m_closing = FALSE;
 
     // used to protect CURLM data structures
-    BOOL GetThreadClosing() { return m_closing; }
+    BOOL GetThreadClosing() const { return m_closing; }
 
 public:
     CURL *AllocCURL()
@@ -1040,6 +1043,9 @@ public:
 
         return rc;
     }
+private:
+	ComContainer(const ComContainer&);
+	ComContainer& operator=(const ComContainer&);
 };
 
 template<class T>
@@ -1137,29 +1143,29 @@ public:
         m_SecureProtocol = *data;
         return TRUE;
     }
-    DWORD GetSecureProtocol() { return m_SecureProtocol; }
+    DWORD GetSecureProtocol() const { return m_SecureProtocol; }
 
     BOOL SetMaxConnections(DWORD *data)
     {
         m_MaxConnections = *data;
         return TRUE;
     }
-    DWORD GetMaxConnections() { return m_MaxConnections; }
+    DWORD GetMaxConnections() const { return m_MaxConnections; }
 
     void SetAsync() { m_Async = TRUE; }
-    BOOL GetAsync() { return m_Async; }
+    BOOL GetAsync() const { return m_Async; }
 
-    BOOL GetThreadClosing() { return m_closing; }
+    BOOL GetThreadClosing() const { return m_closing; }
 
     std::vector<std::string> &GetProxies() { return m_Proxies; }
     void SetProxies(std::vector<std::string> &proxies) { m_Proxies = proxies; }
 
     std::string &GetProxy() { return m_Proxy; }
 
-    int GetServerPort() { return m_ServerPort; }
+    int GetServerPort() const { return m_ServerPort; }
     void SetServerPort(int port) { m_ServerPort = port; }
 
-    long GetTimeout() {
+    long GetTimeout() const {
         if (m_Timeout)
             return m_Timeout;
 
@@ -2964,8 +2970,8 @@ BOOLAPI WinHttpQueryHeaders(
         }
         else
         {
-            TCHAR *outbuf = reinterpret_cast<TCHAR*>(lpBuffer);
-            STNPRINTF(outbuf, *lpdwBufferLength, TEXT("%ld"), retValue);
+            TCHAR *outbuf = static_cast<TCHAR*>(lpBuffer);
+            STNPRINTF(outbuf, *lpdwBufferLength, TEXT("%lu"), retValue);
             outbuf[*lpdwBufferLength/sizeof(outbuf[0]) - 1] = TEXT('\0');
         }
         return TRUE;
@@ -2992,8 +2998,8 @@ BOOLAPI WinHttpQueryHeaders(
         }
         else
         {
-            TCHAR *outbuf = reinterpret_cast<TCHAR*>(lpBuffer);
-            STNPRINTF(outbuf, *lpdwBufferLength, TEXT("%ld"), retValue);
+            TCHAR *outbuf = static_cast<TCHAR*>(lpBuffer);
+            STNPRINTF(outbuf, *lpdwBufferLength, TEXT("%lu"), retValue);
             outbuf[*lpdwBufferLength/sizeof(outbuf[0]) - 1] = TEXT('\0');
         }
         TRACE("%s:%d status code :%lu\n", __func__, __LINE__, retValue);
@@ -3074,7 +3080,7 @@ BOOLAPI WinHttpQueryHeaders(
     {
         size_t length;
         std::string header;
-        TCHAR *wbuffer = reinterpret_cast<TCHAR*>(lpBuffer);
+        TCHAR *wbuffer = static_cast<TCHAR*>(lpBuffer);
 
         request->GetHeaderStringMutex().lock();
         length = request->GetHeaderString().length();
@@ -3130,7 +3136,7 @@ BOOLAPI WinHttpQueryHeaders(
     {
         std::lock_guard<std::mutex> lck(request->GetHeaderStringMutex());
         size_t length;
-        TCHAR *wbuffer = reinterpret_cast<TCHAR*>(lpBuffer);
+        TCHAR *wbuffer = static_cast<TCHAR*>(lpBuffer);
 
         length = request->GetHeaderString().length();
 
@@ -3226,7 +3232,7 @@ BOOLAPI WinHttpSetOption(
             if (!lpBuffer)
                 return FALSE;
 
-            if (!session->SetMaxConnections(reinterpret_cast<DWORD*>(lpBuffer)))
+            if (!session->SetMaxConnections(static_cast<DWORD*>(lpBuffer)))
                 return FALSE;
             return TRUE;
         }
@@ -3235,7 +3241,7 @@ BOOLAPI WinHttpSetOption(
             if (!lpBuffer)
                 return FALSE;
 
-            if (!request->SetMaxConnections(reinterpret_cast<DWORD*>(lpBuffer)))
+            if (!request->SetMaxConnections(static_cast<DWORD*>(lpBuffer)))
                 return FALSE;
             return TRUE;
         }
@@ -3257,7 +3263,7 @@ BOOLAPI WinHttpSetOption(
             if (!lpBuffer)
                 return FALSE;
 
-            if (!connect->SetUserData(reinterpret_cast<void**>(lpBuffer)))
+            if (!connect->SetUserData(static_cast<void**>(lpBuffer)))
                 return FALSE;
             return TRUE;
         }
@@ -3266,7 +3272,7 @@ BOOLAPI WinHttpSetOption(
             if (!lpBuffer)
                 return FALSE;
 
-            if (!session->SetUserData(reinterpret_cast<void**>(lpBuffer)))
+            if (!session->SetUserData(static_cast<void**>(lpBuffer)))
                 return FALSE;
             return TRUE;
         }
@@ -3275,7 +3281,7 @@ BOOLAPI WinHttpSetOption(
             if (!lpBuffer)
                 return FALSE;
 
-            if (!request->SetUserData(reinterpret_cast<void**>(lpBuffer)))
+            if (!request->SetUserData(static_cast<void**>(lpBuffer)))
                 return FALSE;
             return TRUE;
         }
@@ -3295,7 +3301,7 @@ BOOLAPI WinHttpSetOption(
             if (!lpBuffer)
                 return FALSE;
 
-            DWORD curlOffered = ConvertSecurityProtocol(*reinterpret_cast<DWORD*>(lpBuffer));
+            DWORD curlOffered = ConvertSecurityProtocol(*static_cast<DWORD*>(lpBuffer));
             if (curlOffered  && !session->SetSecureProtocol(&curlOffered))
                 return FALSE;
             return TRUE;
@@ -3305,7 +3311,7 @@ BOOLAPI WinHttpSetOption(
             if (!lpBuffer)
                 return FALSE;
 
-            DWORD curlOffered = ConvertSecurityProtocol(*reinterpret_cast<DWORD*>(lpBuffer));
+            DWORD curlOffered = ConvertSecurityProtocol(*static_cast<DWORD*>(lpBuffer));
             if (curlOffered && !request->SetSecureProtocol(&curlOffered))
                 return FALSE;
             return TRUE;
@@ -3325,7 +3331,7 @@ BOOLAPI WinHttpSetOption(
             if (!lpBuffer)
                 return FALSE;
 
-            DWORD value = *reinterpret_cast<DWORD*>(lpBuffer);
+            DWORD value = *static_cast<DWORD*>(lpBuffer);
             if (value == (SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
                 SECURITY_FLAG_IGNORE_CERT_CN_INVALID | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE))
             {
@@ -3400,7 +3406,7 @@ WinHttpQueryOption
         if (!session)
             return FALSE;
 
-        *reinterpret_cast<DWORD *>(lpBuffer) = session->GetTimeout();
+        *static_cast<DWORD *>(lpBuffer) = session->GetTimeout();
     }
     if (WINHTTP_OPTION_CALLBACK == dwOption)
     {
@@ -3416,7 +3422,7 @@ WinHttpQueryOption
 
         DWORD dwNotificationFlags;
         WINHTTP_STATUS_CALLBACK cb = session->GetCallback(&dwNotificationFlags);
-        *reinterpret_cast<WINHTTP_STATUS_CALLBACK *>(lpBuffer) = cb;
+        *static_cast<WINHTTP_STATUS_CALLBACK *>(lpBuffer) = cb;
     }
     else if (WINHTTP_OPTION_URL == dwOption)
     {
@@ -3433,7 +3439,7 @@ WinHttpQueryOption
         if (SizeCheck(lpBuffer, lpdwBufferLength, (strlen(url) + 1) * sizeof(TCHAR)) == FALSE)
             return FALSE;
 
-        TCHAR *wbuffer = reinterpret_cast<TCHAR*>(lpBuffer);
+        TCHAR *wbuffer = static_cast<TCHAR*>(lpBuffer);
         size_t length = strlen(url);
 #ifdef UNICODE
         std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
