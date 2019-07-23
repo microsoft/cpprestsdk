@@ -12,6 +12,7 @@
 
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/uri.h"
+#include <memory>
 
 namespace web
 {
