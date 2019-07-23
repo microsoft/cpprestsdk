@@ -1525,13 +1525,16 @@ size_t WinHttpRequestImp::WriteHeaderFunction(void *ptr, size_t size, size_t nme
             return size * nmemb;
         }
 
+        if (retValue != 100)
         {
             std::lock_guard<std::mutex> lck(request->GetReceiveCompletionEventMtx());
-            {
-                request->ResponseCallbackEventCounter()++;
-                request->HandleReceiveNotifications(srequest);
-                TRACE("%-35s:%-8d:%-16p GetReceiveCompletionEvent().notify_all\n", __func__, __LINE__, (void*)request);
-            }
+            request->ResponseCallbackEventCounter()++;
+            request->HandleReceiveNotifications(srequest);
+            TRACE("%-35s:%-8d:%-16p GetReceiveCompletionEvent().notify_all\n", __func__, __LINE__, (void*)request);
+        }
+        else
+        {
+            TRACE("%-35s:%-8d:%-16p retValue = %lu \n", __func__, __LINE__, (void*)request, retValue);
         }
 
     }
