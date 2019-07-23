@@ -13,6 +13,9 @@
 
 #include "stdafx.h"
 
+#include "cpprest/json.h"
+
+#include <array>
 #include <stdio.h>
 
 #ifndef _WIN32

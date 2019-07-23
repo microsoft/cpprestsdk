@@ -4,7 +4,7 @@ set(SOURCES
   pplxtask_tests.cpp
 )
 
-add_casablanca_test(pplx_test SOURCES)
+add_casablanca_test(pplx_test SOURCES cpprest_pplx)
 
 if(MSVC)
   get_target_property(_srcs pplx_test SOURCES)

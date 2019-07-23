@@ -20,6 +20,10 @@
 #include <string>
 #include <time.h>
 
+#if defined(_WIN32)
+#include "windows_config.h"
+#endif
+
 using namespace utility;
 
 namespace utility

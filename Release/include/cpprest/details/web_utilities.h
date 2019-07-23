@@ -12,6 +12,7 @@
 
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/uri.h"
+#include "pplx/pplxtasks.h"
 #include <memory>
 
 namespace web

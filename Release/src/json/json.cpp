@@ -13,6 +13,8 @@
 
 #include "stdafx.h"
 
+#include "cpprest/json.h"
+
 using namespace web;
 
 bool json::details::g_keep_json_object_unsorted = false;

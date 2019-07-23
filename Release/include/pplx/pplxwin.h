@@ -13,6 +13,10 @@
 
 #pragma once
 
+#if !defined(_PPLX_H)
+#error Include pplx.h instead of pplxwin.h directly.
+#endif
+
 #if !defined(_WIN32) || _MSC_VER < 1800 || CPPREST_FORCE_PPLX
 
 #include "cpprest/details/cpprest_compat.h"

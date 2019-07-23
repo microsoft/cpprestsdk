@@ -19,10 +19,12 @@
 
 #include "cpprest/details/fileio.h"
 
-using namespace web;
+#include "cpprest/asyncrt_utils.h"
+
+#include "windows_config.h"
+
 using namespace utility;
 using namespace concurrency;
-using namespace utility::conversions;
 
 namespace Concurrency
 {

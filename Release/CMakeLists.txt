@@ -23,6 +23,7 @@ set(CPPREST_EXPORT_DIR cpprestsdk CACHE STRING "Directory to install CMake confi
 option(CPPREST_FORCE_NARROW_STRINGS "Keep strings narrow/UTF8 (even if WIN32)" OFF)
 set(CPPREST_INSTALL_HEADERS ON CACHE BOOL "Install header files.")
 set(CPPREST_INSTALL ON CACHE BOOL "Add install commands.")
+option(CPPREST_ISOLATE_COMPONENTS "Build cpprest components as individual libraries" OFF)
 
 if(IOS OR ANDROID)
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
@@ -235,7 +236,8 @@ if(NOT PARENT_DIR STREQUAL "")
 endif()
 
 # Finally, the tests all use the same style declaration to build themselves, so we use a function
-function(add_casablanca_test NAME SOURCES_VAR)
+# Tests that don't specify IMPLEMENTATION_TARGETS are assumed to depend on whole of cpprest.
+function(add_casablanca_test NAME SOURCES_VAR) # [optional] IMPLEMENTATION_TARGETS...
   add_library(${NAME} ${TEST_LIBRARY_TARGET_TYPE} ${${SOURCES_VAR}})
   message("-- Added test library ${NAME}")
   if(TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
@@ -244,8 +246,12 @@ function(add_casablanca_test NAME SOURCES_VAR)
       target_compile_definitions(${NAME} PRIVATE $<TARGET_PROPERTY:${_dep},INTERFACE_COMPILE_DEFINITIONS>)
     endforeach()
   else()
+    set(IMPLEMENTATION_TARGETS cpprest)
+    if(CPPREST_ISOLATE_COMPONENTS AND ${ARGC} GREATER 2)
+      set(IMPLEMENTATION_TARGETS ${ARGN})
+    endif()
     target_link_libraries(${NAME} PRIVATE
-      cpprest
+      ${IMPLEMENTATION_TARGETS}
       common_utilities
       unittestpp
       ${ANDROID_LIBS}

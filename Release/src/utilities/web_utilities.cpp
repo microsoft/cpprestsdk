@@ -13,14 +13,19 @@
 
 #include "stdafx.h"
 
+#include "cpprest/details/web_utilities.h"
+
 #include <assert.h>
 
-#if defined(_WIN32) && !defined(__cplusplus_winrt)
+#if defined(_WIN32)
+#include "windows_config.h"
+
+#if !defined(__cplusplus_winrt)
 #include <Wincrypt.h>
+#else
+#include <robuffer.h>
 #endif
 
-#if defined(__cplusplus_winrt)
-#include <robuffer.h>
 #endif
 
 namespace web

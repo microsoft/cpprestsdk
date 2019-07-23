@@ -15,7 +15,11 @@
 
 #if !defined(_WIN32) || CPPREST_FORCE_PPLX
 
-#include "pplx/pplxwin.h"
+#include "pplx/pplx.h"
+#include "pplx/pplxwin.h" // Note: Should already be included by way of pplx.h
+
+#include "cpprest/asyncrt_utils.h"
+#include "windows_config.h"
 
 // Disable false alarm code analysis warning
 #pragma warning(disable : 26165 26110)
@@ -242,6 +246,9 @@ _PPLXIMP void windows_scheduler::schedule(TaskProc_t proc, _In_ void* param)
 } // namespace pplx
 
 #else // ^^^ !defined(_WIN32) || CPPREST_FORCE_PPLX ^^^ // vvv defined(_WIN32) && !CPPREST_FORCE_PPLX vvv
+
+#include "pplx/pplxtasks.h"
+
 namespace Concurrency
 {
 void __cdecl set_cpprestsdk_ambient_scheduler(const std::shared_ptr<scheduler_interface>& _Scheduler)
