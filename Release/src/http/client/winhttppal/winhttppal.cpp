@@ -39,6 +39,7 @@
 extern "C"
 {
 #include <curl/curl.h>
+#include <curl/curlver.h>
 }
 
 class WinHttpSessionImp;
@@ -387,6 +388,7 @@ static void QueueBufferRequest(std::vector<BufferRequest> &store, LPVOID buffer,
     BufferRequest shr;
     shr.m_Buffer = buffer;
     shr.m_Length = length;
+    shr.m_Used = 0;
     store.push_back(shr);
 }
 
@@ -395,16 +397,13 @@ static BufferRequest GetBufferRequest(std::vector<BufferRequest> &store)
     if (store.empty())
         return BufferRequest();
     BufferRequest shr = store.front();
-    store.pop_back();
+    store.erase(store.begin());
     return shr;
 }
 
-static BufferRequest PeekBufferRequest(std::vector<BufferRequest> &store)
+static BufferRequest &PeekBufferRequest(std::vector<BufferRequest> &store)
 {
-    if (store.empty())
-        return BufferRequest();
-    BufferRequest shr = store.front();
-    return shr;
+    return store.front();
 }
 
 class WinHttpRequestImp :public WinHttpBase, public std::enable_shared_from_this<WinHttpRequestImp>
@@ -437,14 +436,11 @@ class WinHttpRequestImp :public WinHttpBase, public std::enable_shared_from_this
     std::mutex m_HeaderStringMutex;
     std::mutex m_BodyStringMutex;
 
-    std::condition_variable m_QueryDataEvent;
     std::mutex m_QueryDataEventMtx;
     bool m_QueryDataEventState = false;
     std::atomic<bool> m_QueryDataPending;
 
-    std::condition_variable m_ReceiveCompletionEvent;
     std::mutex m_ReceiveCompletionEventMtx;
-    std::atomic<DWORD> m_ReceiveCompletionEventCounter;
 
     std::mutex m_ReceiveResponseMutex;
     std::atomic<bool> m_ReceiveResponsePending;
@@ -492,7 +488,6 @@ public:
 
     bool &GetQueryDataEventState() { return m_QueryDataEventState; }
     std::mutex &GetQueryDataEventMtx() { return m_QueryDataEventMtx; }
-    std::condition_variable &GetQueryDataEvent() { return m_QueryDataEvent; }
 
     bool HandleQueryDataNotifications(std::shared_ptr<WinHttpRequestImp>, size_t available);
     void WaitAsyncQueryDataCompletion(std::shared_ptr<WinHttpRequestImp>);
@@ -545,18 +540,7 @@ public:
     std::mutex &GetReadDataEventMtx() { return m_ReadDataEventMtx; }
     DWORD &GetReadDataEventCounter() { return m_ReadDataEventCounter; }
 
-    // sent by WriteHeaderFunction and WriteBodyFunction during incoming data
-    // to send user notifications for the following events:
-    //
-    // WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE
-    // WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED
-    // WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE
-    //
-    // WinHttpReceiveResponse is blocked until one of the above events happen
-    //
-    std::condition_variable &GetReceiveCompletionEvent() { return m_ReceiveCompletionEvent; }
     std::mutex &GetReceiveCompletionEventMtx() { return m_ReceiveCompletionEventMtx; }
-    std::atomic<DWORD> &GetReceiveCompletionEventCounter() { return m_ReceiveCompletionEventCounter; }
 
     // counters used to see which one of these events are observed: ResponseCallbackEventCounter
     // counters used to see which one of these events are broadcasted: ResponseCallbackSendCounter
@@ -577,7 +561,7 @@ public:
 
     BOOL AsyncQueue(std::shared_ptr<WinHttpRequestImp> &,
                     DWORD dwInternetStatus, size_t statusInformationLength,
-		    LPVOID statusInformation, DWORD statusInformationCopySize, bool allocate);
+            LPVOID statusInformation, DWORD statusInformationCopySize, bool allocate);
 
     void SetHeaderReceiveComplete() { m_HeaderReceiveComplete = TRUE; }
 
@@ -788,8 +772,8 @@ public:
         return the_instance;
     }
 private:
-	UserCallbackContainer(const UserCallbackContainer&);
-	UserCallbackContainer& operator=(const UserCallbackContainer&);
+    UserCallbackContainer(const UserCallbackContainer&);
+    UserCallbackContainer& operator=(const UserCallbackContainer&);
 };
 
 class EnvInit
@@ -1029,8 +1013,8 @@ public:
         return rc;
     }
 private:
-	ComContainer(const ComContainer&);
-	ComContainer& operator=(const ComContainer&);
+    ComContainer(const ComContainer&);
+    ComContainer& operator=(const ComContainer&);
 };
 
 template<class T>
@@ -1242,15 +1226,6 @@ THREADRETURN ComContainer::AsyncThreadFunction(LPVOID lpThreadParameter)
                     TRACE("%-35s:%-8d:%-16p type:%s result:%d\n", __func__, __LINE__, (void*)request, request->GetType().c_str(), m->data.result);
                     request->GetCompletionCode() = m->data.result;
 
-                    // unblock ReceiveResponse if waiting
-                    if (m->data.result != CURLE_OK)
-                    {
-                        std::lock_guard<std::mutex> lck(request->GetReceiveCompletionEventMtx());
-                        request->GetReceiveCompletionEventCounter()++;
-                        request->GetReceiveCompletionEvent().notify_all();
-                        TRACE("%-35s:%-8d:%-16p GetReceiveCompletionEvent().notify_all\n", __func__, __LINE__, (void*)request);
-                    }
-
                     if (m->data.result == CURLE_OK)
                     {
                         if (request->HandleQueryDataNotifications(srequest, 0))
@@ -1260,7 +1235,6 @@ THREADRETURN ComContainer::AsyncThreadFunction(LPVOID lpThreadParameter)
                         {
                             std::lock_guard<std::mutex> lck(request->GetQueryDataEventMtx());
                             request->GetQueryDataEventState() = true;
-                            request->GetQueryDataEvent().notify_all();
                         }
                         request->HandleQueryDataNotifications(srequest, 0);
                     }
@@ -1473,7 +1447,7 @@ void WinHttpRequestImp::HandleReceiveNotifications(std::shared_ptr<WinHttpReques
         bool redirectPending;
         {
             expected = true;
-            redirectPending = std::atomic_compare_exchange_strong(&GetRedirectPending(), &expected, false);
+            redirectPending = GetRedirectPending();
             TRACE("%-35s:%-8d:%-16p redirectPending = %d ResponseCallbackSendCounter = %d\n", __func__, __LINE__, (void*)this,
                     redirectPending, (int)ResponseCallbackSendCounter());
         }
@@ -1507,7 +1481,7 @@ void WinHttpRequestImp::HandleReceiveNotifications(std::shared_ptr<WinHttpReques
             AsyncQueue(srequest, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, GetHeaderString().length(), NULL, 0, false);
             ResponseCallbackSendCounter()++;
         }
-        if (ResponseCallbackSendCounter() == (2 + redirectPending * 3))
+        if ((ResponseCallbackSendCounter() == (2 + redirectPending * 3)) && (GetCompletionCode() == CURLE_OK))
         {
             TRACE("%-35s:%-8d:%-16p WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE\n", __func__, __LINE__, (void*)this);
             SetHeaderReceiveComplete();
@@ -1529,21 +1503,6 @@ size_t WinHttpRequestImp::WriteHeaderFunction(void *ptr, size_t size, size_t nme
     {
         std::lock_guard<std::mutex> lck(request->GetHeaderStringMutex());
 
-        if (request->GetAsync() && request->GetHeaderString().length() == 0) {
-            request->ResponseCallbackEventCounter()++;
-
-            if (request->GetReceiveResponsePending()) {
-                request->GetReceiveResponseMutex().lock();
-
-                if (request->ResponseCallbackSendCounter() == 0) {
-                    TRACE("%-35s:%-8d:%-16p WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE\n", __func__, __LINE__, (void*)request);
-                    request->AsyncQueue(srequest, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, 0, NULL, 0, false);
-                    request->ResponseCallbackSendCounter()++;
-                }
-                request->GetReceiveResponseMutex().unlock();
-            }
-        }
-
         request->GetHeaderString().append(static_cast<char*>(ptr), size * nmemb);
         request->GetTotalHeaderStringLength() += size * nmemb;
 
@@ -1551,29 +1510,6 @@ size_t WinHttpRequestImp::WriteHeaderFunction(void *ptr, size_t size, size_t nme
             EofHeaders = true;
         if (request->GetHeaderString().find("\n\n") != std::string::npos)
             EofHeaders = true;
-
-        if (request->GetAsync() && EofHeaders) {
-            request->ResponseCallbackEventCounter()++;
-
-            if (request->GetReceiveResponsePending())
-            {
-                request->GetReceiveResponseMutex().lock();
-
-                if (request->ResponseCallbackSendCounter() == 0)
-                {
-                    TRACE("%-35s:%-8d:%-16p WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE\n", __func__, __LINE__, (void*)request);
-                    request->AsyncQueue(srequest, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, 0, NULL, 0, false);
-                    request->ResponseCallbackSendCounter()++;
-                }
-                if (request->ResponseCallbackSendCounter() == 1)
-                {
-                    TRACE("%-35s:%-8d:%-16p WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED\n", __func__, __LINE__, (void*)request);
-                    request->AsyncQueue(srequest, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, request->GetHeaderString().length(), NULL, 0, false);
-                    request->ResponseCallbackSendCounter()++;
-                }
-                request->GetReceiveResponseMutex().unlock();
-            }
-        }
     }
     if (EofHeaders && request->GetAsync())
     {
@@ -1585,19 +1521,17 @@ size_t WinHttpRequestImp::WriteHeaderFunction(void *ptr, size_t size, size_t nme
             std::lock_guard<std::mutex> lck(request->GetHeaderStringMutex());
             request->GetHeaderString() = "";
             TRACE("%-35s:%-8d:%-16p Redirect \n", __func__, __LINE__, (void*)request);
-            request->ResponseCallbackEventCounter()++;
             request->GetRedirectPending() = true;
             return size * nmemb;
         }
 
-        request->ResponseCallbackEventCounter()++;
-        TRACE("%-35s:%-8d:%-16p HandleReceiveNotifications \n", __func__, __LINE__, (void*)request);
-        request->HandleReceiveNotifications(srequest);
         {
             std::lock_guard<std::mutex> lck(request->GetReceiveCompletionEventMtx());
-            request->GetReceiveCompletionEventCounter()++;
-            request->GetReceiveCompletionEvent().notify_all();
-            TRACE("%-35s:%-8d:%-16p GetReceiveCompletionEvent().notify_all\n", __func__, __LINE__, (void*)request);
+            {
+                request->ResponseCallbackEventCounter()++;
+                request->HandleReceiveNotifications(srequest);
+                TRACE("%-35s:%-8d:%-16p GetReceiveCompletionEvent().notify_all\n", __func__, __LINE__, (void*)request);
+            }
         }
 
     }
@@ -1653,42 +1587,6 @@ size_t WinHttpRequestImp::WriteBodyFunction(void *ptr, size_t size, size_t nmemb
     }
 
     if (request->GetAsync()) {
-        bool expected = true;
-
-        bool result = std::atomic_compare_exchange_strong(&request->GetReceiveResponsePending(), &expected, false);
-
-        if (result) {
-            request->GetReceiveResponseMutex().lock();
-            if (request->ResponseCallbackSendCounter() == 0)
-            {
-                TRACE("%-35s:%-8d:%-16p WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE\n", __func__, __LINE__, (void*)request);
-                request->AsyncQueue(srequest, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, 0, NULL, 0, false);
-                request->ResponseCallbackSendCounter()++;
-            }
-
-            if (request->ResponseCallbackSendCounter() == 1)
-            {
-                TRACE("%-35s:%-8d:%-16p WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED\n", __func__, __LINE__, (void*)request);
-                request->AsyncQueue(srequest, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, request->GetHeaderString().length(), NULL, 0, false);
-                request->ResponseCallbackSendCounter()++;
-            }
-
-            if (request->ResponseCallbackSendCounter() == 2)
-            {
-                TRACE("%-35s:%-8d:%-16p WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE\n", __func__, __LINE__, (void*)request);
-                request->SetHeaderReceiveComplete();
-                request->AsyncQueue(srequest, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, 0, NULL, 0, false);
-                request->ResponseCallbackSendCounter()++;
-            }
-            {
-                std::lock_guard<std::mutex> lck(request->GetReceiveCompletionEventMtx());
-                request->GetReceiveCompletionEventCounter()++;
-                request->GetReceiveCompletionEvent().notify_all();
-                TRACE("%-35s:%-8d:%-16p GetReceiveCompletionEvent().notify_all\n", __func__, __LINE__, (void*)request);
-            }
-            request->GetReceiveResponseMutex().unlock();
-        }
-
         if (request->HandleQueryDataNotifications(srequest, available))
             TRACE("%-35s:%-8d:%-16p GetQueryDataEvent().notify_all\n", __func__, __LINE__, (void*)request);
     }
@@ -1706,7 +1604,6 @@ void WinHttpRequestImp::CleanUp()
     m_ReadData.clear();
     m_ReadDataEventCounter = 0;
     m_UploadThreadExitStatus = false;
-    m_ReceiveCompletionEventCounter = 0;
     m_QueryDataPending = false;
     m_ReceiveResponsePending = false;
     m_RedirectPending = false;
@@ -1720,7 +1617,6 @@ void WinHttpRequestImp::CleanUp()
 WinHttpRequestImp::WinHttpRequestImp():
             m_UploadCallbackThread(),
             m_QueryDataPending(false),
-            m_ReceiveCompletionEventCounter(0),
             m_ReceiveResponsePending(false),
             m_ReceiveResponseEventCounter(0),
             m_ReceiveResponseSendCounter(0),
@@ -1805,7 +1701,7 @@ size_t WinHttpRequestImp::ReadCallback(void *ptr, size_t size, size_t nmemb, voi
     if (!srequest)
         return size * nmemb;
 
-    size_t len;
+    size_t len = 0;
 
     TRACE("request->GetTotalLength(): %lu\n", request->GetTotalLength());
     if (request->GetOptionalData().length() > 0)
@@ -1836,41 +1732,45 @@ size_t WinHttpRequestImp::ReadCallback(void *ptr, size_t size, size_t nmemb, voi
 
     if (request->GetAsync())
     {
-        DWORD result;
-        size_t written = 0;
+        std::lock_guard<std::mutex> lck(request->GetReadDataEventMtx());
+        if (!request->GetOutstandingWrites().empty())
 
         {
-            request->GetReadDataEventMtx().lock();
-            BufferRequest buf = PeekBufferRequest(request->GetOutstandingWrites());
+            BufferRequest &buf = PeekBufferRequest(request->GetOutstandingWrites());
             len = MIN(buf.m_Length - buf.m_Used, size * nmemb);
-            request->GetReadLength() += len;
 
-            TRACE("%-35s:%-8d:%-16p writing additional length:%lu written:%lu buf.m_Length:%lu buf.m_Used:%lu\n",
-                  __func__, __LINE__, (void*)request, len, written, buf.m_Length, buf.m_Used);
+            if (request->GetTotalLength())
+            {
+                size_t remaining = request->GetTotalLength() - request->GetReadLength();
+                len = MIN(len, remaining);
+            }
+
+            request->GetReadLength() += len;
+            TRACE("%-35s:%-8d:%-16p writing additional length:%lu  buf.m_Length:%lu buf.m_Buffer:%p buf.m_Used:%lu\n",
+                  __func__, __LINE__, (void*)request, len, buf.m_Length, buf.m_Buffer, buf.m_Used);
 
             if (len)
+            {
                 memcpy(static_cast<char*>(ptr), (char*)buf.m_Buffer + buf.m_Used, len);
+            }
 
             buf.m_Used += len;
-
-            result = len;
 
             if (buf.m_Used == buf.m_Length)
             {
                 DWORD dwInternetStatus;
+                DWORD result;
 
+                result = buf.m_Length;
                 dwInternetStatus = WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE;
                 request->AsyncQueue(srequest, dwInternetStatus, sizeof(dwInternetStatus), &result, sizeof(result), true);
                 GetBufferRequest(request->GetOutstandingWrites());
-                TRACE("%-35s:%-8d:%-16p WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE:%lu written:%lu\n", __func__, __LINE__, (void*)request, len, written);
+                TRACE("%-35s:%-8d:%-16p WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE:%p buf.m_Length:%lu\n", __func__, __LINE__, (void*)request, buf.m_Buffer, buf.m_Length);
                 request->GetReadDataEventCounter()--;
             }
 
-            request->GetReadDataEventMtx().unlock();
-            written += len;
+            TRACE("%-35s:%-8d:%-16p chunk written:%lu\n", __func__, __LINE__, (void*)request, len);
         }
-
-        len = written;
     }
     else
     {
@@ -2446,73 +2346,119 @@ BOOLAPI WinHttpSendRequest
     request->GetTotalLength() = dwTotalLength;
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_READDATA, request);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_READFUNCTION, request->ReadCallback);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_DEBUGFUNCTION, request->SocketCallback);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_DEBUGDATA, request);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_WRITEFUNCTION, request->WriteBodyFunction);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_WRITEDATA, request);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_HEADERFUNCTION, request->WriteHeaderFunction);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_HEADERDATA, request);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_PRIVATE, request);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_FOLLOWLOCATION, 1L);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     if (winhttp_tracing_verbose)
     {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_VERBOSE, 1);
         if (res != CURLE_OK)
+        {
+            TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
             return FALSE;
+        }
     }
 
     /* enable TCP keep-alive for this transfer */
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_TCP_KEEPALIVE, 1L);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     /* keep-alive idle time to 120 seconds */
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_TCP_KEEPIDLE, 120L);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     /* interval time between keep-alive probes: 60 seconds */
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_TCP_KEEPINTVL, 60L);
     if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
+    }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSL_VERIFYPEER, request->VerifyPeer());
-    if (res != CURLE_OK) {
+    if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
     }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSL_VERIFYHOST, request->VerifyHost());
-    if (res != CURLE_OK) {
+    if (res != CURLE_OK)
+    {
+        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
         return FALSE;
     }
 
@@ -2526,7 +2472,10 @@ BOOLAPI WinHttpSendRequest
     if (maxConnections) {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_MAXCONNECTS, maxConnections);
         if (res != CURLE_OK)
+        {
+            TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
             return FALSE;
+        }
     }
 
     if (dwContext)
@@ -2542,7 +2491,10 @@ BOOLAPI WinHttpSendRequest
     if (securityProtocols) {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSLVERSION, securityProtocols);
         if (res != CURLE_OK)
+        {
+            TRACE("%-35s:%-8d:%-16p securityProtocols:0x%lx res:%d\n", __func__, __LINE__, (void*)request, securityProtocols, res);
             return FALSE;
+        }
     }
 
     if (request->GetAsync())
@@ -2602,18 +2554,16 @@ BOOLAPI WinHttpSendRequest
 void WinHttpRequestImp::WaitAsyncReceiveCompletion(std::shared_ptr<WinHttpRequestImp> srequest)
 {
     bool expected = false;
-    bool result = std::atomic_compare_exchange_strong(&GetReceiveResponsePending(), &expected, true);
+    std::atomic_compare_exchange_strong(&GetReceiveResponsePending(), &expected, true);
 
     TRACE("%-35s:%-8d:%-16p GetReceiveResponsePending() = %d\n", __func__, __LINE__, (void*)this, (int) GetReceiveResponsePending());
-    std::unique_lock<std::mutex> lck(GetReceiveCompletionEventMtx());
-    while (!GetReceiveCompletionEventCounter())
-        GetReceiveCompletionEvent().wait(lck);
-    lck.unlock();
-
-    if (result && (GetCompletionCode() == CURLE_OK))
     {
-        TRACE("%-35s:%-8d:%-16p HandleReceiveNotifications \n", __func__, __LINE__, (void*)this);
-        HandleReceiveNotifications(srequest);
+        std::lock_guard<std::mutex> lck(GetReceiveCompletionEventMtx());
+        if (ResponseCallbackEventCounter())
+        {
+            TRACE("%-35s:%-8d:%-16p HandleReceiveNotifications \n", __func__, __LINE__, (void*)this);
+            HandleReceiveNotifications(srequest);
+        }
     }
 }
 
@@ -2873,7 +2823,8 @@ WinHttpSetTimeouts
     WinHttpRequestImp *request;
     CURLcode res;
 
-    TRACE("%-35s:%-8d:%-16p\n", __func__, __LINE__, (void*)base);
+    TRACE("%-35s:%-8d:%-16p nResolveTimeout:%d nConnectTimeout:%d nSendTimeout:%d nReceiveTimeout:%d\n",
+          __func__, __LINE__, (void*)base, nResolveTimeout, nConnectTimeout, nSendTimeout, nReceiveTimeout);
     if ((session = dynamic_cast<WinHttpSessionImp *>(base)))
     {
         session->SetTimeout(nReceiveTimeout);
@@ -2924,27 +2875,27 @@ static TSTRING FindRegex(const TSTRING &subject,const TSTRING &regstr)
 
 bool is_newline(char i)
 {
-	return (i == '\n') || (i == '\r');
+    return (i == '\n') || (i == '\r');
 }
 
 template<class CharT>
 std::basic_string<CharT> nullize_newlines(const std::basic_string<CharT>& str) {
-	std::basic_string<CharT> result;
-	result.reserve(str.size());
+    std::basic_string<CharT> result;
+    result.reserve(str.size());
 
-	auto cursor = str.begin();
-	const auto end = str.end();
-	for (;;) {
-		cursor = std::find_if_not(cursor, end, is_newline);
-		if (cursor == end) {
-			return result;
-		}
+    auto cursor = str.begin();
+    const auto end = str.end();
+    for (;;) {
+        cursor = std::find_if_not(cursor, end, is_newline);
+        if (cursor == end) {
+            return result;
+        }
 
-		const auto nextNewline = std::find_if(cursor, end, is_newline);
-		result.append(cursor, nextNewline);
-		result.push_back(CharT{});
-		cursor = nextNewline;
-	}
+        const auto nextNewline = std::find_if(cursor, end, is_newline);
+        result.append(cursor, nextNewline);
+        result.push_back(CharT{});
+        cursor = nextNewline;
+    }
 }
 
 BOOLAPI WinHttpQueryHeaders(
@@ -3213,31 +3164,50 @@ BOOLAPI WinHttpQueryHeaders(
 
 DWORD ConvertSecurityProtocol(DWORD offered)
 {
-    DWORD curlOffered = CURL_SSLVERSION_DEFAULT;
+    DWORD min = 0;
+    DWORD max = 0;
 
-    if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_SSL2)
-        curlOffered = CURL_SSLVERSION_SSLv2;
-
-    if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_SSL3)
-        curlOffered = CURL_SSLVERSION_SSLv3;
+    if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_SSL2) {
+        min = CURL_SSLVERSION_SSLv2;
+    }
+    else if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_SSL3) {
+        min = CURL_SSLVERSION_SSLv3;
+    }
 
     if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_TLS1) {
-        curlOffered = CURL_SSLVERSION_TLSv1;
-        curlOffered |= CURL_SSLVERSION_MAX_TLSv1_0;
-    }
+        min = CURL_SSLVERSION_TLSv1_0;
 
-    if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1) {
-        curlOffered = CURL_SSLVERSION_TLSv1;
-        curlOffered &= ~0xFFFF;
-        curlOffered |= CURL_SSLVERSION_MAX_TLSv1_1;
     }
+    else if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1) {
+        min = CURL_SSLVERSION_TLSv1_1;
+    }
+    else if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2) {
+        min = CURL_SSLVERSION_TLSv1_2;
+    }
+    else
+        min = CURL_SSLVERSION_DEFAULT;
 
+#if (LIBCURL_VERSION_MAJOR==7) && (LIBCURL_VERSION_MINOR >= 61)
     if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2) {
-        curlOffered = CURL_SSLVERSION_TLSv1;
-        curlOffered &= ~0xFFFF;
-        curlOffered |= CURL_SSLVERSION_MAX_TLSv1_2;
+        max = CURL_SSLVERSION_MAX_TLSv1_2;
     }
-    return curlOffered;
+    else if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1) {
+        max = CURL_SSLVERSION_MAX_TLSv1_1;
+    }
+    else if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_TLS1) {
+        max = CURL_SSLVERSION_MAX_TLSv1_0;
+    }
+    else if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_SSL3) {
+        max = CURL_SSLVERSION_SSLv3;
+    }
+    else if (offered & WINHTTP_FLAG_SECURE_PROTOCOL_SSL2) {
+        max = CURL_SSLVERSION_SSLv2;
+    }
+    else
+        max = CURL_SSLVERSION_MAX_DEFAULT;
+#endif
+
+    return min | max;
 }
 
 BOOLAPI WinHttpSetOption(
