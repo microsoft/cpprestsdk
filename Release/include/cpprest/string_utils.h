@@ -18,6 +18,7 @@
 #include <limits.h>
 #include <locale.h>
 #include <string>
+#include <typeinfo>
 #include <vector>
 
 #ifndef _WIN32
