@@ -86,7 +86,7 @@ jobs:
         maximumCpuCount: true
         platform: 'x64'
         configuration: 'Release'
-- job: Windows_VS2017_UWP
+  - job: Windows_VS2017_UWP
     pool:
       vmImage: 'vs2017-win2016'
     steps:
