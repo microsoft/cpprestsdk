@@ -95,6 +95,7 @@ function(add_sub_component name) # sources...
       PRIVATE
         nopch
     )
+	set_target_properties(${name}_objects PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${name}_objects PRIVATE ${name}_properties_PUBLIC ${name}_properties_PRIVATE)
 
     # create library of sub-component
