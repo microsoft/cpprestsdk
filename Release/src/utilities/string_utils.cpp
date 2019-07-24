@@ -15,6 +15,7 @@
 
 #include <cpprest/string_utils.h>
 
+#include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>

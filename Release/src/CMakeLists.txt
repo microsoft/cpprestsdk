@@ -59,6 +59,12 @@ target_include_directories(cpprest
 )
 target_link_libraries(cpprest PUBLIC cpprest_interface_PUBLIC PRIVATE cpprest_interface_PRIVATE)
 set(CPPREST_TARGETS cpprest cpprest_interface_PUBLIC)
+if(NOT BUILD_SHARED_LIBS)
+  # for installed static libraries the private dependencies must also be
+  # installed, though those should be interfaces only.
+  list(APPEND CPPREST_TARGETS cpprest_interface_PRIVATE)
+endif()
+
 
 ## Sub-components
 
@@ -113,6 +119,11 @@ function(add_sub_component name) # sources...
   # append public properties (interface) target to install list
   # sub-component libraries (isolation build only) are not installed
   list(APPEND CPPREST_TARGETS ${name}_properties_PUBLIC)
+  if(NOT BUILD_SHARED_LIBS)
+    # for installed static libraries the private dependencies must also be
+    # installed, though those should be interfaces only.
+    list(APPEND CPPREST_TARGETS ${name}_properties_PRIVATE)
+  endif()
   set(CPPREST_TARGETS ${CPPREST_TARGETS} PARENT_SCOPE)
 endfunction()
 
