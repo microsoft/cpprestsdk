@@ -19,6 +19,8 @@
 
 #include "cpprest/details/fileio.h"
 
+#include <boost/asio/ssl.hpp>
+
 using namespace boost::asio;
 using namespace Concurrency::streams::details;
 
