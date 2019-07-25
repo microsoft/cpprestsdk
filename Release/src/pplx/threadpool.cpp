@@ -10,6 +10,7 @@
 
 #include "pplx/threadpool.h"
 #include <boost/asio/detail/thread.hpp>
+#include <mutex>
 #include <new>
 #include <type_traits>
 #include <utility>

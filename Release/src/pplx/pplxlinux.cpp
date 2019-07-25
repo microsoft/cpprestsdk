@@ -16,6 +16,7 @@
 #include "pplx/pplx.h"
 #include "pplx/threadpool.h"
 #include "sys/syscall.h"
+#include <boost/bind.hpp>
 #include <thread>
 
 #ifdef _WIN32
