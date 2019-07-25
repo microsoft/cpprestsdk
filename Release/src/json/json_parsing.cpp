@@ -17,6 +17,7 @@
 
 #include <array>
 #include <cstdlib>
+#include <cstring>
 
 #if defined(_MSC_VER)
 #pragma warning(disable : 4127) // allow expressions like while(true) pass
@@ -826,7 +827,7 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
             const size_t numChars = m_position - start - 1;
             const size_t prevSize = token.string_val.size();
             token.string_val.resize(prevSize + numChars);
-            memcpy(const_cast<CharType*>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
+            std::memcpy(const_cast<CharType*>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
 
             if (!JSON_StringParser<CharType>::handle_unescape_char(token))
             {
@@ -847,7 +848,7 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
     const size_t numChars = m_position - start - 1;
     const size_t prevSize = token.string_val.size();
     token.string_val.resize(prevSize + numChars);
-    memcpy(const_cast<CharType*>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
+    std::memcpy(const_cast<CharType*>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
 
     token.kind = JSON_Parser<CharType>::Token::TKN_StringLiteral;
 
