@@ -21,9 +21,15 @@
 #include <string>
 #include <memory>
 #include <codecvt>
+#include <iomanip>
+#include <chrono>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
+
+#ifdef WIN32
+#define localtime_r(_Time, _Tm) localtime_s(_Tm, _Time)
+#endif
 
 #define _WINHTTP_INTERNAL_
 #ifdef _MSC_VER
@@ -49,7 +55,7 @@ class WinHttpRequestImp;
 #pragma comment(lib, "Ws2_32.lib")
 #endif
 
-std::map<DWORD, TSTRING> StatusCodeMap = {
+static const std::map<DWORD, TSTRING> StatusCodeMap = {
 { 100, TEXT("Continue") },
 { 101, TEXT("Switching Protocols") },
 { 200, TEXT("OK") },
@@ -100,14 +106,14 @@ enum
     WINHTTP_CLASS_IMP,
 };
 
-int winhttp_tracing = false;
-int winhttp_tracing_verbose = false;
+static int winhttp_tracing = false;
+static int winhttp_tracing_verbose = false;
 
 #ifdef _MSC_VER
 int gettimeofday(struct timeval * tp, struct timezone * tzp);
 #endif
 
-std::mutex trcmtx;
+static std::mutex trcmtx;
 
 #ifndef _MSC_VER
 static void TRACE_INTERNAL(const char *fmt, ...) __attribute__ ((format (gnu_printf, 1, 2)));
@@ -119,17 +125,21 @@ static void TRACE_INTERNAL(const char *fmt, ...)
     va_list args;
     va_start(args, fmt);
 
-    struct timeval tv;
-    time_t nowtime;
-    struct tm *nowtm;
-    char tmbuf[64], buf[64];
+    tm localTime;
+    std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
+    time_t now = std::chrono::system_clock::to_time_t(t);
+    localtime_r(&now, &localTime);
 
-    gettimeofday(&tv, NULL);
-    nowtime = tv.tv_sec;
-    nowtm = localtime(&nowtime);
-    strftime(tmbuf, sizeof tmbuf, "%H:%M:%S", nowtm);
-    snprintf(buf, sizeof buf, "%s.%06ld ", tmbuf, tv.tv_usec);
-    printf("%s", buf);
+    const std::chrono::duration<double> tse = t.time_since_epoch();
+    std::chrono::seconds::rep milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(tse).count() % 1000;
+
+    std::cout << (1900 + localTime.tm_year) << '-'
+        << std::setfill('0') << std::setw(2) << (localTime.tm_mon + 1) << '-'
+        << std::setfill('0') << std::setw(2) << localTime.tm_mday << ' '
+        << std::setfill('0') << std::setw(2) << localTime.tm_hour << ':'
+        << std::setfill('0') << std::setw(2) << localTime.tm_min << ':'
+        << std::setfill('0') << std::setw(2) << localTime.tm_sec << '.'
+        << std::setfill('0') << std::setw(3) << milliseconds << " ";
 
     char szBuffer[512];
     vsnprintf(szBuffer, sizeof szBuffer -1, fmt, args);
@@ -143,6 +153,13 @@ static void TRACE_INTERNAL(const char *fmt, ...)
 
 #define TRACE_VERBOSE(fmt, ...) \
             do { if (winhttp_tracing_verbose) TRACE_INTERNAL(fmt, __VA_ARGS__); } while (0)
+
+#define CURL_BAILOUT_ONERROR(res, request, retval)                                         \
+    if ((res) != CURLE_OK)                                                                 \
+    {                                                                                      \
+        TRACE("%-35s:%-8d:%-16p res:%d\n", __func__, __LINE__, (void*)request, res);       \
+        return retval;                                                                     \
+    }
 
 typedef void (*CompletionCb)(std::shared_ptr<WinHttpRequestImp>, DWORD status);
 
@@ -182,13 +199,6 @@ static inline THREAD_HANDLE CREATETHREAD(LPTHREAD_START_ROUTINE func, LPVOID par
 }
 #endif
 
-void handle_error(const char *file, int lineno, const char *msg)
-{
-    fprintf(stderr, "** %s:%d %s\n", file, lineno, msg);
-    ERR_print_errors_fp(stderr);
-    /* exit(-1); */
-}
-
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 /* This array will store all of the mutexes available to OpenSSL. */
 static MUTEX_TYPE *mutex_buf = NULL;
@@ -207,7 +217,7 @@ static unsigned long id_function(void)
 }
 #endif
 
-int thread_setup(void)
+static int thread_setup(void)
 {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
     int i;
@@ -223,7 +233,7 @@ int thread_setup(void)
     return 1;
 }
 
-int thread_cleanup(void)
+static int thread_cleanup(void)
 {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
     int i;
@@ -370,6 +380,9 @@ public:
 
     BOOL SetUserData(void **data)
     {
+        if (!data)
+            return FALSE;
+
         m_UserBuffer = *data;
         return TRUE;
     }
@@ -411,7 +424,6 @@ class WinHttpRequestImp :public WinHttpBase, public std::enable_shared_from_this
     CURL *m_curl = NULL;
     std::vector<BYTE> m_ResponseString;
     std::string m_HeaderString = "";
-    size_t m_TotalHeaderStringLength = 0;
     std::string m_Header = "";
     std::string m_FullPath = "";
     std::string m_OptionalData = "";
@@ -477,7 +489,8 @@ public:
     }
     WINHTTP_STATUS_CALLBACK GetCallback(DWORD *dwNotificationFlags)
     {
-        *dwNotificationFlags = m_NotificationFlags;
+        if (dwNotificationFlags)
+            *dwNotificationFlags = m_NotificationFlags;
         return m_InternetCallback;
     }
 
@@ -492,7 +505,7 @@ public:
     bool HandleQueryDataNotifications(std::shared_ptr<WinHttpRequestImp>, size_t available);
     void WaitAsyncQueryDataCompletion(std::shared_ptr<WinHttpRequestImp>);
 
-    void HandleReceiveNotifications(std::shared_ptr<WinHttpRequestImp>);
+    void HandleReceiveNotifications(std::shared_ptr<WinHttpRequestImp> srequest);
     void WaitAsyncReceiveCompletion(std::shared_ptr<WinHttpRequestImp> srequest);
 
     CURLcode &GetCompletionCode() { return m_CompletionCode; }
@@ -512,6 +525,9 @@ public:
     static THREADRETURN UploadThreadFunction(THREADPARAM lpThreadParameter)
     {
         WinHttpRequestImp *request = static_cast<WinHttpRequestImp *>(lpThreadParameter);
+        if (!request)
+            return NULL;
+
         CURL *curl = request->GetCurl();
         CURLcode res;
 
@@ -519,12 +535,8 @@ public:
         /* Perform the request, res will get the return code */
         res = curl_easy_perform(curl);
         /* Check for errors */
-        if (res != CURLE_OK)
-        {
-            TRACE("curl_easy_perform() failed: %s\n",
-                curl_easy_strerror(res));
-            return FALSE;
-        }
+        CURL_BAILOUT_ONERROR(res, request, NULL);
+
         TRACE("%-35s:%-8d:%-16p res:%d\n", __func__, __LINE__, (void*)request, res);
         request->GetUploadThreadExitStatus() = true;
 
@@ -567,6 +579,9 @@ public:
 
     BOOL SetSecureProtocol(DWORD *data)
     {
+        if (!data)
+            return FALSE;
+
         m_SecureProtocol = *data;
         return TRUE;
     }
@@ -574,6 +589,9 @@ public:
 
     BOOL SetMaxConnections(DWORD *data)
     {
+        if (!data)
+            return FALSE;
+
         m_MaxConnections = *data;
         return TRUE;
     }
@@ -581,6 +599,9 @@ public:
 
     BOOL SetUserData(void **data)
     {
+        if (!data)
+            return FALSE;
+
         m_UserBuffer = *data;
         return TRUE;
     }
@@ -613,7 +634,6 @@ public:
     }
 
     std::vector<BYTE> &GetResponseString() { return m_ResponseString; }
-    size_t &GetTotalHeaderStringLength() { return m_TotalHeaderStringLength; }
     std::string &GetHeaderString() { return m_HeaderString; }
     CURL *GetCurl() { return m_curl; }
 
@@ -627,8 +647,7 @@ public:
             CURLcode res;
 
             res = curl_easy_setopt(GetCurl(), CURLOPT_PROXY, urlstr.c_str());
-            if (res != CURLE_OK)
-                return FALSE;
+            CURL_BAILOUT_ONERROR(res, this, FALSE);
         }
 
         return TRUE;
@@ -639,12 +658,10 @@ public:
         CURLcode res;
 
         res = curl_easy_setopt(GetCurl(), CURLOPT_URL, ServerName.c_str());
-        if (res != CURLE_OK)
-            return FALSE;
+        CURL_BAILOUT_ONERROR(res, this, FALSE);
 
         res = curl_easy_setopt(GetCurl(), CURLOPT_PORT, nServerPort);
-        if (res != CURLE_OK)
-            return FALSE;
+        CURL_BAILOUT_ONERROR(res, this, FALSE);
 
         return TRUE;
     }
@@ -653,9 +670,13 @@ public:
     size_t &GetReadLength() { return m_TotalReceiveSize; }
 
     std::string &GetOptionalData() { return m_OptionalData; }
-    void SetOptionalData(void *lpOptional, size_t dwOptionalLength)
+    BOOL SetOptionalData(void *lpOptional, size_t dwOptionalLength)
     {
+        if (!lpOptional || !dwOptionalLength)
+            return FALSE;
+
         m_OptionalData.assign(&(static_cast<char*>(lpOptional))[0], dwOptionalLength);
+        return TRUE;
     }
 
     std::vector<BYTE> &GetReadData() { return m_ReadData; }
@@ -714,8 +735,11 @@ public:
 
     static THREADRETURN UserCallbackThreadFunction(LPVOID lpThreadParameter);
 
-    void Queue(UserCallbackContext *ctx)
+    BOOL Queue(UserCallbackContext *ctx)
     {
+        if (!ctx)
+            return FALSE;
+
         {
             std::lock_guard<std::mutex> lck(m_MapMutex);
 
@@ -729,6 +753,7 @@ public:
             m_EventCounter++;
             m_hEvent.notify_all();
         }
+        return TRUE;
     }
 
     void DrainQueue()
@@ -951,6 +976,9 @@ public:
 
     int QueryData(int *still_running)
     {
+        if (!still_running)
+            return 0;
+
         int rc = 0;
         struct timeval timeout;
 
@@ -1102,6 +1130,9 @@ public:
 
     BOOL SetUserData(void **data)
     {
+        if (!data)
+            return FALSE;
+
         m_UserBuffer = *data;
         return TRUE;
     }
@@ -1109,6 +1140,9 @@ public:
 
     BOOL SetSecureProtocol(DWORD *data)
     {
+        if (!data)
+            return FALSE;
+
         m_SecureProtocol = *data;
         return TRUE;
     }
@@ -1116,6 +1150,9 @@ public:
 
     BOOL SetMaxConnections(DWORD *data)
     {
+        if (!data)
+            return FALSE;
+
         m_MaxConnections = *data;
         return TRUE;
     }
@@ -1159,12 +1196,9 @@ public:
     }
     WINHTTP_STATUS_CALLBACK GetCallback(DWORD *dwNotificationFlags)
     {
-        *dwNotificationFlags = m_NotificationFlags;
+        if (dwNotificationFlags)
+            *dwNotificationFlags = m_NotificationFlags;
         return m_InternetCallback;
-    }
-
-    WinHttpSessionImp()
-    {
     }
 
     ~WinHttpSessionImp()
@@ -1245,7 +1279,6 @@ THREADRETURN ComContainer::AsyncThreadFunction(LPVOID lpThreadParameter)
 
                     if (m->data.result == CURLE_OK)
                     {
-                        DWORD read = 0;
                         BYTE *ptr = request->GetResponseString().data();
                         size_t available = request->GetResponseString().size();
                         while (1)
@@ -1257,7 +1290,7 @@ THREADRETURN ComContainer::AsyncThreadFunction(LPVOID lpThreadParameter)
                             size_t len = MIN(buf.m_Length, available);
                             if (len)
                             {
-                                TRACE("%-35s:%-8d:%-16p reading length:%lu written:%lu\n", __func__, __LINE__, (void*)request, len, read);
+                                TRACE("%-35s:%-8d:%-16p reading length:%lu\n", __func__, __LINE__, (void*)request, len);
                                 memcpy(static_cast<char*>(buf.m_Buffer), ptr, len);
                             }
 
@@ -1420,6 +1453,8 @@ WinHttpSessionImp *GetImp(WinHttpBase *base)
     else if ((request = dynamic_cast<WinHttpRequestImp *>(base)))
     {
         connect = request->GetSession();
+        if (!connect)
+            return NULL;
         session = connect->GetHandle();
     }
     else
@@ -1494,6 +1529,9 @@ void WinHttpRequestImp::HandleReceiveNotifications(std::shared_ptr<WinHttpReques
 
 size_t WinHttpRequestImp::WriteHeaderFunction(void *ptr, size_t size, size_t nmemb, void* rqst) {
     WinHttpRequestImp *request = static_cast<WinHttpRequestImp *>(rqst);
+    if (!request)
+        return 0;
+
     std::shared_ptr<WinHttpRequestImp> srequest = request->shared_from_this();
     if (!srequest)
         return size * nmemb;
@@ -1504,7 +1542,6 @@ size_t WinHttpRequestImp::WriteHeaderFunction(void *ptr, size_t size, size_t nme
         std::lock_guard<std::mutex> lck(request->GetHeaderStringMutex());
 
         request->GetHeaderString().append(static_cast<char*>(ptr), size * nmemb);
-        request->GetTotalHeaderStringLength() += size * nmemb;
 
         if (request->GetHeaderString().find("\r\n\r\n") != std::string::npos)
             EofHeaders = true;
@@ -1545,6 +1582,9 @@ size_t WinHttpRequestImp::WriteBodyFunction(void *ptr, size_t size, size_t nmemb
     DWORD available = size * nmemb;
     DWORD read = 0;
     WinHttpRequestImp *request = static_cast<WinHttpRequestImp *>(rqst);
+    if (!request)
+        return 0;
+
     std::shared_ptr<WinHttpRequestImp> srequest = request->shared_from_this();
     if (!srequest)
         return available;
@@ -1602,7 +1642,6 @@ void WinHttpRequestImp::CleanUp()
     m_CompletionCode = CURLE_OK;
     m_ResponseString.clear();
     m_HeaderString.clear();
-    m_TotalHeaderStringLength = 0;
     m_TotalReceiveSize = 0;
     m_ReadData.clear();
     m_ReadDataEventCounter = 0;
@@ -1683,7 +1722,7 @@ BOOL WinHttpRequestImp::AsyncQueue(std::shared_ptr<WinHttpRequestImp> &requestRe
 
     userdata = GetUserData();
 
-    ctx = new UserCallbackContext(requestRef, dwInternetStatus, (DWORD)statusInformationLength,
+    ctx = new UserCallbackContext(requestRef, dwInternetStatus, static_cast<DWORD>(statusInformationLength),
                                     dwNotificationFlags, cb, userdata, statusInformation,
                                     statusInformationCopySize, allocate, RequestCompletionCb);
     if (ctx) {
@@ -1754,7 +1793,7 @@ size_t WinHttpRequestImp::ReadCallback(void *ptr, size_t size, size_t nmemb, voi
 
             if (len)
             {
-                memcpy(static_cast<char*>(ptr), (char*)buf.m_Buffer + buf.m_Used, len);
+                memcpy(static_cast<char*>(ptr), static_cast<char*>(buf.m_Buffer) + buf.m_Used, len);
             }
 
             buf.m_Used += len;
@@ -1839,6 +1878,8 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpen
 )
 {
     std::shared_ptr<WinHttpSessionImp> session = std::make_shared<WinHttpSessionImp> ();
+    if (!session)
+        return NULL;
 
     TRACE("%-35s:%-8d:%-16p\n", __func__, __LINE__, (void*) (session.get()));
     if (dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY)
@@ -1869,6 +1910,8 @@ WINHTTPAPI HINTERNET WINAPI WinHttpConnect
 )
 {
     WinHttpSessionImp *session = static_cast<WinHttpSessionImp *>(hSession);
+    if (!session)
+        return NULL;
 
     TRACE("%-35s:%-8d:%-16p pswzServerName: " STRING_LITERAL " nServerPort:%d\n",
           __func__, __LINE__, (void*)session, pswzServerName, nServerPort);
@@ -1945,7 +1988,13 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpenRequest(
 )
 {
     WinHttpConnectImp *connect = static_cast<WinHttpConnectImp *>(hConnect);
+    if (!connect)
+        return NULL;
+
     WinHttpSessionImp *session = connect->GetHandle();
+    if (!session)
+        return NULL;
+
     CURLcode res;
 
     if (!pwszVerb)
@@ -2032,31 +2081,24 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpenRequest(
     if (session->GetTimeout() > 0)
     {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_TIMEOUT_MS, session->GetTimeout());
-        if (res != CURLE_OK) {
-            return NULL;
-        }
+        CURL_BAILOUT_ONERROR(res, request, NULL);
     }
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_LOW_SPEED_TIME, 60L);
-    if (res != CURLE_OK)
-        return NULL;
+    CURL_BAILOUT_ONERROR(res, request, NULL);
+
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_LOW_SPEED_LIMIT, 1L);
-    if (res != CURLE_OK)
-        return NULL;
+    CURL_BAILOUT_ONERROR(res, request, NULL);
 
     request->SetProxy(session->GetProxies());
 
     if (WCTCMP(pwszVerb, (const TCHAR *)TEXT("PUT")) == 0)
     {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_PUT, 1L);
-        if (res != CURLE_OK) {
-            return NULL;
-        }
+        CURL_BAILOUT_ONERROR(res, request, NULL);
 
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_UPLOAD, 1L);
-        if (res != CURLE_OK) {
-            return NULL;
-        }
+        CURL_BAILOUT_ONERROR(res, request, NULL);
     }
     else if (WCTCMP(pwszVerb, (const TCHAR *)TEXT("GET")) == 0)
     {
@@ -2064,9 +2106,7 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpenRequest(
     else if (WCTCMP(pwszVerb, (const TCHAR *)TEXT("POST")) == 0)
     {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_POST, 1L);
-        if (res != CURLE_OK) {
-            return NULL;
-        }
+        CURL_BAILOUT_ONERROR(res, request, NULL);
     }
     else
     {
@@ -2075,9 +2115,7 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpenRequest(
         ConvertCstrAssign(pwszVerb, WCTLEN(pwszVerb), verb);
         TRACE("%-35s:%-8d:%-16p setting custom header %s\n", __func__, __LINE__, (void*)request, verb.c_str());
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_CUSTOMREQUEST, verb.c_str());
-        if (res != CURLE_OK) {
-            return NULL;
-        }
+        CURL_BAILOUT_ONERROR(res, request, NULL);
     }
 
     if (pwszVersion)
@@ -2094,9 +2132,7 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpenRequest(
             return NULL;
 
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_HTTP_VERSION, ver);
-        if (res != CURLE_OK) {
-            return NULL;
-        }
+        CURL_BAILOUT_ONERROR(res, request, NULL);
     }
 
     if (pwszReferrer)
@@ -2104,9 +2140,7 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpenRequest(
         ConvertCstrAssign(pwszReferrer, WCTLEN(pwszReferrer), session->GetReferrer());
 
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_REFERER, session->GetReferrer().c_str());
-        if (res != CURLE_OK) {
-            return NULL;
-        }
+        CURL_BAILOUT_ONERROR(res, request, NULL);
     }
 
     if (dwFlags & WINHTTP_FLAG_SECURE)
@@ -2144,66 +2178,47 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpenRequest(
             pPassphrase = env_p;
 
         if (pEngine) {
-            if (curl_easy_setopt(request->GetCurl(), CURLOPT_SSLENGINE, pEngine) != CURLE_OK) {
-                /* load the crypto engine */
-                TRACE("%s", "can't set crypto engine\n");
-                return NULL;
-            }
-            if (curl_easy_setopt(request->GetCurl(), CURLOPT_SSLENGINE_DEFAULT, 1L) != CURLE_OK) {
-                /* set the crypto engine as default */
-                /* only needed for the first time you load
-                   a engine a curl object... */
-                TRACE("%s", "can't set crypto engine as default\n");
-                return NULL;
-            }
+            res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSLENGINE, pEngine);
+            CURL_BAILOUT_ONERROR(res, request, NULL);
+
+            res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSLENGINE_DEFAULT, 1L);
+            CURL_BAILOUT_ONERROR(res, request, NULL);
         }
         /* cert is stored PEM coded in file... */
         /* since PEM is default, we needn't set it for PEM */
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSLCERTTYPE, "PEM");
-        if (res != CURLE_OK) {
-            return NULL;
-        }
+        CURL_BAILOUT_ONERROR(res, request, NULL);
 
         /* set the cert for client authentication */
         if (pCertFile) {
             res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSLCERT, pCertFile);
-            if (res != CURLE_OK) {
-                return NULL;
-            }
+            CURL_BAILOUT_ONERROR(res, request, NULL);
         }
 
         /* sorry, for engine we must set the passphrase
            (if the key has one...) */
         if (pPassphrase) {
             res = curl_easy_setopt(request->GetCurl(), CURLOPT_KEYPASSWD, pPassphrase);
-            if (res != CURLE_OK) {
-                return NULL;
-            }
+            CURL_BAILOUT_ONERROR(res, request, NULL);
         }
 
         /* if we use a key stored in a crypto engine,
            we must set the key type to "ENG" */
         if (pKeyType) {
             res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSLKEYTYPE, pKeyType);
-            if (res != CURLE_OK) {
-                return NULL;
-            }
+            CURL_BAILOUT_ONERROR(res, request, NULL);
         }
 
         /* set the private key (file or ID in engine) */
         if (pKeyName) {
             res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSLKEY, pKeyName);
-            if (res != CURLE_OK) {
-                return NULL;
-            }
+            CURL_BAILOUT_ONERROR(res, request, NULL);
         }
 
         /* set the file with the certs vaildating the server */
         if (pCACertFile) {
             res = curl_easy_setopt(request->GetCurl(), CURLOPT_CAINFO, pCACertFile);
-            if (res != CURLE_OK) {
-                return NULL;
-            }
+            CURL_BAILOUT_ONERROR(res, request, NULL);
         }
     }
     if (pwszVerb)
@@ -2255,10 +2270,7 @@ WinHttpAddRequestHeaders
         request->AddHeader(headers);
 
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_HTTPHEADER, request->GetHeaderList());
-        if (res != CURLE_OK)
-        {
-            return FALSE;
-        }
+        CURL_BAILOUT_ONERROR(res, request, FALSE);
     }
 
     return TRUE;
@@ -2281,6 +2293,9 @@ BOOLAPI WinHttpSendRequest
         return FALSE;
 
     WinHttpConnectImp *connect = request->GetSession();
+    if (!connect)
+        return FALSE;
+
     WinHttpSessionImp *session = connect->GetHandle();
 
     std::shared_ptr<WinHttpRequestImp> srequest = request->shared_from_this();
@@ -2314,8 +2329,7 @@ BOOLAPI WinHttpSendRequest
         {
             /* Now specify the POST data */
             res = curl_easy_setopt(request->GetCurl(), CURLOPT_POSTFIELDS, request->GetOptionalData().c_str());
-            if (res != CURLE_OK)
-                return FALSE;
+            CURL_BAILOUT_ONERROR(res, request, FALSE);
         }
     }
 
@@ -2336,134 +2350,68 @@ BOOLAPI WinHttpSendRequest
     if (request->GetType() == "POST")
     {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_POSTFIELDSIZE, (long)totalsize);
-        if (res != CURLE_OK)
-            return FALSE;
+        CURL_BAILOUT_ONERROR(res, request, FALSE);
     }
     else if (totalsize)
     {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_INFILESIZE_LARGE, (curl_off_t)totalsize);
-        if (res != CURLE_OK)
-            return FALSE;
+        CURL_BAILOUT_ONERROR(res, request, FALSE);
     }
 
     request->GetTotalLength() = dwTotalLength;
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_READDATA, request);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_READFUNCTION, request->ReadCallback);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_DEBUGFUNCTION, request->SocketCallback);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_DEBUGDATA, request);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_WRITEFUNCTION, request->WriteBodyFunction);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_WRITEDATA, request);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_HEADERFUNCTION, request->WriteHeaderFunction);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_HEADERDATA, request);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_PRIVATE, request);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_FOLLOWLOCATION, 1L);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     if (winhttp_tracing_verbose)
     {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_VERBOSE, 1);
-        if (res != CURLE_OK)
-        {
-            TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-            return FALSE;
-        }
+        CURL_BAILOUT_ONERROR(res, request, FALSE);
     }
 
     /* enable TCP keep-alive for this transfer */
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_TCP_KEEPALIVE, 1L);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     /* keep-alive idle time to 120 seconds */
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_TCP_KEEPIDLE, 120L);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     /* interval time between keep-alive probes: 60 seconds */
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_TCP_KEEPINTVL, 60L);
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSL_VERIFYPEER, request->VerifyPeer());
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSL_VERIFYHOST, request->VerifyHost());
-    if (res != CURLE_OK)
-    {
-        TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-        return FALSE;
-    }
+    CURL_BAILOUT_ONERROR(res, request, FALSE);
 
     DWORD maxConnections = 0;
 
@@ -2474,11 +2422,7 @@ BOOLAPI WinHttpSendRequest
 
     if (maxConnections) {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_MAXCONNECTS, maxConnections);
-        if (res != CURLE_OK)
-        {
-            TRACE("%-35s:%-8d:%-16p \n", __func__, __LINE__, (void*)request);
-            return FALSE;
-        }
+        CURL_BAILOUT_ONERROR(res, request, FALSE);
     }
 
     if (dwContext)
@@ -2493,11 +2437,7 @@ BOOLAPI WinHttpSendRequest
 
     if (securityProtocols) {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_SSLVERSION, securityProtocols);
-        if (res != CURLE_OK)
-        {
-            TRACE("%-35s:%-8d:%-16p securityProtocols:0x%lx res:%d\n", __func__, __LINE__, (void*)request, securityProtocols, res);
-            return FALSE;
-        }
+        CURL_BAILOUT_ONERROR(res, request, FALSE);
     }
 
     if (request->GetAsync())
@@ -2508,22 +2448,14 @@ BOOLAPI WinHttpSendRequest
             return FALSE;
         }
         request->CleanUp();
-
-        TRACE("%-35s:%-8d:%-16p use_count = %lu\n", __func__, __LINE__, (void*)request, srequest.use_count());
         request->AsyncQueue(srequest, WINHTTP_CALLBACK_STATUS_SENDING_REQUEST, 0, NULL, 0, false);
-
-        TRACE("%-35s:%-8d:%-16p use_count = %lu\n", __func__, __LINE__, (void*)request, srequest.use_count());
 
         if (!ComContainer::GetInstance().AddHandle(srequest, request->GetCurl()))
             return FALSE;
 
-        TRACE("%-35s:%-8d:%-16p use_count = %lu\n", __func__, __LINE__, (void*)request, srequest.use_count());
         ComContainer::GetInstance().KickStart();
 
-        TRACE("%-35s:%-8d:%-16p use_count = %lu\n", __func__, __LINE__, (void*)request, srequest.use_count());
         request->AsyncQueue(srequest, WINHTTP_CALLBACK_STATUS_REQUEST_SENT, 0, NULL, 0, false);
-
-        TRACE("%-35s:%-8d:%-16p use_count = %lu\n", __func__, __LINE__, (void*)request, srequest.use_count());
         request->AsyncQueue(srequest, WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE, 0, NULL, 0, false);
 
         TRACE("%-35s:%-8d:%-16p use_count = %lu\n", __func__, __LINE__, (void*)request, srequest.use_count());
@@ -2542,12 +2474,7 @@ BOOLAPI WinHttpSendRequest
             /* Perform the request, res will get the return code */
             res = curl_easy_perform(request->GetCurl());
             /* Check for errors */
-            if (res != CURLE_OK)
-            {
-                TRACE("curl_easy_perform() failed: %s\n",
-                    curl_easy_strerror(res));
-                return FALSE;
-            }
+            CURL_BAILOUT_ONERROR(res, request, FALSE);
         }
     }
 
@@ -2835,8 +2762,7 @@ WinHttpSetTimeouts
     else if ((request = dynamic_cast<WinHttpRequestImp *>(base)))
     {
         res = curl_easy_setopt(request->GetCurl(), CURLOPT_TIMEOUT_MS, nReceiveTimeout);
-        if (res != CURLE_OK)
-            return FALSE;
+        CURL_BAILOUT_ONERROR(res, request, FALSE);
     }
     else
         return FALSE;
@@ -2901,6 +2827,28 @@ std::basic_string<CharT> nullize_newlines(const std::basic_string<CharT>& str) {
     }
 }
 
+static void TerminateString(TCHAR *wbuffer, size_t length, LPDWORD lpdwBufferLength)
+{
+    if (wbuffer[length] != TEXT('\0'))
+    {
+        if (lpdwBufferLength)
+        {
+            if ((length + 1) < (*lpdwBufferLength / sizeof(TCHAR)))
+            {
+                wbuffer[length] = 0;
+            }
+            else
+            {
+                wbuffer[(*lpdwBufferLength / sizeof(TCHAR)) - 1] = 0;
+            }
+        }
+        else
+        {
+            wbuffer[length] = 0;
+        }
+    }
+}
+
 BOOLAPI WinHttpQueryHeaders(
     HINTERNET   hRequest,
     DWORD       dwInfoLevel,
@@ -2945,8 +2893,7 @@ BOOLAPI WinHttpQueryHeaders(
         DWORD retValue;
 
         res = curl_easy_getinfo(request->GetCurl(), CURLINFO_HTTP_VERSION, &retValue);
-        if (res != CURLE_OK)
-            return FALSE;
+        CURL_BAILOUT_ONERROR(res, request, FALSE);
 
         if (!returnDWORD && SizeCheck(lpBuffer, lpdwBufferLength, (NumDigits(retValue) + 1) * sizeof(TCHAR)) == FALSE)
             return FALSE;
@@ -2973,8 +2920,7 @@ BOOLAPI WinHttpQueryHeaders(
         DWORD retValue;
 
         res = curl_easy_getinfo(request->GetCurl(), CURLINFO_RESPONSE_CODE, &retValue);
-        if (res != CURLE_OK)
-            return FALSE;
+        CURL_BAILOUT_ONERROR(res, request, FALSE);
 
         if (!returnDWORD && SizeCheck(lpBuffer, lpdwBufferLength, (NumDigits(retValue) + 1) * sizeof(TCHAR)) == FALSE)
             return FALSE;
@@ -3003,8 +2949,7 @@ BOOLAPI WinHttpQueryHeaders(
         size_t length;
 
         res = curl_easy_getinfo(request->GetCurl(), CURLINFO_RESPONSE_CODE, &responseCode);
-        if (res != CURLE_OK)
-            return FALSE;
+        CURL_BAILOUT_ONERROR(res, request, FALSE);
 
         std::lock_guard<std::mutex> lck(request->GetHeaderStringMutex());
         length = request->GetHeaderString().length();
@@ -3055,7 +3000,7 @@ BOOLAPI WinHttpQueryHeaders(
         }
         else
         {
-            TSTRING retStr = StatusCodeMap[responseCode];
+            TSTRING retStr = StatusCodeMap.at(responseCode);
             if (retStr == TEXT(""))
                 return FALSE;
 
@@ -3093,26 +3038,9 @@ BOOLAPI WinHttpQueryHeaders(
         std::copy(wc.begin(), wc.end(), wbuffer);
         wbuffer[header.length()] = TEXT('\0');
 #else
-        strncpy(wbuffer, header.c_str(), length);
+        memcpy(wbuffer, header.c_str(), length);
 #endif
-        if (wbuffer[length] != TEXT('\0'))
-        {
-            if (lpdwBufferLength)
-            {
-                if ((length + 1) < (*lpdwBufferLength / sizeof(TCHAR)))
-                {
-                    wbuffer[length] = 0;
-                }
-                else
-                {
-                    wbuffer[(*lpdwBufferLength / sizeof(TCHAR)) - 1] = 0;
-                }
-            }
-            else
-            {
-                wbuffer[length] = 0;
-            }
-        }
+        TerminateString(wbuffer, length, lpdwBufferLength);
         if (lpdwBufferLength)
             *lpdwBufferLength = (DWORD)length;
         return TRUE;
@@ -3139,23 +3067,9 @@ BOOLAPI WinHttpQueryHeaders(
         wbuffer[request->GetHeaderString().length()] = TEXT('\0');
 
 #else
-        strncpy(wbuffer, request->GetHeaderString().c_str(), length);
+        memcpy(wbuffer, request->GetHeaderString().c_str(), length);
 #endif
-        if (lpdwBufferLength)
-        {
-            if ((length + 1) < (*lpdwBufferLength / sizeof(TCHAR)))
-            {
-                wbuffer[length] = 0;
-            }
-            else
-            {
-                wbuffer[(*lpdwBufferLength / sizeof(TCHAR)) - 1] = 0;
-            }
-        }
-        else
-        {
-            wbuffer[length] = 0;
-        }
+        TerminateString(wbuffer, length, lpdwBufferLength);
         if (lpdwBufferLength)
             *lpdwBufferLength = (DWORD)(length * sizeof(TCHAR));
         return TRUE;
@@ -3165,7 +3079,7 @@ BOOLAPI WinHttpQueryHeaders(
     return FALSE;
 }
 
-DWORD ConvertSecurityProtocol(DWORD offered)
+static DWORD ConvertSecurityProtocol(DWORD offered)
 {
     DWORD min = 0;
     DWORD max = 0;
@@ -3213,6 +3127,23 @@ DWORD ConvertSecurityProtocol(DWORD offered)
     return min | max;
 }
 
+
+template <class T, typename prmtype>
+static BOOL CallMemberFunction(WinHttpBase *base, std::function<BOOL(T*, prmtype *data)> fn, LPVOID    lpBuffer)
+{
+    T *obj;
+
+    if (!lpBuffer)
+        return FALSE;
+
+    if ((obj = dynamic_cast<T *>(base)))
+    {
+        if (fn(obj, static_cast<prmtype*>(lpBuffer)))
+            return TRUE;
+    }
+    return FALSE;
+}
+
 BOOLAPI WinHttpSetOption(
     HINTERNET hInternet,
     DWORD     dwOption,
@@ -3226,103 +3157,46 @@ BOOLAPI WinHttpSetOption(
 
     if (dwOption == WINHTTP_OPTION_MAX_CONNS_PER_SERVER)
     {
-        WinHttpSessionImp *session;
-        WinHttpRequestImp *request;
-
         if (dwBufferLength != sizeof(DWORD))
             return FALSE;
 
-        if ((session = dynamic_cast<WinHttpSessionImp *>(base)))
-        {
-            if (!lpBuffer)
-                return FALSE;
-
-            if (!session->SetMaxConnections(static_cast<DWORD*>(lpBuffer)))
-                return FALSE;
+        if (CallMemberFunction<WinHttpSessionImp, DWORD>(base, &WinHttpSessionImp::SetMaxConnections, lpBuffer))
             return TRUE;
-        }
-        else if ((request = dynamic_cast<WinHttpRequestImp *>(base)))
-        {
-            if (!lpBuffer)
-                return FALSE;
 
-            if (!request->SetMaxConnections(static_cast<DWORD*>(lpBuffer)))
-                return FALSE;
+        if (CallMemberFunction<WinHttpRequestImp, DWORD>(base, &WinHttpRequestImp::SetMaxConnections, lpBuffer))
             return TRUE;
-        }
-        else
-            return FALSE;
 
+        return FALSE;
     }
     else if (dwOption == WINHTTP_OPTION_CONTEXT_VALUE)
     {
-        WinHttpConnectImp *connect;
-        WinHttpSessionImp *session;
-        WinHttpRequestImp *request;
-
         if (dwBufferLength != sizeof(void*))
             return FALSE;
 
-        if ((connect = dynamic_cast<WinHttpConnectImp *>(base)))
-        {
-            if (!lpBuffer)
-                return FALSE;
-
-            if (!connect->SetUserData(static_cast<void**>(lpBuffer)))
-                return FALSE;
+        if (CallMemberFunction<WinHttpConnectImp, void*>(base, &WinHttpConnectImp::SetUserData, lpBuffer))
             return TRUE;
-        }
-        else if ((session = dynamic_cast<WinHttpSessionImp *>(base)))
-        {
-            if (!lpBuffer)
-                return FALSE;
 
-            if (!session->SetUserData(static_cast<void**>(lpBuffer)))
-                return FALSE;
+        if (CallMemberFunction<WinHttpSessionImp, void*>(base, &WinHttpSessionImp::SetUserData, lpBuffer))
             return TRUE;
-        }
-        else if ((request = dynamic_cast<WinHttpRequestImp *>(base)))
-        {
-            if (!lpBuffer)
-                return FALSE;
 
-            if (!request->SetUserData(static_cast<void**>(lpBuffer)))
-                return FALSE;
+        if (CallMemberFunction<WinHttpRequestImp, void*>(base, &WinHttpRequestImp::SetUserData, lpBuffer))
             return TRUE;
-        }
-        else
-            return FALSE;
+
+        return FALSE;
     }
     else if (dwOption == WINHTTP_OPTION_SECURE_PROTOCOLS)
     {
-        WinHttpSessionImp *session;
-        WinHttpRequestImp *request;
-
         if (dwBufferLength != sizeof(DWORD))
             return FALSE;
 
-        if ((session = dynamic_cast<WinHttpSessionImp *>(base)))
-        {
-            if (!lpBuffer)
-                return FALSE;
-
-            DWORD curlOffered = ConvertSecurityProtocol(*static_cast<DWORD*>(lpBuffer));
-            if (curlOffered  && !session->SetSecureProtocol(&curlOffered))
-                return FALSE;
+        DWORD curlOffered = ConvertSecurityProtocol(*static_cast<DWORD*>(lpBuffer));
+        if (CallMemberFunction<WinHttpSessionImp, DWORD>(base, &WinHttpSessionImp::SetSecureProtocol, &curlOffered))
             return TRUE;
-        }
-        else if ((request = dynamic_cast<WinHttpRequestImp *>(base)))
-        {
-            if (!lpBuffer)
-                return FALSE;
 
-            DWORD curlOffered = ConvertSecurityProtocol(*static_cast<DWORD*>(lpBuffer));
-            if (curlOffered && !request->SetSecureProtocol(&curlOffered))
-                return FALSE;
+        if (CallMemberFunction<WinHttpRequestImp, DWORD>(base, &WinHttpRequestImp::SetSecureProtocol, &curlOffered))
             return TRUE;
-        }
-        else
-            return FALSE;
+
+        return FALSE;
     }
     else if (dwOption == WINHTTP_OPTION_SECURITY_FLAGS)
     {
@@ -3455,7 +3329,7 @@ WinHttpQueryOption
         std::copy(wc.begin(), wc.end(), wbuffer);
         wbuffer[strlen(url)] = TEXT('\0');
 #else
-        strncpy(wbuffer, url, length);
+        memcpy(wbuffer, url, length);
 #endif
         if (wbuffer[length] != TEXT('\0'))
         {
