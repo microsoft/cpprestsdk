@@ -217,11 +217,11 @@ jobs:
         ./test_runner *test.so
       displayName: 'Run tests, release'
     - script: |
-        cd ../../../build.debug.isolated/Release/Binaries
+        cd build.debug.isolated/Release/Binaries
         ./test_runner *test.so
       displayName: 'Run tests, isolated debug'
     - script: |
-        cd ../../../build.release.isolated/Release/Binaries
+        cd build.release.isolated/Release/Binaries
         ./test_runner *test.so
       displayName: 'Run tests, isolated release'
   - job: Ubuntu_1604_Vcpkg
