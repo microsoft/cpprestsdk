@@ -1036,14 +1036,6 @@ protected:
             return;
         }
 
-        // Only need to cache the request body if user specified and the request stream doesn't support seeking.
-        if (curl_context->m_bodyType != no_body && client_config().buffer_request() &&
-            !curl_context->_get_readbuffer().can_seek())
-        {
-            curl_context->m_readBufferCopy =
-                ::utility::details::make_unique<::concurrency::streams::container_buffer<std::vector<uint8_t>>>();
-        }
-
         _start_request_send(curl_context, content_length);
 
         return;
