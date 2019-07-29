@@ -679,7 +679,7 @@ private:
         client.stop_perpetual();
 
         // Can't join thread directly since it is the current thread.
-        pplx::create_task([this, connecting, ec, closeCode, reason]() mutable {
+        pplx::create_task([] {}).then([this, connecting, ec, closeCode, reason]() mutable {
             {
                 std::lock_guard<std::mutex> lock(m_wspp_client_lock);
                 if (m_thread.joinable())
