@@ -22,6 +22,7 @@ set(CPPREST_EXCLUDE_BROTLI ON CACHE BOOL "Exclude Brotli compression functionali
 set(CPPREST_EXPORT_DIR cpprestsdk CACHE STRING "Directory to install CMake config files.")
 set(CPPREST_INSTALL_HEADERS ON CACHE BOOL "Install header files.")
 set(CPPREST_INSTALL ON CACHE BOOL "Add install commands.")
+set(CPPREST_ENABLE_APISCAN ON CACHE BOOL "Add specific complier switch to enable ApiScan.")
 
 if(IOS OR ANDROID)
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
@@ -177,6 +178,15 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   set(WARNINGS)
   set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /ignore:4264")
   add_compile_options(/bigobj)
+  
+  if(CPPREST_ENABLE_APISCAN)
+    message("-- Set specific options for ApiScan")
+    add_compile_options(/Zi)
+    add_compile_options(/GF)
+    add_compile_options(/Gy)
+    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /DEBUGTYPE:cv,fixup /INCREMENTAL:NO")
+  endif()
+
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MP")
   set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MP")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MP")
