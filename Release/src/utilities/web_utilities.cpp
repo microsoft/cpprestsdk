@@ -47,14 +47,14 @@ void winrt_secure_zero_buffer(Windows::Storage::Streams::IBuffer ^ buffer)
     }
 }
 
-winrt_encryption::winrt_encryption(const ::utility::string_t& data)
+winrt_encryption::winrt_encryption(utility::string_view_t data)
 {
     auto provider = ref new Windows::Security::Cryptography::DataProtection::DataProtectionProvider(
         ref new Platform::String(L"Local=user"));
 
     // Create buffer containing plain text password.
     Platform::ArrayReference<unsigned char> arrayref(
-        reinterpret_cast<unsigned char*>(const_cast<::utility::string_t::value_type*>(data.c_str())),
+        reinterpret_cast<unsigned char*>(const_cast<::utility::string_t::value_type*>(data.data())),
         static_cast<unsigned int>(data.size()) * sizeof(::utility::string_t::value_type));
     Windows::Storage::Streams::IBuffer ^ plaintext =
         Windows::Security::Cryptography::CryptographicBuffer::CreateFromByteArray(arrayref);
@@ -91,7 +91,7 @@ plaintext_string winrt_encryption::decrypt() const
 
 #else  // ^^^ __cplusplus_winrt ^^^ // vvv !__cplusplus_winrt vvv
 
-win32_encryption::win32_encryption(const ::utility::string_t& data) : m_numCharacters(data.size())
+win32_encryption::win32_encryption(::utility::string_view_t data) : m_numCharacters(data.size())
 {
     // Early return because CryptProtectMemory crashes with empty string
     if (m_numCharacters == 0)
@@ -113,7 +113,7 @@ win32_encryption::win32_encryption(const ::utility::string_t& data) : m_numChara
     assert((dataNumBytes % CRYPTPROTECTMEMORY_BLOCK_SIZE) == 0);
     assert(dataNumBytes >= dataSizeDword);
     m_buffer.resize(dataNumBytes);
-    memcpy_s(m_buffer.data(), m_buffer.size(), data.c_str(), dataNumBytes);
+    memcpy_s(m_buffer.data(), m_buffer.size(), data.data(), dataNumBytes);
     if (!CryptProtectMemory(m_buffer.data(), dataNumBytes, CRYPTPROTECTMEMORY_SAME_PROCESS))
     {
         throw ::utility::details::create_system_error(GetLastError());

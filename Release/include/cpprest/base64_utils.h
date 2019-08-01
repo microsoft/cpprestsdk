@@ -36,7 +36,7 @@ _ASYNCRTIMP utility::string_t __cdecl to_base64(uint64_t data);
 /// <summary>
 /// Decode the given base64 string to a byte array
 /// </summary>
-_ASYNCRTIMP std::vector<unsigned char> __cdecl from_base64(const utility::string_t& str);
+_ASYNCRTIMP std::vector<unsigned char> __cdecl from_base64(utility::string_view_t str);
 
 } // namespace conversions
 

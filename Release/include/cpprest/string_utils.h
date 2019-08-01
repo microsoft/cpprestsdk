@@ -42,35 +42,35 @@ namespace conversions
 /// </summary>
 /// <param name="w">A two byte character UTF-16 string.</param>
 /// <returns>A single byte character UTF-8 string.</returns>
-_ASYNCRTIMP std::string __cdecl utf16_to_utf8(const utf16string& w);
+_ASYNCRTIMP std::string __cdecl utf16_to_utf8(utf16string_view w);
 
 /// <summary>
 /// Converts a UTF-8 string to a UTF-16
 /// </summary>
 /// <param name="s">A single byte character UTF-8 string.</param>
 /// <returns>A two byte character UTF-16 string.</returns>
-_ASYNCRTIMP utf16string __cdecl utf8_to_utf16(const std::string& s);
+_ASYNCRTIMP utf16string __cdecl utf8_to_utf16(utility::nstring_view_t s);
 
 /// <summary>
 /// Converts a ASCII (us-ascii) string to a UTF-16 string.
 /// </summary>
 /// <param name="s">A single byte character us-ascii string.</param>
 /// <returns>A two byte character UTF-16 string.</returns>
-_ASYNCRTIMP utf16string __cdecl usascii_to_utf16(const std::string& s);
+_ASYNCRTIMP utf16string __cdecl usascii_to_utf16(utility::nstring_view_t s);
 
 /// <summary>
 /// Converts a Latin1 (iso-8859-1) string to a UTF-16 string.
 /// </summary>
 /// <param name="s">A single byte character UTF-8 string.</param>
 /// <returns>A two byte character UTF-16 string.</returns>
-_ASYNCRTIMP utf16string __cdecl latin1_to_utf16(const std::string& s);
+_ASYNCRTIMP utf16string __cdecl latin1_to_utf16(utility::nstring_view_t s);
 
 /// <summary>
 /// Converts a Latin1 (iso-8859-1) string to a UTF-8 string.
 /// </summary>
 /// <param name="s">A single byte character UTF-8 string.</param>
 /// <returns>A single byte character UTF-8 string.</returns>
-_ASYNCRTIMP utf8string __cdecl latin1_to_utf8(const std::string& s);
+_ASYNCRTIMP utf8string __cdecl latin1_to_utf8(utility::nstring_view_t s);
 
 /// <summary>
 /// Converts to a platform dependent Unicode string type.
@@ -99,9 +99,18 @@ _ASYNCRTIMP utility::string_t __cdecl to_string_t(utf16string&& s);
 /// <param name="s">A single byte character UTF-8 string.</param>
 /// <returns>A platform dependent string type.</returns>
 #ifdef _UTF16_STRINGS
-_ASYNCRTIMP utility::string_t __cdecl to_string_t(const std::string& s);
+_ASYNCRTIMP utility::string_t __cdecl to_string_t(utility::nstring_view_t s);
 #else
 inline const utility::string_t& to_string_t(const std::string& s) { return s; }
+#if CPPREST_USE_STRING_VIEWS
+inline utility::string_view_t to_string_t(utility::nstring_view_t s) { return s; }
+#endif
+#endif
+
+#if CPPREST_USE_STRING_VIEWS
+// Provide precise overload for string literals to resolve ambiguity of other overloads.
+template<typename CharType>
+inline auto to_string_t(const CharType * s) { return to_string_t(std::basic_string_view(s)); }
 #endif
 
 /// <summary>
@@ -111,8 +120,11 @@ inline const utility::string_t& to_string_t(const std::string& s) { return s; }
 /// <returns>A platform dependent string type.</returns>
 #ifdef _UTF16_STRINGS
 inline const utility::string_t& to_string_t(const utf16string& s) { return s; }
+#if CPPREST_USE_STRING_VIEWS
+inline utf16string_view to_string_t(utf16string_view s) { return s; }
+#endif
 #else
-_ASYNCRTIMP utility::string_t __cdecl to_string_t(const utf16string& s);
+_ASYNCRTIMP utility::string_t __cdecl to_string_t(utf16string_view s);
 #endif
 
 /// <summary>
@@ -120,7 +132,7 @@ _ASYNCRTIMP utility::string_t __cdecl to_string_t(const utf16string& s);
 /// </summary>
 /// <param name="value">A single byte character UTF-8 string.</param>
 /// <returns>A two byte character UTF-16 string.</returns>
-_ASYNCRTIMP utf16string __cdecl to_utf16string(const std::string& value);
+_ASYNCRTIMP utf16string __cdecl to_utf16string(utility::nstring_view_t value);
 
 /// <summary>
 /// Converts to a UTF-16 from string.
@@ -128,6 +140,9 @@ _ASYNCRTIMP utf16string __cdecl to_utf16string(const std::string& value);
 /// <param name="value">A two byte character UTF-16 string.</param>
 /// <returns>A two byte character UTF-16 string.</returns>
 inline const utf16string& to_utf16string(const utf16string& value) { return value; }
+#if CPPREST_USE_STRING_VIEWS
+inline utf16string_view to_utf16string(utf16string_view value) { return value; }
+#endif
 /// <summary>
 /// Converts to a UTF-16 from string.
 /// </summary>
@@ -148,13 +163,16 @@ inline std::string&& to_utf8string(std::string&& value) { return std::move(value
 /// <param name="value">A single byte character UTF-8 string.</param>
 /// <returns>A single byte character UTF-8 string.</returns>
 inline const std::string& to_utf8string(const std::string& value) { return value; }
+#if CPPREST_USE_STRING_VIEWS
+inline utility::nstring_view_t to_utf8string(utility::nstring_view_t value) { return value; }
+#endif
 
 /// <summary>
 /// Converts to a UTF-8 string.
 /// </summary>
 /// <param name="value">A two byte character UTF-16 string.</param>
 /// <returns>A single byte character UTF-8 string.</returns>
-_ASYNCRTIMP std::string __cdecl to_utf8string(const utf16string& value);
+_ASYNCRTIMP std::string __cdecl to_utf8string(utf16string_view value);
 
 template<typename Source>
 CASABLANCA_DEPRECATED("All locale-sensitive APIs will be removed in a future update. Use stringstreams directly if "
@@ -216,6 +234,9 @@ utility::string_t print_string(const Source& val)
 }
 
 inline const utility::string_t& print_string(const utility::string_t& val) { return val; }
+#if CPPREST_USE_STRING_VIEWS
+inline utility::string_view_t print_string(utility::string_view_t val) { return val; }
+#endif
 
 template<typename Source>
 utf8string print_utf8string(const Source& val)
@@ -343,7 +364,7 @@ inline bool __cdecl is_alnum(Elem ch) CPPREST_NOEXCEPT
 /// <param name="left">First string to compare.</param>
 /// <param name="right">Second strong to compare.</param>
 /// <returns>true if the strings are equivalent, false otherwise</returns>
-_ASYNCRTIMP bool __cdecl str_iequal(const std::string& left, const std::string& right) CPPREST_NOEXCEPT;
+_ASYNCRTIMP bool __cdecl str_iequal(utility::nstring_view_t left, utility::nstring_view_t right) CPPREST_NOEXCEPT;
 
 /// <summary>
 /// Cross platform utility function for performing case insensitive string equality comparison.
@@ -351,7 +372,7 @@ _ASYNCRTIMP bool __cdecl str_iequal(const std::string& left, const std::string& 
 /// <param name="left">First string to compare.</param>
 /// <param name="right">Second strong to compare.</param>
 /// <returns>true if the strings are equivalent, false otherwise</returns>
-_ASYNCRTIMP bool __cdecl str_iequal(const std::wstring& left, const std::wstring& right) CPPREST_NOEXCEPT;
+_ASYNCRTIMP bool __cdecl str_iequal(utility::wstring_view_t left, utility::wstring_view_t right) CPPREST_NOEXCEPT;
 
 /// <summary>
 /// Cross platform utility function for performing case insensitive string less-than comparison.
@@ -360,7 +381,7 @@ _ASYNCRTIMP bool __cdecl str_iequal(const std::wstring& left, const std::wstring
 /// <param name="right">Second strong to compare.</param>
 /// <returns>true if a lowercase view of left is lexicographically less than a lowercase view of right; otherwise,
 /// false.</returns>
-_ASYNCRTIMP bool __cdecl str_iless(const std::string& left, const std::string& right) CPPREST_NOEXCEPT;
+_ASYNCRTIMP bool __cdecl str_iless(utility::nstring_view_t left, utility::nstring_view_t right) CPPREST_NOEXCEPT;
 
 /// <summary>
 /// Cross platform utility function for performing case insensitive string less-than comparison.
@@ -369,7 +390,7 @@ _ASYNCRTIMP bool __cdecl str_iless(const std::string& left, const std::string& r
 /// <param name="right">Second strong to compare.</param>
 /// <returns>true if a lowercase view of left is lexicographically less than a lowercase view of right; otherwise,
 /// false.</returns>
-_ASYNCRTIMP bool __cdecl str_iless(const std::wstring& left, const std::wstring& right) CPPREST_NOEXCEPT;
+_ASYNCRTIMP bool __cdecl str_iless(utility::wstring_view_t left, utility::wstring_view_t right) CPPREST_NOEXCEPT;
 
 /// <summary>
 /// Convert a string to lowercase in place.

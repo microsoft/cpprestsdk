@@ -68,22 +68,22 @@ namespace utility
 {
 namespace details
 {
-_ASYNCRTIMP bool __cdecl str_iequal(const std::string& left, const std::string& right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iequal(utility::nstring_view_t left, utility::nstring_view_t right) CPPREST_NOEXCEPT
 {
     return left.size() == right.size() && std::equal(left.cbegin(), left.cend(), right.cbegin(), eq_lower_ch);
 }
 
-_ASYNCRTIMP bool __cdecl str_iequal(const std::wstring& left, const std::wstring& right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iequal(utility::wstring_view_t left, utility::wstring_view_t right) CPPREST_NOEXCEPT
 {
     return left.size() == right.size() && std::equal(left.cbegin(), left.cend(), right.cbegin(), eq_lower_ch);
 }
 
-_ASYNCRTIMP bool __cdecl str_iless(const std::string& left, const std::string& right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iless(utility::nstring_view_t left, utility::nstring_view_t right) CPPREST_NOEXCEPT
 {
     return std::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend(), lt_lower_ch);
 }
 
-_ASYNCRTIMP bool __cdecl str_iless(const std::wstring& left, const std::wstring& right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iless(utility::wstring_view_t left, utility::wstring_view_t right) CPPREST_NOEXCEPT
 {
     return std::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend(), lt_lower_ch);
 }
@@ -228,7 +228,7 @@ scoped_c_thread_locale::~scoped_c_thread_locale()
 // or unsigned.
 using UtilCharInternal_t = signed char;
 
-inline size_t count_utf8_to_utf16(const std::string& s)
+inline size_t count_utf8_to_utf16(utility::nstring_view_t s)
 {
     const size_t sSize = s.size();
     auto const sData = reinterpret_cast<const UtilCharInternal_t*>(s.data());
@@ -313,7 +313,7 @@ inline size_t count_utf8_to_utf16(const std::string& s)
     return result;
 }
 
-utf16string __cdecl conversions::utf8_to_utf16(const std::string& s)
+utf16string __cdecl conversions::utf8_to_utf16(utility::nstring_view_t s)
 {
     // Save repeated heap allocations, use the length of resulting sequence.
     const size_t srcSize = s.size();
@@ -384,9 +384,9 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string& s)
     return dest;
 }
 
-inline size_t count_utf16_to_utf8(const utf16string& w)
+inline size_t count_utf16_to_utf8(utf16string_view w)
 {
-    const utf16string::value_type* const srcData = &w[0];
+    const utf16string::value_type* const srcData = w.data();
     const size_t srcSize = w.size();
     size_t destSize(srcSize);
     for (size_t index = 0; index < srcSize; ++index)
@@ -425,10 +425,10 @@ inline size_t count_utf16_to_utf8(const utf16string& w)
     return destSize;
 }
 
-std::string __cdecl conversions::utf16_to_utf8(const utf16string& w)
+std::string __cdecl conversions::utf16_to_utf8(utf16string_view w)
 {
     const size_t srcSize = w.size();
-    const utf16string::value_type* const srcData = &w[0];
+    const utf16string::value_type* const srcData = w.data();
     std::string dest(count_utf16_to_utf8(w), '\0');
     std::string::value_type* const destData = &dest[0];
     size_t destIndex(0);
@@ -481,13 +481,13 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string& w)
     return dest;
 }
 
-utf16string __cdecl conversions::usascii_to_utf16(const std::string& s)
+utf16string __cdecl conversions::usascii_to_utf16(utility::nstring_view_t s)
 {
     // Ascii is a subset of UTF-8 so just convert to UTF-16
     return utf8_to_utf16(s);
 }
 
-utf16string __cdecl conversions::latin1_to_utf16(const std::string& s)
+utf16string __cdecl conversions::latin1_to_utf16(utility::nstring_view_t s)
 {
     // Latin1 is the first 256 code points in Unicode.
     // In UTF-16 encoding each of these is represented as exactly the numeric code point.
@@ -502,7 +502,7 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string& s)
     return dest;
 }
 
-utf8string __cdecl conversions::latin1_to_utf8(const std::string& s) { return utf16_to_utf8(latin1_to_utf16(s)); }
+utf8string __cdecl conversions::latin1_to_utf8(utility::nstring_view_t s) { return utf16_to_utf8(latin1_to_utf16(s)); }
 
 #ifndef _UTF16_STRINGS
 utility::string_t __cdecl conversions::to_string_t(utf16string&& s) { return utf16_to_utf8(std::move(s)); }
@@ -513,15 +513,15 @@ utility::string_t __cdecl conversions::to_string_t(std::string&& s) { return utf
 #endif
 
 #ifndef _UTF16_STRINGS
-utility::string_t __cdecl conversions::to_string_t(const utf16string& s) { return utf16_to_utf8(s); }
+utility::string_t __cdecl conversions::to_string_t(utf16string_view s) { return utf16_to_utf8(s); }
 #endif
 
 #ifdef _UTF16_STRINGS
-utility::string_t __cdecl conversions::to_string_t(const std::string& s) { return utf8_to_utf16(s); }
+utility::string_t __cdecl conversions::to_string_t(utility::nstring_view_t s) { return utf8_to_utf16(s); }
 #endif
 
-std::string __cdecl conversions::to_utf8string(const utf16string& value) { return utf16_to_utf8(value); }
+std::string __cdecl conversions::to_utf8string(utf16string_view value) { return utf16_to_utf8(value); }
 
-utf16string __cdecl conversions::to_utf16string(const std::string& value) { return utf8_to_utf16(value); }
+utf16string __cdecl conversions::to_utf16string(utility::nstring_view_t value) { return utf8_to_utf16(value); }
 
 } // namespace utility

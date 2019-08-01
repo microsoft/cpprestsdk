@@ -281,7 +281,7 @@ public:
 #if defined(_UTF16_STRINGS)
 private:
     // Only used internally by JSON parser.
-    static _ASYNCRTIMP value __cdecl string(const std::string& value);
+    static _ASYNCRTIMP value __cdecl string(utility::nstring_view_t value);
 
 public:
 #endif
@@ -394,7 +394,7 @@ public:
     /// Parses a string and construct a JSON value.
     /// </summary>
     /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
-    _ASYNCRTIMP static value __cdecl parse(const utility::string_t& value);
+    _ASYNCRTIMP static value __cdecl parse(utility::string_view_t value);
 
     /// <summary>
     /// Attempts to parse a string and construct a JSON value.
@@ -402,7 +402,7 @@ public:
     /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
     /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
     /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
-    _ASYNCRTIMP static value __cdecl parse(const utility::string_t& value, std::error_code& errorCode);
+    _ASYNCRTIMP static value __cdecl parse(utility::string_view_t value, std::error_code& errorCode);
 
     /// <summary>
     /// Serializes the current JSON value to a C++ string.
@@ -539,56 +539,56 @@ public:
     /// </summary>
     /// <param name="key">The name of the field</param>
     /// <returns>True if the field exists, false otherwise.</returns>
-    bool has_field(const utility::string_t& key) const;
+    bool has_field(utility::string_view_t key) const;
 
     /// <summary>
     /// Tests for the presence of a number field
     /// </summary>
     /// <param name="key">The name of the field</param>
     /// <returns>True if the field exists, false otherwise.</returns>
-    _ASYNCRTIMP bool has_number_field(const utility::string_t& key) const;
+    _ASYNCRTIMP bool has_number_field(utility::string_view_t key) const;
 
     /// <summary>
     /// Tests for the presence of an integer field
     /// </summary>
     /// <param name="key">The name of the field</param>
     /// <returns>True if the field exists, false otherwise.</returns>
-    _ASYNCRTIMP bool has_integer_field(const utility::string_t& key) const;
+    _ASYNCRTIMP bool has_integer_field(utility::string_view_t key) const;
 
     /// <summary>
     /// Tests for the presence of a double field
     /// </summary>
     /// <param name="key">The name of the field</param>
     /// <returns>True if the field exists, false otherwise.</returns>
-    _ASYNCRTIMP bool has_double_field(const utility::string_t& key) const;
+    _ASYNCRTIMP bool has_double_field(utility::string_view_t key) const;
 
     /// <summary>
     /// Tests for the presence of a boolean field
     /// </summary>
     /// <param name="key">The name of the field</param>
     /// <returns>True if the field exists, false otherwise.</returns>
-    _ASYNCRTIMP bool has_boolean_field(const utility::string_t& key) const;
+    _ASYNCRTIMP bool has_boolean_field(utility::string_view_t key) const;
 
     /// <summary>
     /// Tests for the presence of a string field
     /// </summary>
     /// <param name="key">The name of the field</param>
     /// <returns>True if the field exists, false otherwise.</returns>
-    _ASYNCRTIMP bool has_string_field(const utility::string_t& key) const;
+    _ASYNCRTIMP bool has_string_field(utility::string_view_t key) const;
 
     /// <summary>
     /// Tests for the presence of an array field
     /// </summary>
     /// <param name="key">The name of the field</param>
     /// <returns>True if the field exists, false otherwise.</returns>
-    _ASYNCRTIMP bool has_array_field(const utility::string_t& key) const;
+    _ASYNCRTIMP bool has_array_field(utility::string_view_t key) const;
 
     /// <summary>
     /// Tests for the presence of an object field
     /// </summary>
     /// <param name="key">The name of the field</param>
     /// <returns>True if the field exists, false otherwise.</returns>
-    _ASYNCRTIMP bool has_object_field(const utility::string_t& key) const;
+    _ASYNCRTIMP bool has_object_field(utility::string_view_t key) const;
 
     /// <summary>
     /// Accesses a field of a JSON object.
@@ -609,7 +609,7 @@ public:
     /// Erases an element of a JSON object. Throws if the key doesn't exist.
     /// </summary>
     /// <param name="key">The key of the element to erase in the JSON object.</param>
-    _ASYNCRTIMP void erase(const utility::string_t& key);
+    _ASYNCRTIMP void erase(utility::string_view_t key);
 
     /// <summary>
     /// Accesses an element of a JSON array. Throws when index out of bounds.
@@ -630,26 +630,26 @@ public:
     /// </summary>
     /// <param name="key">The key of an element in the JSON object.</param>
     /// <returns>If the key exists, a reference to the value.</returns>
-    _ASYNCRTIMP json::value& at(const utility::string_t& key);
+    _ASYNCRTIMP json::value& at(utility::string_view_t key);
 
     /// <summary>
     /// Accesses an element of a JSON object. If the key doesn't exist, this method throws.
     /// </summary>
     /// <param name="key">The key of an element in the JSON object.</param>
     /// <returns>If the key exists, a reference to the value.</returns>
-    _ASYNCRTIMP const json::value& at(const utility::string_t& key) const;
+    _ASYNCRTIMP const json::value& at(utility::string_view_t key) const;
 
     /// <summary>
     /// Accesses a field of a JSON object.
     /// </summary>
     /// <param name="key">The name of the field</param>
     /// <returns>A reference to the value kept in the field.</returns>
-    _ASYNCRTIMP value& operator[](const utility::string_t& key);
+    _ASYNCRTIMP value& operator[](utility::string_view_t key);
 
 #if defined(_UTF16_STRINGS)
 private:
     // Only used internally by JSON parser
-    _ASYNCRTIMP value& operator[](const std::string& key)
+    _ASYNCRTIMP value& operator[](utility::nstring_view_t key)
     {
         // JSON object stores its field map as a unordered_map of string_t, so this conversion is hard to avoid
         return operator[](utility::conversions::to_string_t(key));
@@ -1050,7 +1050,7 @@ public:
     /// Deletes an element of the JSON object. If the key doesn't exist, this method throws.
     /// </summary>
     /// <param name="key">The key of an element in the JSON object.</param>
-    void erase(const utility::string_t& key)
+    void erase(utility::string_view_t key)
     {
         auto iter = find_by_key(key);
         if (iter == m_elements.end())
@@ -1066,7 +1066,7 @@ public:
     /// </summary>
     /// <param name="key">The key of an element in the JSON object.</param>
     /// <returns>If the key exists, a reference to the value kept in the field.</returns>
-    json::value& at(const utility::string_t& key)
+    json::value& at(utility::string_view_t key)
     {
         auto iter = find_by_key(key);
         if (iter == m_elements.end())
@@ -1082,7 +1082,7 @@ public:
     /// </summary>
     /// <param name="key">The key of an element in the JSON object.</param>
     /// <returns>If the key exists, a reference to the value kept in the field.</returns>
-    const json::value& at(const utility::string_t& key) const
+    const json::value& at(utility::string_view_t key) const
     {
         auto iter = find_by_key(key);
         if (iter == m_elements.end())
@@ -1099,7 +1099,7 @@ public:
     /// <param name="key">The key of an element in the JSON object.</param>
     /// <returns>If the key exists, a reference to the value kept in the field, otherwise a newly created null value
     /// that will be stored for the given key.</returns>
-    json::value& operator[](const utility::string_t& key)
+    json::value& operator[](utility::string_view_t key)
     {
         auto iter = find_insert_location(key);
 
@@ -1116,7 +1116,7 @@ public:
     /// </summary>
     /// <param name="key">The key of an element in the JSON object.</param>
     /// <returns>A const iterator to the value kept in the field.</returns>
-    const_iterator find(const utility::string_t& key) const { return find_by_key(key); }
+    const_iterator find(utility::string_view_t key) const { return find_by_key(key); }
 
     /// <summary>
     /// Gets the number of elements of the object.
@@ -1136,12 +1136,12 @@ private:
     {
         return p1.first < p2.first;
     }
-    static bool compare_with_key(const std::pair<utility::string_t, value>& p1, const utility::string_t& key)
+    static bool compare_with_key(const std::pair<utility::string_t, value>& p1, utility::string_view_t key)
     {
         return p1.first < key;
     }
 
-    storage_type::iterator find_insert_location(const utility::string_t& key)
+    storage_type::iterator find_insert_location(utility::string_view_t key)
     {
         if (m_keep_order)
         {
@@ -1155,7 +1155,7 @@ private:
         }
     }
 
-    storage_type::const_iterator find_by_key(const utility::string_t& key) const
+    storage_type::const_iterator find_by_key(utility::string_view_t key) const
     {
         if (m_keep_order)
         {
@@ -1174,7 +1174,7 @@ private:
         }
     }
 
-    storage_type::iterator find_by_key(const utility::string_t& key)
+    storage_type::iterator find_by_key(utility::string_view_t key)
     {
         auto iter = find_insert_location(key);
         if (iter != m_elements.end() && key != iter->first)
@@ -1357,14 +1357,14 @@ class _Value
 public:
     virtual std::unique_ptr<_Value> _copy_value() = 0;
 
-    virtual bool has_field(const utility::string_t&) const { return false; }
-    virtual value get_field(const utility::string_t&) const { throw json_exception("not an object"); }
+    virtual bool has_field(utility::string_view_t) const { return false; }
+    virtual value get_field(utility::string_view_t) const { throw json_exception("not an object"); }
     virtual value get_element(array::size_type) const { throw json_exception("not an array"); }
 
-    virtual value& index(const utility::string_t&) { throw json_exception("not an object"); }
+    virtual value& index(utility::string_view_t) { throw json_exception("not an object"); }
     virtual value& index(array::size_type) { throw json_exception("not an array"); }
 
-    virtual const value& cnst_index(const utility::string_t&) const { throw json_exception("not an object"); }
+    virtual const value& cnst_index(utility::string_view_t) const { throw json_exception("not an object"); }
     virtual const value& cnst_index(array::size_type) const { throw json_exception("not an array"); }
 
     // Common function used for serialization to strings and streams.
@@ -1537,12 +1537,12 @@ private:
 };
 
 template<typename CharType>
-_ASYNCRTIMP void append_escape_string(std::basic_string<CharType>& str, const std::basic_string<CharType>& escaped);
+_ASYNCRTIMP void append_escape_string(std::basic_string<CharType>& str, utility::string_view<CharType> escaped);
 
-void format_string(const utility::string_t& key, utility::string_t& str);
+void format_string(utility::string_view_t key, utility::string_t& str);
 
 #if defined(_UTF16_STRINGS)
-void format_string(const utility::string_t& key, std::string& str);
+void format_string(utility::string_view_t key, std::string& str);
 #endif
 
 class _Object : public _Value
@@ -1559,9 +1559,9 @@ public:
 
     virtual json::value::value_type type() const { return json::value::Object; }
 
-    virtual bool has_field(const utility::string_t&) const;
+    virtual bool has_field(utility::string_view_t) const;
 
-    virtual json::value& index(const utility::string_t& key);
+    virtual json::value& index(utility::string_view_t key);
 
     bool is_equal(const _Object* other) const
     {
@@ -1752,7 +1752,7 @@ inline size_t json::value::size() const { return m_value->size(); }
 /// </summary>
 /// <param name="key">The name of the field</param>
 /// <returns>True if the field exists, false otherwise.</returns>
-inline bool json::value::has_field(const utility::string_t& key) const { return m_value->has_field(key); }
+inline bool json::value::has_field(utility::string_view_t key) const { return m_value->has_field(key); }
 
 /// <summary>
 /// Access a field of a JSON object.

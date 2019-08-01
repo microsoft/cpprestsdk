@@ -53,6 +53,10 @@ target_include_directories(cpprest
     pch
 )
 
+if(CPPREST_USE_STRING_VIEWS)
+  target_compile_features(cpprest PUBLIC cxx_std_17)
+endif()
+
 ## Sub-components
 # Websockets component
 if(CPPREST_WEBSOCKETS_IMPL STREQUAL "none")

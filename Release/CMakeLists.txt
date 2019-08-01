@@ -13,6 +13,14 @@ set(CPPREST_VERSION_MAJOR 2)
 set(CPPREST_VERSION_MINOR 10)
 set(CPPREST_VERSION_REVISION 14)
 
+# Note: when bumping CMake version to 3.3 or higher if(... IN_LIST ...) may be used
+list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_std_17 COMPILER_HAS_CXX_STD_17)
+if(COMPILER_HAS_CXX_STD_17 EQUAL "-1")
+  set(CPPREST_USE_STRING_VIEWS_DEFAULT_PER_CXX_STANDARD OFF)
+else()
+  set(CPPREST_USE_STRING_VIEWS_DEFAULT_PER_CXX_STANDARD ON)
+endif()
+
 enable_testing()
 
 set(WERROR ON CACHE BOOL "Treat Warnings as Errors.")
@@ -21,6 +29,7 @@ set(CPPREST_EXCLUDE_COMPRESSION OFF CACHE BOOL "Exclude compression functionalit
 set(CPPREST_EXCLUDE_BROTLI ON CACHE BOOL "Exclude Brotli compression functionality.")
 set(CPPREST_EXPORT_DIR cpprestsdk CACHE STRING "Directory to install CMake config files.")
 option(CPPREST_FORCE_NARROW_STRINGS "Keep strings narrow/UTF8 (even if WIN32)" OFF)
+option(CPPREST_USE_STRING_VIEWS "Use string_view types" ${CPPREST_USE_STRING_VIEWS_DEFAULT_PER_CXX_STANDARD})
 set(CPPREST_INSTALL_HEADERS ON CACHE BOOL "Install header files.")
 set(CPPREST_INSTALL ON CACHE BOOL "Add install commands.")
 
@@ -135,7 +144,10 @@ set(ANDROID_LIBS)
 
 # Generic build settings
 if(CPPREST_FORCE_NARROW_STRINGS)
-	add_definitions(-DCPPREST_FORCE_NARROW_STRINGS)
+  add_definitions(-DCPPREST_FORCE_NARROW_STRINGS)
+endif()
+if(CPPREST_USE_STRING_VIEWS)
+  add_definitions(-DCPPREST_USE_STRING_VIEWS)
 endif()
 
 # Platform (not compiler) specific settings

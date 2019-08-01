@@ -228,7 +228,11 @@ bool __cdecl _open_fsb_str(_In_ _filestream_callback* callback,
     _ASSERTE(callback != nullptr);
     _ASSERTE(filename != nullptr);
 
-    std::wstring name = conversions::to_utf16string(filename);
+    std::wstring name(
+#if defined(CPPREST_FORCE_NARROW_STRINGS)
+        conversions::to_utf16string
+#endif
+        (filename));
 
     pplx::create_task([=]() {
         DWORD dwDesiredAccess, dwCreationDisposition, dwShareMode;

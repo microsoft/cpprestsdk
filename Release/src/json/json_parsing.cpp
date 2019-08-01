@@ -46,7 +46,7 @@ __declspec(noreturn)
 #else
     __attribute__((noreturn))
 #endif
-    void CreateException(const Token& tk, const utility::string_t& message)
+    void CreateException(const Token& tk, utility::string_view_t message)
 {
     std::string str("* Line ");
     str += std::to_string(tk.start.m_line);
@@ -211,7 +211,7 @@ template<typename CharType>
 class JSON_StringParser : public JSON_Parser<CharType>
 {
 public:
-    JSON_StringParser(const std::basic_string<CharType>& string) : m_position(&string[0])
+    JSON_StringParser(utility::string_view<CharType> string) : m_position(string.data())
     {
         m_startpos = m_position;
         m_endpos = m_position + string.size();
@@ -1223,7 +1223,7 @@ static web::json::value _parse_narrow_stream(std::istream& stream, std::error_co
 }
 #endif
 
-web::json::value web::json::value::parse(const utility::string_t& str)
+web::json::value web::json::value::parse(utility::string_view_t str)
 {
     web::json::details::JSON_StringParser<utility::char_t> parser(str);
     web::json::details::JSON_Parser<utility::char_t>::Token tkn;
@@ -1247,7 +1247,7 @@ web::json::value web::json::value::parse(const utility::string_t& str)
     return value;
 }
 
-web::json::value web::json::value::parse(const utility::string_t& str, std::error_code& error)
+web::json::value web::json::value::parse(utility::string_view_t str, std::error_code& error)
 {
     web::json::details::JSON_StringParser<utility::char_t> parser(str);
     web::json::details::JSON_Parser<utility::char_t>::Token tkn;
