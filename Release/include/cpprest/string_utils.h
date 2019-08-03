@@ -150,6 +150,12 @@ inline utf16string_view to_utf16string(utf16string_view value) { return value; }
 /// <returns>A two byte character UTF-16 string.</returns>
 inline utf16string&& to_utf16string(utf16string&& value) { return std::move(value); }
 
+#if CPPREST_USE_STRING_VIEWS
+// Provide precise overload for string literals to resolve ambiguity of other overloads.
+template<typename CharType>
+inline auto to_utf16string(const CharType * s) { return to_utf16string(std::basic_string_view(s)); }
+#endif
+
 /// <summary>
 /// Converts to a UTF-8 string.
 /// </summary>
@@ -173,6 +179,12 @@ inline utility::nstring_view_t to_utf8string(utility::nstring_view_t value) { re
 /// <param name="value">A two byte character UTF-16 string.</param>
 /// <returns>A single byte character UTF-8 string.</returns>
 _ASYNCRTIMP std::string __cdecl to_utf8string(utf16string_view value);
+
+#if CPPREST_USE_STRING_VIEWS
+// Provide precise overload for string literals to resolve ambiguity of other overloads.
+template<typename CharType>
+inline auto to_utf8string(const CharType * s) { return to_utf8string(std::basic_string_view(s)); }
+#endif
 
 template<typename Source>
 CASABLANCA_DEPRECATED("All locale-sensitive APIs will be removed in a future update. Use stringstreams directly if "
