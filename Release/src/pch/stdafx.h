@@ -66,15 +66,6 @@
 #include <unistd.h>
 #endif // _WIN32
 
-// Suppress C++17 deprecation warning in aiso per https://github.com/chriskohlhoff/asio/issues/290#issuecomment-371867040
-// MSVC has address issue in 16.0 per https://devblogs.microsoft.com/cppblog/cpp17-20-features-and-fixes-in-vs-2019/
-#if _HAS_CXX17 && _MSC_VER >= 1913 && _MSC_VER < 1920
-#pragma push_macro("_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING")
-#define _SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING
-#include <boost/asio/associated_allocator.hpp>
-#pragma pop_macro("_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING")
-#endif
-
 // Macro indicating the C++ Rest SDK product itself is being built.
 // This is to help track how many developers are directly building from source themselves.
 #define _CASA_BUILD_FROM_SRC

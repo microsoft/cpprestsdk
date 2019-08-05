@@ -251,6 +251,13 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   if (NOT (MSVC_VERSION LESS 1920))
 	add_compile_options(/permissive-)
   endif()
+
+  # Suppress C++17 deprecation warning in aiso per https://github.com/chriskohlhoff/asio/issues/290#issuecomment-371867040
+  # MSVC has addressed issue in 16.0 per https://devblogs.microsoft.com/cppblog/cpp17-20-features-and-fixes-in-vs-2019/
+  if(MSVC_VERSION GREATER 1912 AND MSVC_VERSION LESS 1920)
+    add_definitions(-D_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING)
+  endif()
+
 else()
   message("-- Unknown compiler, success is doubtful.")
   message("CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
