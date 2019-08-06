@@ -484,8 +484,10 @@ class WinHttpRequestImp :public WinHttpBase, public std::enable_shared_from_this
     DWORD m_NotificationFlags = 0;
     std::vector<BufferRequest> m_OutstandingWrites;
     std::vector<BufferRequest> m_OutstandingReads;
+    bool m_Secure = false;
 
 public:
+    bool &GetSecure() { return m_Secure; }
     std::vector<BufferRequest> &GetOutstandingWrites() { return m_OutstandingWrites; }
     std::vector<BufferRequest> &GetOutstandingReads() { return m_OutstandingReads; }
 
@@ -1907,9 +1909,14 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpen
         if (!pszProxyW)
             return NULL;
 
+        TRACE("%-35s:%-8d:%-16p proxy: " STRING_LITERAL " \n", __func__, __LINE__, (void*) (session.get()), pszProxyW);
         ConvertCstrAssign(pszProxyW, WCTLEN(pszProxyW), session->GetProxy());
 
         std::vector<std::string> proxies = Split(session->GetProxy(), ';');
+		if (proxies.empty())
+		{
+			proxies.push_back(session->GetProxy());
+		}
         session->SetProxies(proxies);
     }
 
@@ -2061,9 +2068,15 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpenRequest(
     const char *prefix;
     std::string server = session->GetServerName();
     if (dwFlags & WINHTTP_FLAG_SECURE)
+    {
         prefix = "https://";
+        request->GetSecure() = true;
+    }
     else
+    {
         prefix = "http://";
+        request->GetSecure() = false;
+    }
 
     if (server.find("http://") == std::string::npos)
         server = prefix + server;
@@ -2930,7 +2943,13 @@ BOOLAPI WinHttpQueryHeaders(
 #endif
     if (dwInfoLevel == WINHTTP_QUERY_STATUS_CODE)
     {
-        return ReadCurlValue(request, lpBuffer, lpdwBufferLength, CURLINFO_RESPONSE_CODE, returnDWORD);
+        WinHttpSessionImp *session;
+
+        session = GetImp(request);
+        if (!session->GetProxies().empty() && request->GetSecure())
+            return ReadCurlValue(request, lpBuffer, lpdwBufferLength, CURLINFO_HTTP_CONNECTCODE, returnDWORD);
+        else
+            return ReadCurlValue(request, lpBuffer, lpdwBufferLength, CURLINFO_RESPONSE_CODE, returnDWORD);
     }
 
     if (dwInfoLevel == WINHTTP_QUERY_STATUS_TEXT)
