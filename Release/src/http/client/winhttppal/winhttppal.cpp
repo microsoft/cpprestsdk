@@ -1296,7 +1296,7 @@ THREADRETURN ComContainer::AsyncThreadFunction(LPVOID lpThreadParameter)
                     {
                         void *ptr = request->GetResponseString().data();
                         size_t available = request->GetResponseString().size();
-						size_t totalread = 0;
+                        size_t totalread = 0;
                         request->ConsumeIncoming(srequest, ptr, available, totalread);
                         if (totalread)
                         {
@@ -1611,7 +1611,7 @@ void WinHttpRequestImp::ConsumeIncoming(std::shared_ptr<WinHttpRequestImp> &sreq
 }
 
 size_t WinHttpRequestImp::WriteBodyFunction(void *ptr, size_t size, size_t nmemb, void* rqst) {
-	size_t read = 0;
+    size_t read = 0;
     WinHttpRequestImp *request = static_cast<WinHttpRequestImp *>(rqst);
     if (!request)
         return 0;
@@ -1624,7 +1624,7 @@ size_t WinHttpRequestImp::WriteBodyFunction(void *ptr, size_t size, size_t nmemb
         std::lock_guard<std::mutex> lck(request->GetBodyStringMutex());
         void *buf = request->GetResponseString().data();
         size_t available = request->GetResponseString().size();
-		size_t totalread = 0;
+        size_t totalread = 0;
 
         request->ConsumeIncoming(srequest, buf, available, totalread);
         if (totalread)
@@ -1636,7 +1636,7 @@ size_t WinHttpRequestImp::WriteBodyFunction(void *ptr, size_t size, size_t nmemb
         }
     }
 
-	size_t available = size * nmemb;
+    size_t available = size * nmemb;
     {
         std::lock_guard<std::mutex> lck(request->GetBodyStringMutex());
         void *buf = ptr;
@@ -1913,10 +1913,10 @@ WINHTTPAPI HINTERNET WINAPI WinHttpOpen
         ConvertCstrAssign(pszProxyW, WCTLEN(pszProxyW), session->GetProxy());
 
         std::vector<std::string> proxies = Split(session->GetProxy(), ';');
-		if (proxies.empty())
-		{
-			proxies.push_back(session->GetProxy());
-		}
+        if (proxies.empty())
+        {
+            proxies.push_back(session->GetProxy());
+        }
         session->SetProxies(proxies);
     }
 
