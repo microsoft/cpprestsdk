@@ -162,9 +162,9 @@ int main(int argc, char* args[])
         printf("Usage: SearchFile.exe input_file search_string output_file\n");
         return -1;
     }
-    const string_t inFileName = args[1];
+    const string_t inFileName = utility::conversions::to_string_t(args[1]);
     const std::string searchString = utility::conversions::to_utf8string(args[2]);
-    const string_t outFileName = args[3];
+    const string_t outFileName = utility::conversions::to_string_t(args[3]);
     producer_consumer_buffer<char> lineResultsBuffer;
 
     // Find all matches in file.

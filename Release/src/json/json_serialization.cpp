@@ -13,6 +13,9 @@
 
 #include "stdafx.h"
 
+#include "cpprest/json.h"
+
+#include <array>
 #include <stdio.h>
 
 #ifndef _WIN32
@@ -29,7 +32,7 @@ using namespace utility::conversions;
 // JSON Serialization
 //
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 void web::json::value::serialize(std::ostream& stream) const
 {
     // This has better performance than writing directly to stream.
@@ -119,7 +122,7 @@ void web::json::details::format_string(const utility::string_t& key, utility::st
     str.push_back('"');
 }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 void web::json::details::format_string(const utility::string_t& key, std::string& str)
 {
     str.push_back('"');
@@ -190,7 +193,7 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
     }
 }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 
 void web::json::details::_String::format(std::basic_string<wchar_t>& str) const
 {

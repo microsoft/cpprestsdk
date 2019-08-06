@@ -4,9 +4,13 @@
  **/
 #include "stdafx.h"
 
-#if !defined(CPPREST_EXCLUDE_WEBSOCKETS) || !defined(_WIN32)
+#if defined(CPPREST_EXCLUDE_WEBSOCKETS) && defined(_WIN32)
+#error CPPREST_EXCLUDE_WEBSOCKETS and WIN32, but still compiling threadpool.cpp
+#endif
+
 #include "pplx/threadpool.h"
 #include <boost/asio/detail/thread.hpp>
+#include <mutex>
 #include <new>
 #include <type_traits>
 #include <utility>
@@ -232,4 +236,3 @@ std::unique_ptr<crossplat::threadpool> crossplat::threadpool::construct(size_t n
 {
     return std::unique_ptr<crossplat::threadpool>(new threadpool_impl(num_threads));
 }
-#endif //  !defined(CPPREST_EXCLUDE_WEBSOCKETS) || !defined(_WIN32)

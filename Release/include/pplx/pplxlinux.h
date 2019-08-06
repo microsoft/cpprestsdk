@@ -17,6 +17,10 @@
 #error This file must not be included for Visual Studio
 #endif
 
+#if !defined(_PPLX_H)
+#error Include pplx.h instead of pplxlinux.h directly.
+#endif
+
 #ifndef _WIN32
 
 #include "cpprest/details/cpprest_compat.h"

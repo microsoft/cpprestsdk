@@ -225,7 +225,7 @@ utility::string_t flatten_http_headers(const http_headers& headers)
     return flattened_headers;
 }
 
-#if defined(_WIN32)
+#if defined(_UTF16_STRINGS)
 void parse_headers_string(_Inout_z_ utf16char* headersStr, http_headers& headers)
 {
     utf16char* context = nullptr;

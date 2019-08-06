@@ -47,7 +47,7 @@ elseif(WIN32)
 endif()
 
 add_library(unittestpp ${UT_SOURCES})
-target_link_libraries(unittestpp PUBLIC cpprest)
+target_link_libraries(unittestpp PUBLIC cpprest_interface_PUBLIC)
 
 if(UNIX)
   cpprest_find_boost()

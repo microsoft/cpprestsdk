@@ -19,10 +19,12 @@
 
 #include "cpprest/details/fileio.h"
 
-using namespace web;
+#include "cpprest/asyncrt_utils.h"
+
+#include "windows_config.h"
+
 using namespace utility;
 using namespace concurrency;
-using namespace utility::conversions;
 
 namespace Concurrency
 {
@@ -228,7 +230,7 @@ bool __cdecl _open_fsb_str(_In_ _filestream_callback* callback,
     _ASSERTE(callback != nullptr);
     _ASSERTE(filename != nullptr);
 
-    std::wstring name(filename);
+    std::wstring name = conversions::to_utf16string(filename);
 
     pplx::create_task([=]() {
         DWORD dwDesiredAccess, dwCreationDisposition, dwShareMode;

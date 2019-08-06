@@ -20,29 +20,8 @@
 #endif
 
 #ifdef _WIN32
-// use the debug version of the CRT if _DEBUG is defined
-#ifdef _DEBUG
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
-#endif // _DEBUG
-
-#include <SDKDDKVer.h>
-#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
-
-#if CPPREST_TARGET_XP && _WIN32_WINNT != 0x0501
-#error CPPREST_TARGET_XP implies _WIN32_WINNT == 0x0501
-#endif // CPPREST_TARGET_XP && _WIN32_WINNT != 0x0501
-
-#include <objbase.h>
-
-#include <windows.h>
-
-// Windows Header Files:
-#ifndef __cplusplus_winrt
-#include <winhttp.h>
-#endif !__cplusplus_winrt
-
-#else // LINUX or APPLE
+#include "windows_config.h"
+#else  // LINUX or APPLE
 #define __STDC_LIMIT_MACROS
 #include "pthread.h"
 #include <atomic>
@@ -92,7 +71,10 @@
 
 // utilities
 #include "cpprest/asyncrt_utils.h"
+#include "cpprest/base64_utils.h"
 #include "cpprest/details/web_utilities.h"
+#include "cpprest/memory_utils.h"
+#include "cpprest/string_utils.h"
 
 // http
 #include "cpprest/details/http_helpers.h"

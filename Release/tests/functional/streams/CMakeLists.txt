@@ -14,7 +14,7 @@ else()
   endif()
 endif()
 
-add_casablanca_test(streams_test SOURCES)
+add_casablanca_test(streams_test SOURCES cpprest_streams)
 if(NOT WIN32 OR CPPREST_WEBSOCKETS_IMPL STREQUAL "wspp")
   cpprest_find_boost()
   if(NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")

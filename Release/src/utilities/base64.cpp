@@ -10,7 +10,11 @@
  ****/
 #include "stdafx.h"
 
-using namespace web;
+#include "cpprest/base64_utils.h"
+
+#include <array>
+#include <cstring>
+
 using namespace utility;
 
 std::vector<unsigned char> _from_base64(const utility::string_t& str);
@@ -135,7 +139,7 @@ std::vector<unsigned char> _from_base64(const utility::string_t& input)
     for (; size > 4; ++idx)
     {
         unsigned char target[3];
-        memset(target, 0, sizeof(target));
+        std::memset(target, 0, sizeof(target));
         _triple_byte* record = reinterpret_cast<_triple_byte*>(target);
 
         unsigned char val0 = _base64_dectbl[ptr[0]];
@@ -164,7 +168,7 @@ std::vector<unsigned char> _from_base64(const utility::string_t& input)
 
     {
         unsigned char target[3];
-        memset(target, 0, sizeof(target));
+        std::memset(target, 0, sizeof(target));
         _triple_byte* record = reinterpret_cast<_triple_byte*>(target);
 
         unsigned char val0 = _base64_dectbl[ptr[0]];

@@ -13,7 +13,11 @@
 
 #include "stdafx.h"
 
+#include "cpprest/json.h"
+
+#include <array>
 #include <cstdlib>
+#include <cstring>
 
 #if defined(_MSC_VER)
 #pragma warning(disable : 4127) // allow expressions like while(true) pass
@@ -356,24 +360,32 @@ inline bool JSON_Parser<CharType>::ParseInt64(CharType first, uint64_t& value)
 // This namespace hides the x-plat helper functions
 namespace
 {
-#if defined(_WIN32)
+#ifdef _WIN32
+
 static int print_llu(char* ptr, size_t n, uint64_t val64)
 {
     return _snprintf_s_l(ptr, n, _TRUNCATE, "%I64u", utility::details::scoped_c_thread_locale::c_locale(), val64);
 }
 
+#if defined(_UTF16_STRINGS)
 static int print_llu(wchar_t* ptr, size_t n, uint64_t val64)
 {
     return _snwprintf_s_l(ptr, n, _TRUNCATE, L"%I64u", utility::details::scoped_c_thread_locale::c_locale(), val64);
 }
+#endif
+
 static double anystod(const char* str)
 {
     return _strtod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
 }
+
+#if defined(_UTF16_STRINGS)
 static double anystod(const wchar_t* str)
 {
     return _wcstod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
 }
+#endif
+
 #else
 static int __attribute__((__unused__)) print_llu(char* ptr, size_t n, unsigned long long val64)
 {
@@ -815,7 +827,7 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
             const size_t numChars = m_position - start - 1;
             const size_t prevSize = token.string_val.size();
             token.string_val.resize(prevSize + numChars);
-            memcpy(const_cast<CharType*>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
+            std::memcpy(const_cast<CharType*>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
 
             if (!JSON_StringParser<CharType>::handle_unescape_char(token))
             {
@@ -836,7 +848,7 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
     const size_t numChars = m_position - start - 1;
     const size_t prevSize = token.string_val.size();
     token.string_val.resize(prevSize + numChars);
-    memcpy(const_cast<CharType*>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
+    std::memcpy(const_cast<CharType*>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
 
     token.kind = JSON_Parser<CharType>::Token::TKN_StringLiteral;
 
@@ -1166,7 +1178,7 @@ static web::json::value _parse_stream(utility::istream_t& stream, std::error_cod
     return returnObject;
 }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 static web::json::value _parse_narrow_stream(std::istream& stream)
 {
     web::json::details::JSON_StreamParser<char> parser(stream);
@@ -1269,7 +1281,7 @@ web::json::value web::json::value::parse(utility::istream_t& stream, std::error_
     return _parse_stream(stream, error);
 }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 web::json::value web::json::value::parse(std::istream& stream) { return _parse_narrow_stream(stream); }
 
 web::json::value web::json::value::parse(std::istream& stream, std::error_code& error)

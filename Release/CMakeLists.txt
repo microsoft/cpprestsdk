@@ -20,8 +20,10 @@ set(CPPREST_EXCLUDE_WEBSOCKETS OFF CACHE BOOL "Exclude websockets functionality.
 set(CPPREST_EXCLUDE_COMPRESSION OFF CACHE BOOL "Exclude compression functionality.")
 set(CPPREST_EXCLUDE_BROTLI ON CACHE BOOL "Exclude Brotli compression functionality.")
 set(CPPREST_EXPORT_DIR cpprestsdk CACHE STRING "Directory to install CMake config files.")
+option(CPPREST_FORCE_NARROW_STRINGS "Keep strings narrow/UTF8 (even if WIN32)" OFF)
 set(CPPREST_INSTALL_HEADERS ON CACHE BOOL "Install header files.")
 set(CPPREST_INSTALL ON CACHE BOOL "Add install commands.")
+option(CPPREST_ISOLATE_COMPONENTS "Build cpprest components as individual libraries" OFF)
 
 if(IOS OR ANDROID)
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
@@ -112,8 +114,30 @@ else()
   message(FATAL_ERROR "Unknown platform. Cannot determine appropriate feature implementations.")
 endif()
 
+# CPPREST_EXCLUDE_HTTP_NARROW_STRING_WIP is not a formal option. It exists to
+# allow a successfull Windows build with CPPREST_FORCE_NARROW_STRINGS enabled
+# until HTTP related code can be updated with support.
+set(CPPREST_EXCLUDE_HTTP_NARROW_STRING_WIP OFF)
+if(CPPREST_FORCE_NARROW_STRINGS AND WIN32)
+  if(NOT CPPREST_EXCLUDE_WEBSOCKETS)
+    message(FATAL_ERROR "CPPREST_EXCLUDE_WEBSOCKETS must be OFF when forcing narrow strings on Windows (WIP)")
+  endif()
+  if(NOT CPPREST_HTTP_LISTENER_IMPL STREQUAL "none")
+    message(FATAL_ERROR "CPPREST_HTTP_LISTENER_IMPL must be 'none' when forcing narrow strings on Windows (per http_server_httpsys.cpp WIP)")
+  endif()
+  set(CPPREST_EXCLUDE_HTTP_NARROW_STRING_WIP ON)
+  if(BUILD_SAMPLES)
+    message(WARNING "Most samples will fail build when forcing narrow strings on Windows (WIP)")
+  endif()
+endif()
+
 set(WARNINGS)
 set(ANDROID_LIBS)
+
+# Generic build settings
+if(CPPREST_FORCE_NARROW_STRINGS)
+	add_definitions(-DCPPREST_FORCE_NARROW_STRINGS)
+endif()
 
 # Platform (not compiler) specific settings
 if(ANDROID)
@@ -212,7 +236,8 @@ if(NOT PARENT_DIR STREQUAL "")
 endif()
 
 # Finally, the tests all use the same style declaration to build themselves, so we use a function
-function(add_casablanca_test NAME SOURCES_VAR)
+# Tests that don't specify IMPLEMENTATION_TARGETS are assumed to depend on whole of cpprest.
+function(add_casablanca_test NAME SOURCES_VAR) # [optional] IMPLEMENTATION_TARGETS...
   add_library(${NAME} ${TEST_LIBRARY_TARGET_TYPE} ${${SOURCES_VAR}})
   message("-- Added test library ${NAME}")
   if(TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
@@ -221,8 +246,12 @@ function(add_casablanca_test NAME SOURCES_VAR)
       target_compile_definitions(${NAME} PRIVATE $<TARGET_PROPERTY:${_dep},INTERFACE_COMPILE_DEFINITIONS>)
     endforeach()
   else()
+    set(IMPLEMENTATION_TARGETS cpprest)
+    if(CPPREST_ISOLATE_COMPONENTS AND ${ARGC} GREATER 2)
+      set(IMPLEMENTATION_TARGETS ${ARGN})
+    endif()
     target_link_libraries(${NAME} PRIVATE
-      cpprest
+      ${IMPLEMENTATION_TARGETS}
       common_utilities
       unittestpp
       ${ANDROID_LIBS}

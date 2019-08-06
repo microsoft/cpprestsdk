@@ -65,6 +65,27 @@ jobs:
         cd build.common\Release\Binaries\Release
         .\test_runner.exe *test.dll
       displayName: 'Run tests, release'
+    - script: mkdir build.isolated
+      displayName: Make Isolated Build Directory
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.isolated'
+        cmakeArgs: '-A x64 -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCPPREST_EXCLUDE_BROTLI=OFF -DCPPREST_ISOLATE_COMPONENTS=ON ..'
+    - task: MSBuild@1
+      inputs:
+        solution: 'build.isolated/ALL_BUILD.vcxproj'
+        maximumCpuCount: true
+        platform: 'x64'
+    - script: |
+        cd build.isolated\Release\Binaries\Debug
+        .\test_runner.exe *testd.dll
+      displayName: 'Run isolated tests, debug'
+    - task: MSBuild@1
+      inputs:
+        solution: 'build.isolated/ALL_BUILD.vcxproj'
+        maximumCpuCount: true
+        platform: 'x64'
+        configuration: 'Release'
   - job: Windows_VS2017_UWP
     pool:
       vmImage: 'vs2017-win2016'
@@ -166,13 +187,43 @@ jobs:
         cd build.release
         /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
         cd ..
+        mkdir build.debug.isolated
+        cd build.debug.isolated
+        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCPPREST_ISOLATE_COMPONENTS=ON ..
+        cd ..
+        mkdir build.release.isolated
+        cd build.release.isolated
+        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCPPREST_ISOLATE_COMPONENTS=ON ..
+        cd ..
+      displayName: Run build generate
+    - script: |
         ninja -C build.debug
+      displayName: 'Run ninja, debug'
+    - script: |
         ninja -C build.release
+      displayName: 'Run ninja, release'
+    - script: |
+        ninja -C build.debug.isolated
+      displayName: 'Run ninja, isolated debug'
+    - script: |
+        ninja -C build.release.isolated
+      displayName: 'Run ninja, isolated release'
+    - script: |
         cd build.debug/Release/Binaries
         ./test_runner *test.so
-        cd ../../../build.release/Release/Binaries
+      displayName: 'Run tests, debug'
+    - script: |
+        cd build.release/Release/Binaries
         ./test_runner *test.so
-      displayName: Run build
+      displayName: 'Run tests, release'
+    - script: |
+        cd build.debug.isolated/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run tests, isolated debug'
+    - script: |
+        cd build.release.isolated/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run tests, isolated release'
   - job: Ubuntu_1604_Vcpkg
     pool:
       vmImage: 'Ubuntu 16.04'
@@ -196,6 +247,14 @@ jobs:
       inputs:
         workingDirectory: 'build.release'
         cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.debug.isolated'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.release.isolated'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
     - script: |
         cd build.debug
         ninja
@@ -212,6 +271,22 @@ jobs:
         cd build.release/Release/Binaries
         ./test_runner *test.so
       displayName: 'Run tests, release'
+    - script: |
+        cd build.debug.isolated
+        ninja
+      displayName: 'Run ninja, isolated debug'
+    - script: |
+        cd build.debug.isolated/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run Tests, isolated debug'
+    - script: |
+        cd build.release.isolated
+        ninja
+      displayName: 'Run ninja, isolated release'
+    - script: |
+        cd build.release.isolated/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run tests, isolated release'
   - job: Android
     pool:
       vmImage: 'Ubuntu 16.04'

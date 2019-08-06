@@ -15,6 +15,7 @@
 #include "cpprest/http_client.h"
 #include "cpprest/http_msg.h"
 #include "cpprest/json.h"
+#include "cpprest/uri.h"
 #include "cpprest/uri_builder.h"
 
 namespace tests
