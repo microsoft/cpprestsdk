@@ -297,7 +297,7 @@ class pplx::task_completion_event&lt; void &gt;</h3>
 
 <p>Sets the task completion event. </p>
 <dl class="section return"><dt>Returns</dt><dd>The method returns <code>true</code> if it was successful in setting the event. It returns <code>false</code> if the event is already set. </dd></dl>
-<p>In the presence of multiple or concurrent calls to <code>set</code>, only the first call will succeed and its result (if any) will be stored in the task completion event. The remaining sets are ignored and the method will return false. When you set a task completion event, all the tasks created from that event will immediately complete, and its continuations, if any, will be scheduled. Task completion objects that have a <em>_ResultType</em>  other than <code>void</code> will pass the value  to their continuations. </p>
+<p>In the presence of multiple or concurrent calls to <code>set</code>, only the first call will succeed and its result (if any) will be stored in the task completion event. The remaining sets are ignored and the method will return false. When you set a task completion event, all the tasks created from that event will immediately complete, and its continuations, if any, will be scheduled. Task completion objects that have a <em>_ReturnType</em>  other than <code>void</code> will pass the value  to their continuations. </p>
 
 </div>
 </div>

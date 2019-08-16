@@ -101,14 +101,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
-<p>The Parallel Patterns Library (PPL) <code>task</code> class. A <code>task</code> object represents work that can be executed asynchronously, and concurrently with other tasks and parallel work produced by parallel algorithms in the Concurrency Runtime. It produces a result of type <em>_ResultType</em>  on successful completion. Tasks of type <code>task&lt;void&gt;</code> produce no result. A task can be waited upon and canceled independently of other tasks. It can also be composed with other tasks using continuations(<code>then</code>), and join(<code>when_all</code>) and choice(<code>when_any</code>) patterns.  
+<p>The Parallel Patterns Library (PPL) <code>task</code> class. A <code>task</code> object represents work that can be executed asynchronously, and concurrently with other tasks and parallel work produced by parallel algorithms in the Concurrency Runtime. It produces a result of type <em>_ReturnType</em>  on successful completion. Tasks of type <code>task&lt;void&gt;</code> produce no result. A task can be waited upon and canceled independently of other tasks. It can also be composed with other tasks using continuations(<code>then</code>), and join(<code>when_all</code>) and choice(<code>when_any</code>) patterns.  
  <a href="classpplx_1_1task.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="pplxtasks_8h_source.html">pplxtasks.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a4cac3ab1c80a40ab2b45aef3e3e1273e"><td class="memItemLeft" align="right" valign="top">typedef _ReturnType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpplx_1_1task.html#a4cac3ab1c80a40ab2b45aef3e3e1273e">result_type</a></td></tr>
+<tr class="memitem:a4cac3ab1c80a40ab2b45aef3e3e1273e"><td class="memItemLeft" align="right" valign="top">typedef _ReturnType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpplx_1_1task.html#a4cac3ab1c80a40ab2b45aef3e3e1273e">return_type</a></td></tr>
 <tr class="memdesc:a4cac3ab1c80a40ab2b45aef3e3e1273e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the result an object of this class produces.  <a href="#a4cac3ab1c80a40ab2b45aef3e3e1273e">More...</a><br /></td></tr>
 <tr class="separator:a4cac3ab1c80a40ab2b45aef3e3e1273e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -171,7 +171,7 @@ return&#160;</td><td class="memItemRight" valign="bottom"><b>_ThenImpl</b> (_Fun
 <tr class="memdesc:a9332070143c1ac390ae59faa1eaec47c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Waits for this task to reach a terminal state. It is possible for <code>wait</code> to execute the task inline, if all of the tasks dependencies are satisfied, and it has not already been picked up for execution by a background worker.  <a href="#a9332070143c1ac390ae59faa1eaec47c">More...</a><br /></td></tr>
 <tr class="separator:a9332070143c1ac390ae59faa1eaec47c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aae0809c4a44880c7b638cc0503bcbfa6"><td class="memItemLeft" align="right" valign="top">_ReturnType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpplx_1_1task.html#aae0809c4a44880c7b638cc0503bcbfa6">get</a> () const </td></tr>
-<tr class="memdesc:aae0809c4a44880c7b638cc0503bcbfa6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the result this task produced. If the task is not in a terminal state, a call to <code>get</code> will wait for the task to finish. This method does not return a value when called on a task with a <code>result_type</code> of <code>void</code>.  <a href="#aae0809c4a44880c7b638cc0503bcbfa6">More...</a><br /></td></tr>
+<tr class="memdesc:aae0809c4a44880c7b638cc0503bcbfa6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the result this task produced. If the task is not in a terminal state, a call to <code>get</code> will wait for the task to finish. This method does not return a value when called on a task with a <code>return_type</code> of <code>void</code>.  <a href="#aae0809c4a44880c7b638cc0503bcbfa6">More...</a><br /></td></tr>
 <tr class="separator:aae0809c4a44880c7b638cc0503bcbfa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a38ddcaaed350e471307e183e97e8ee2c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpplx_1_1task.html#a38ddcaaed350e471307e183e97e8ee2c">is_done</a> () const </td></tr>
 <tr class="memdesc:a38ddcaaed350e471307e183e97e8ee2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determines if the task is completed.  <a href="#a38ddcaaed350e471307e183e97e8ee2c">More...</a><br /></td></tr>
@@ -230,10 +230,10 @@ template&lt;typename T &gt; </td></tr>
 <div class="textblock"><h3>template&lt;typename _ReturnType&gt;<br />
 class pplx::task&lt; _ReturnType &gt;</h3>
 
-<p>The Parallel Patterns Library (PPL) <code>task</code> class. A <code>task</code> object represents work that can be executed asynchronously, and concurrently with other tasks and parallel work produced by parallel algorithms in the Concurrency Runtime. It produces a result of type <em>_ResultType</em>  on successful completion. Tasks of type <code>task&lt;void&gt;</code> produce no result. A task can be waited upon and canceled independently of other tasks. It can also be composed with other tasks using continuations(<code>then</code>), and join(<code>when_all</code>) and choice(<code>when_any</code>) patterns. </p>
+<p>The Parallel Patterns Library (PPL) <code>task</code> class. A <code>task</code> object represents work that can be executed asynchronously, and concurrently with other tasks and parallel work produced by parallel algorithms in the Concurrency Runtime. It produces a result of type <em>_ReturnType</em>  on successful completion. Tasks of type <code>task&lt;void&gt;</code> produce no result. A task can be waited upon and canceled independently of other tasks. It can also be composed with other tasks using continuations(<code>then</code>), and join(<code>when_all</code>) and choice(<code>when_any</code>) patterns. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">_ReturnType</td><td>The result type of this task. </td></tr>
+    <tr><td class="paramname">_ReturnType</td><td>The return type of this task. </td></tr>
   </table>
   </dd>
 </dl>
@@ -246,7 +246,7 @@ class pplx::task&lt; _ReturnType &gt;</h3>
 template&lt;typename _ReturnType&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">typedef _ReturnType <a class="el" href="classpplx_1_1task.html">pplx::task</a>&lt; _ReturnType &gt;::<a class="el" href="classpplx_1_1task.html#a4cac3ab1c80a40ab2b45aef3e3e1273e">result_type</a></td>
+          <td class="memname">typedef _ReturnType <a class="el" href="classpplx_1_1task.html">pplx::task</a>&lt; _ReturnType &gt;::<a class="el" href="classpplx_1_1task.html#a4cac3ab1c80a40ab2b45aef3e3e1273e">return_type</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -283,7 +283,7 @@ template&lt;typename _ReturnType&gt; </div>
 <p>The default constructor for a <code>task</code> is only present in order to allow tasks to be used within containers. A default constructed task cannot be used until you assign a valid task to it. Methods such as <code>get</code>, <code>wait</code> or <code>then</code> will throw an <a class="el" href="">invalid_argument</a> exception when called on a default constructed task. </p>
 <p>A task that is created from a <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a></code> will complete (and have its continuations scheduled) when the task completion event is set.</p>
 <p>The version of the constructor that takes a cancellation token creates a task that can be canceled using the <code><a class="el" href="classpplx_1_1cancellation__token__source.html" title="The cancellation_token_source class represents the ability to cancel some cancelable operation...">cancellation_token_source</a></code> the token was obtained from. Tasks created without a cancellation token are not cancelable.</p>
-<p>Tasks created from a <code>Windows::Foundation::IAsyncInfo</code> interface or a lambda that returns an <code>IAsyncInfo</code> interface reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created from a lamda that returns a <code>task&lt;result_type&gt;</code> reach their terminal state when the inner task reaches its terminal state, and not when the lamda returns.</p>
+<p>Tasks created from a <code>Windows::Foundation::IAsyncInfo</code> interface or a lambda that returns an <code>IAsyncInfo</code> interface reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created from a lamda that returns a <code>task&lt;return_type&gt;</code> reach their terminal state when the inner task reaches its terminal state, and not when the lamda returns.</p>
 <p><code>task</code> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads without the need for locks.</p>
 <p>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available to Windows Store apps.</p>
 <p>For more information, see Task Parallelism (Concurrency Runtime).</p>
@@ -324,7 +324,7 @@ template&lt;typename _ReturnType&gt; </div>
 <p>The default constructor for a <code>task</code> is only present in order to allow tasks to be used within containers. A default constructed task cannot be used until you assign a valid task to it. Methods such as <code>get</code>, <code>wait</code> or <code>then</code> will throw an <a class="el" href="">invalid_argument</a> exception when called on a default constructed task. </p>
 <p>A task that is created from a <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a></code> will complete (and have its continuations scheduled) when the task completion event is set.</p>
 <p>The version of the constructor that takes a cancellation token creates a task that can be canceled using the <code><a class="el" href="classpplx_1_1cancellation__token__source.html" title="The cancellation_token_source class represents the ability to cancel some cancelable operation...">cancellation_token_source</a></code> the token was obtained from. Tasks created without a cancellation token are not cancelable.</p>
-<p>Tasks created from a <code>Windows::Foundation::IAsyncInfo</code> interface or a lambda that returns an <code>IAsyncInfo</code> interface reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created from a lamda that returns a <code>task&lt;result_type&gt;</code> reach their terminal state when the inner task reaches its terminal state, and not when the lamda returns.</p>
+<p>Tasks created from a <code>Windows::Foundation::IAsyncInfo</code> interface or a lambda that returns an <code>IAsyncInfo</code> interface reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created from a lamda that returns a <code>task&lt;return_type&gt;</code> reach their terminal state when the inner task reaches its terminal state, and not when the lamda returns.</p>
 <p><code>task</code> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads without the need for locks.</p>
 <p>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available to Windows Store apps.</p>
 <p>For more information, see Task Parallelism (Concurrency Runtime).</p>
@@ -365,7 +365,7 @@ template&lt;typename _ReturnType&gt; </div>
 <p>The default constructor for a <code>task</code> is only present in order to allow tasks to be used within containers. A default constructed task cannot be used until you assign a valid task to it. Methods such as <code>get</code>, <code>wait</code> or <code>then</code> will throw an <a class="el" href="">invalid_argument</a> exception when called on a default constructed task. </p>
 <p>A task that is created from a <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a></code> will complete (and have its continuations scheduled) when the task completion event is set.</p>
 <p>The version of the constructor that takes a cancellation token creates a task that can be canceled using the <code><a class="el" href="classpplx_1_1cancellation__token__source.html" title="The cancellation_token_source class represents the ability to cancel some cancelable operation...">cancellation_token_source</a></code> the token was obtained from. Tasks created without a cancellation token are not cancelable.</p>
-<p>Tasks created from a <code>Windows::Foundation::IAsyncInfo</code> interface or a lambda that returns an <code>IAsyncInfo</code> interface reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created from a lamda that returns a <code>task&lt;result_type&gt;</code> reach their terminal state when the inner task reaches its terminal state, and not when the lamda returns.</p>
+<p>Tasks created from a <code>Windows::Foundation::IAsyncInfo</code> interface or a lambda that returns an <code>IAsyncInfo</code> interface reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created from a lamda that returns a <code>task&lt;return_type&gt;</code> reach their terminal state when the inner task reaches its terminal state, and not when the lamda returns.</p>
 <p><code>task</code> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads without the need for locks.</p>
 <p>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available to Windows Store apps.</p>
 <p>For more information, see Task Parallelism (Concurrency Runtime).</p>
@@ -408,7 +408,7 @@ template&lt;typename _Ty &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">_Param</td><td>The parameter from which the task is to be constructed. This could be a lambda, a function object, a <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a>&lt;result_type&gt;</code> object, or a Windows::Foundation::IAsyncInfo if you are using tasks in your Windows Store app. The lambda or function object should be a type equivalent to <code>std::function&lt;X(void)&gt;</code>, where X can be a variable of type <code>result_type</code>, <code>task&lt;result_type&gt;</code>, or a Windows::Foundation::IAsyncInfo in Windows Store apps. </td></tr>
+    <tr><td class="paramname">_Param</td><td>The parameter from which the task is to be constructed. This could be a lambda, a function object, a <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a>&lt;return_type&gt;</code> object, or a Windows::Foundation::IAsyncInfo if you are using tasks in your Windows Store app. The lambda or function object should be a type equivalent to <code>std::function&lt;X(void)&gt;</code>, where X can be a variable of type <code>return_type</code>, <code>task&lt;return_type&gt;</code>, or a Windows::Foundation::IAsyncInfo in Windows Store apps. </td></tr>
     <tr><td class="paramname">_Token</td><td>The cancellation token to associate with this task. A task created without a cancellation token cannot be canceled. It implicitly receives the token <code><a class="el" href="classpplx_1_1cancellation__token.html#a1730eca8686fb4c83776a89b98e48581" title="Returns a cancellation token which can never be subject to cancellation. ">cancellation_token::none()</a></code>. </td></tr>
   </table>
   </dd>
@@ -416,7 +416,7 @@ template&lt;typename _Ty &gt; </div>
 <p>The default constructor for a <code>task</code> is only present in order to allow tasks to be used within containers. A default constructed task cannot be used until you assign a valid task to it. Methods such as <code>get</code>, <code>wait</code> or <code>then</code> will throw an <a class="el" href="">invalid_argument</a> exception when called on a default constructed task. </p>
 <p>A task that is created from a <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a></code> will complete (and have its continuations scheduled) when the task completion event is set.</p>
 <p>The version of the constructor that takes a cancellation token creates a task that can be canceled using the <code><a class="el" href="classpplx_1_1cancellation__token__source.html" title="The cancellation_token_source class represents the ability to cancel some cancelable operation...">cancellation_token_source</a></code> the token was obtained from. Tasks created without a cancellation token are not cancelable.</p>
-<p>Tasks created from a <code>Windows::Foundation::IAsyncInfo</code> interface or a lambda that returns an <code>IAsyncInfo</code> interface reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created from a lamda that returns a <code>task&lt;result_type&gt;</code> reach their terminal state when the inner task reaches its terminal state, and not when the lamda returns.</p>
+<p>Tasks created from a <code>Windows::Foundation::IAsyncInfo</code> interface or a lambda that returns an <code>IAsyncInfo</code> interface reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created from a lamda that returns a <code>task&lt;return_type&gt;</code> reach their terminal state when the inner task reaches its terminal state, and not when the lamda returns.</p>
 <p><code>task</code> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads without the need for locks.</p>
 <p>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available to Windows Store apps.</p>
 <p>For more information, see Task Parallelism (Concurrency Runtime).</p>
@@ -450,7 +450,7 @@ template&lt;typename _Ty &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">_Param</td><td>The parameter from which the task is to be constructed. This could be a lambda, a function object, a <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a>&lt;result_type&gt;</code> object, or a Windows::Foundation::IAsyncInfo if you are using tasks in your Windows Store app. The lambda or function object should be a type equivalent to <code>std::function&lt;X(void)&gt;</code>, where X can be a variable of type <code>result_type</code>, <code>task&lt;result_type&gt;</code>, or a Windows::Foundation::IAsyncInfo in Windows Store apps. </td></tr>
+    <tr><td class="paramname">_Param</td><td>The parameter from which the task is to be constructed. This could be a lambda, a function object, a <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a>&lt;return_type&gt;</code> object, or a Windows::Foundation::IAsyncInfo if you are using tasks in your Windows Store app. The lambda or function object should be a type equivalent to <code>std::function&lt;X(void)&gt;</code>, where X can be a variable of type <code>return_type</code>, <code>task&lt;return_type&gt;</code>, or a Windows::Foundation::IAsyncInfo in Windows Store apps. </td></tr>
     <tr><td class="paramname">_TaskOptions</td><td>The task options include cancellation token, scheduler etc </td></tr>
   </table>
   </dd>
@@ -458,7 +458,7 @@ template&lt;typename _Ty &gt; </div>
 <p>The default constructor for a <code>task</code> is only present in order to allow tasks to be used within containers. A default constructed task cannot be used until you assign a valid task to it. Methods such as <code>get</code>, <code>wait</code> or <code>then</code> will throw an <a class="el" href="">invalid_argument</a> exception when called on a default constructed task. </p>
 <p>A task that is created from a <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a></code> will complete (and have its continuations scheduled) when the task completion event is set.</p>
 <p>The version of the constructor that takes a cancellation token creates a task that can be canceled using the <code><a class="el" href="classpplx_1_1cancellation__token__source.html" title="The cancellation_token_source class represents the ability to cancel some cancelable operation...">cancellation_token_source</a></code> the token was obtained from. Tasks created without a cancellation token are not cancelable.</p>
-<p>Tasks created from a <code>Windows::Foundation::IAsyncInfo</code> interface or a lambda that returns an <code>IAsyncInfo</code> interface reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created from a lamda that returns a <code>task&lt;result_type&gt;</code> reach their terminal state when the inner task reaches its terminal state, and not when the lamda returns.</p>
+<p>Tasks created from a <code>Windows::Foundation::IAsyncInfo</code> interface or a lambda that returns an <code>IAsyncInfo</code> interface reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created from a lamda that returns a <code>task&lt;return_type&gt;</code> reach their terminal state when the inner task reaches its terminal state, and not when the lamda returns.</p>
 <p><code>task</code> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads without the need for locks.</p>
 <p>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available to Windows Store apps.</p>
 <p>For more information, see Task Parallelism (Concurrency Runtime).</p>
@@ -501,11 +501,11 @@ template&lt;typename _Function &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">_Func</td><td>The continuation function to execute when this task completes. This continuation function must take as input a variable of either <code>result_type</code> or <code>task&lt;result_type&gt;</code>, where <code>result_type</code> is the type of the result this task produces. </td></tr>
+    <tr><td class="paramname">_Func</td><td>The continuation function to execute when this task completes. This continuation function must take as input a variable of either <code>return_type</code> or <code>task&lt;return_type&gt;</code>, where <code>return_type</code> is the type of the result this task produces. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The newly created continuation task. The result type of the returned task is determined by what <em>_Func</em>  returns. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The newly created continuation task. The return type of the returned task is determined by what <em>_Func</em>  returns. </dd></dl>
 <p>The overloads of <code>then</code> that take a lambda or functor that returns a Windows::Foundation::IAsyncInfo interface, are only available to Windows Store apps. </p>
 <p>For more information on how to use task continuations to compose asynchronous work, see Task Parallelism (Concurrency Runtime).</p>
 
@@ -538,12 +538,12 @@ template&lt;typename _Function &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">_Func</td><td>The continuation function to execute when this task completes. This continuation function must take as input a variable of either <code>result_type</code> or <code>task&lt;result_type&gt;</code>, where <code>result_type</code> is the type of the result this task produces. </td></tr>
+    <tr><td class="paramname">_Func</td><td>The continuation function to execute when this task completes. This continuation function must take as input a variable of either <code>return_type</code> or <code>task&lt;return_type&gt;</code>, where <code>return_type</code> is the type of the result this task produces. </td></tr>
     <tr><td class="paramname">_TaskOptions</td><td>The task options include cancellation token, scheduler and continuation context. By default the former 3 options are inherited from the antecedent task </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The newly created continuation task. The result type of the returned task is determined by what <em>_Func</em>  returns. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The newly created continuation task. The return type of the returned task is determined by what <em>_Func</em>  returns. </dd></dl>
 <p>The overloads of <code>then</code> that take a lambda or functor that returns a Windows::Foundation::IAsyncInfo interface, are only available to Windows Store apps. </p>
 <p>For more information on how to use task continuations to compose asynchronous work, see Task Parallelism (Concurrency Runtime).</p>
 
@@ -576,13 +576,13 @@ template&lt;typename _Function &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">_Func</td><td>The continuation function to execute when this task completes. This continuation function must take as input a variable of either <code>result_type</code> or <code>task&lt;result_type&gt;</code>, where <code>result_type</code> is the type of the result this task produces. </td></tr>
+    <tr><td class="paramname">_Func</td><td>The continuation function to execute when this task completes. This continuation function must take as input a variable of either <code>return_type</code> or <code>task&lt;return_type&gt;</code>, where <code>return_type</code> is the type of the result this task produces. </td></tr>
     <tr><td class="paramname">_CancellationToken</td><td>The cancellation token to associate with the continuation task. A continuation task that is created without a cancellation token will inherit the token of its antecedent task. </td></tr>
     <tr><td class="paramname">_ContinuationContext</td><td>A variable that specifies where the continuation should execute. This variable is only useful when used in a Windows Store style app. For more information, see <a class="el" href="">task_continuation_context</a> </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The newly created continuation task. The result type of the returned task is determined by what <em>_Func</em>  returns. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The newly created continuation task. The return type of the returned task is determined by what <em>_Func</em>  returns. </dd></dl>
 <p>The overloads of <code>then</code> that take a lambda or functor that returns a Windows::Foundation::IAsyncInfo interface, are only available to Windows Store apps. </p>
 <p>For more information on how to use task continuations to compose asynchronous work, see Task Parallelism (Concurrency Runtime).</p>
 
@@ -835,7 +835,7 @@ template&lt;typename _ReturnType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the result this task produced. If the task is not in a terminal state, a call to <code>get</code> will wait for the task to finish. This method does not return a value when called on a task with a <code>result_type</code> of <code>void</code>. </p>
+<p>Returns the result this task produced. If the task is not in a terminal state, a call to <code>get</code> will wait for the task to finish. This method does not return a value when called on a task with a <code>return_type</code> of <code>void</code>. </p>
 <dl class="section return"><dt>Returns</dt><dd>The result of the task. </dd></dl>
 <p>If the task is canceled, a call to <code>get</code> will throw a <a class="el" href="">task_canceled</a> exception. If the task encountered an different exception or an exception was propagated to it from an antecedent task, a call to <code>get</code> will throw that exception. </p>
 

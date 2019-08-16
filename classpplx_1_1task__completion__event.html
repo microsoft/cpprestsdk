@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.10"/>
-<title>C++ Rest SDK: pplx::task_completion_event&lt; _ResultType &gt; Class Template Reference</title>
+<title>C++ Rest SDK: pplx::task_completion_event&lt; _ReturnType &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -94,7 +94,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <a href="#friends">Friends</a> &#124;
 <a href="classpplx_1_1task__completion__event-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">pplx::task_completion_event&lt; _ResultType &gt; Class Template Reference</div>  </div>
+<div class="title">pplx::task_completion_event&lt; _ReturnType &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -108,7 +108,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a63b9ca24b2a49591d301582251ba2247"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpplx_1_1task__completion__event.html#a63b9ca24b2a49591d301582251ba2247">task_completion_event</a> ()</td></tr>
 <tr class="memdesc:a63b9ca24b2a49591d301582251ba2247"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a></code> object.  <a href="#a63b9ca24b2a49591d301582251ba2247">More...</a><br /></td></tr>
 <tr class="separator:a63b9ca24b2a49591d301582251ba2247"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac698b32bd34bcff4dfda6c4af52e0874"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpplx_1_1task__completion__event.html#ac698b32bd34bcff4dfda6c4af52e0874">set</a> (_ResultType _Result) const </td></tr>
+<tr class="memitem:ac698b32bd34bcff4dfda6c4af52e0874"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpplx_1_1task__completion__event.html#ac698b32bd34bcff4dfda6c4af52e0874">set</a> (_ReturnType _Result) const </td></tr>
 <tr class="memdesc:ac698b32bd34bcff4dfda6c4af52e0874"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the task completion event.  <a href="#ac698b32bd34bcff4dfda6c4af52e0874">More...</a><br /></td></tr>
 <tr class="separator:ac698b32bd34bcff4dfda6c4af52e0874"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a377c9561e36837e586f48c7b9cd84ada"><td class="memTemplParams" colspan="2"><a class="anchor" id="a377c9561e36837e586f48c7b9cd84ada"></a>
@@ -145,13 +145,14 @@ template&lt;typename T &gt; </td></tr>
 <tr class="separator:aa86f4cb31e28196a26114a84f68cd0e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename _ResultType&gt;<br />
-class pplx::task_completion_event&lt; _ResultType &gt;</h3>
+<div class="textblock"><h3>template&lt;typename _ReturnType&gt;<br />
+class pplx::task_completion_event&lt; _ReturnType &gt;</h3>
 
 <p>The <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a></code> class allows you to delay the execution of a task until a condition is satisfied, or start a task in response to an external event. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">_ResultType</td><td>The result type of this <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a></code> class. </td></tr>
+    <tr><td class="paramname">_ReturnType
+    </td><td>The return type of this <code><a class="el" href="classpplx_1_1task__completion__event.html" title="The task_completion_event class allows you to delay the execution of a task until a condition is sati...">task_completion_event</a></code> class. </td></tr>
   </table>
   </dd>
 </dl>
@@ -164,13 +165,13 @@ class pplx::task_completion_event&lt; _ResultType &gt;</h3>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename _ResultType&gt; </div>
+template&lt;typename _ReturnType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ResultType &gt;::<a class="el" href="classpplx_1_1task__completion__event.html">task_completion_event</a> </td>
+          <td class="memname"><a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ReturnType &gt;::<a class="el" href="classpplx_1_1task__completion__event.html">task_completion_event</a> </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -192,13 +193,13 @@ template&lt;typename _ResultType&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename _ResultType&gt; </div>
+template&lt;typename _ReturnType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ResultType &gt;::__declspec </td>
+          <td class="memname"><a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ReturnType &gt;::__declspec </td>
           <td>(</td>
           <td class="paramtype">noinline&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -221,13 +222,13 @@ template&lt;typename _ResultType&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename _ResultType&gt; </div>
+template&lt;typename _ReturnType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">bool <a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ResultType &gt;::_Cancel </td>
+          <td class="memname">bool <a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ReturnType &gt;::_Cancel </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -248,7 +249,7 @@ template&lt;typename _ResultType&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename _ResultType&gt; </div>
+template&lt;typename _ReturnType&gt; </div>
 <div class="memtemplate">
 template&lt;typename _ExHolderType &gt; </div>
 <table class="mlabels">
@@ -256,7 +257,7 @@ template&lt;typename _ExHolderType &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">bool <a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ResultType &gt;::_Cancel </td>
+          <td class="memname">bool <a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ReturnType &gt;::_Cancel </td>
           <td>(</td>
           <td class="paramtype">_ExHolderType&#160;</td>
           <td class="paramname"><em>_ExHolder</em>, </td>
@@ -288,13 +289,13 @@ template&lt;typename _ExHolderType &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename _ResultType&gt; </div>
+template&lt;typename _ReturnType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">bool <a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ResultType &gt;::_IsTriggered </td>
+          <td class="memname">bool <a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ReturnType &gt;::_IsTriggered </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -315,7 +316,7 @@ template&lt;typename _ResultType&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename _ResultType&gt; </div>
+template&lt;typename _ReturnType&gt; </div>
 <div class="memtemplate">
 template&lt;typename _ExHolderType &gt; </div>
 <table class="mlabels">
@@ -323,7 +324,7 @@ template&lt;typename _ExHolderType &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">bool <a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ResultType &gt;::_StoreException </td>
+          <td class="memname">bool <a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ReturnType &gt;::_StoreException </td>
           <td>(</td>
           <td class="paramtype">_ExHolderType&#160;</td>
           <td class="paramname"><em>_ExHolder</em>, </td>
@@ -355,15 +356,15 @@ template&lt;typename _ExHolderType &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename _ResultType&gt; </div>
+template&lt;typename _ReturnType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">bool <a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ResultType &gt;::set </td>
+          <td class="memname">bool <a class="el" href="classpplx_1_1task__completion__event.html">pplx::task_completion_event</a>&lt; _ReturnType &gt;::set </td>
           <td>(</td>
-          <td class="paramtype">_ResultType&#160;</td>
+          <td class="paramtype">_ReturnType&#160;</td>
           <td class="paramname"><em>_Result</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -383,7 +384,7 @@ template&lt;typename _ResultType&gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The method returns <code>true</code> if it was successful in setting the event. It returns <code>false</code> if the event is already set. </dd></dl>
-<p>In the presence of multiple or concurrent calls to <code>set</code>, only the first call will succeed and its result (if any) will be stored in the task completion event. The remaining sets are ignored and the method will return false. When you set a task completion event, all the tasks created from that event will immediately complete, and its continuations, if any, will be scheduled. Task completion objects that have a <em>_ResultType</em>  other than <code>void</code> will pass the value  to their continuations. </p>
+<p>In the presence of multiple or concurrent calls to <code>set</code>, only the first call will succeed and its result (if any) will be stored in the task completion event. The remaining sets are ignored and the method will return false. When you set a task completion event, all the tasks created from that event will immediately complete, and its continuations, if any, will be scheduled. Task completion objects that have a <em>_ReturnType</em>  other than <code>void</code> will pass the value  to their continuations. </p>
 
 </div>
 </div>
