@@ -292,7 +292,7 @@ public:
 
         client.set_fail_handler([this](websocketpp::connection_hdl con_hdl) {
             _ASSERTE(m_state == CONNECTING);
-            shutdown_wspp_impl<WebsocketConfigType>(con_hdl, true);
+            this->shutdown_wspp_impl<WebsocketConfigType>(con_hdl, true);
         });
 
         client.set_message_handler(
@@ -354,7 +354,7 @@ public:
 
         client.set_close_handler([this](websocketpp::connection_hdl con_hdl) {
             _ASSERTE(m_state != CLOSED);
-            shutdown_wspp_impl<WebsocketConfigType>(con_hdl, false);
+            this->shutdown_wspp_impl<WebsocketConfigType>(con_hdl, false);
         });
 
         // Set User Agent specified by the user. This needs to happen before any connection is created
@@ -679,7 +679,7 @@ private:
         client.stop_perpetual();
 
         // Can't join thread directly since it is the current thread.
-        pplx::create_task([this, connecting, ec, closeCode, reason] {
+        pplx::create_task([] {}).then([this, connecting, ec, closeCode, reason]() mutable {
             {
                 std::lock_guard<std::mutex> lock(m_wspp_client_lock);
                 if (m_thread.joinable())

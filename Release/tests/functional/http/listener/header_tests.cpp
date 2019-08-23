@@ -112,6 +112,31 @@ SUITE(header_tests)
         listener.close().wait();
     }
 
+    TEST_FIXTURE(uri_address, request_known_headers)
+    {
+        http_listener listener(m_uri);
+        listener.open().wait();
+        test_http_client::scoped_client client(m_uri);
+        test_http_client* p_client = client.client();
+        const utility::string_t mtd = methods::GET;
+        std::map<utility::string_t, utility::string_t> headers;
+
+        // "Date" was being incorrectly mapped to "Data"
+        // see https://github.com/microsoft/cpprestsdk/issues/1208
+        headers[U("Date")] = U("Mon, 29 Jul 2019 12:32:57 GMT");
+        listener.support([&](http_request request) {
+            http_asserts::assert_request_equals(request, mtd, U("/"), headers);
+            request.reply(status_codes::OK).wait();
+        });
+        VERIFY_ARE_EQUAL(0, p_client->request(mtd, U(""), headers));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        listener.close().wait();
+    }
+
     TEST_FIXTURE(uri_address, response_headers)
     {
         http_listener listener(m_uri);
