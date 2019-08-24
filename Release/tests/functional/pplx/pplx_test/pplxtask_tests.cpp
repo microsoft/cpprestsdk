@@ -285,46 +285,6 @@ SUITE(pplxtask_tests)
         }
     }
 
-    struct MoveOnlyBase
-    {
-        MoveOnlyBase() = default;
-        MoveOnlyBase(MoveOnlyBase&&) = default;
-        MoveOnlyBase& operator=(MoveOnlyBase&&) = default;
-
-        // explicitly delete copy functions
-        MoveOnlyBase(const MoveOnlyBase&) = delete;
-        MoveOnlyBase& operator=(const MoveOnlyBase&) = delete;
-    };
-
-    TEST(TestTasks_move_only_then)
-    {
-#ifndef _MSC_VER
-        // create move-only type
-        struct IntParamFunctor : public MoveOnlyBase
-        {
-            char operator()(int) { return 'c'; }
-        } a;
-
-        task<int> task = create_task([] { return 2; });
-        auto f = task.then(std::move(a));
-
-        IsTrue(f.get() == 'c', L".then should be able to work with movable functors");
-#endif // _MSC_VER
-    }
-
-    TEST(TestTasks_move_only_initial_task)
-    {
-#ifndef _MSC_VER
-        struct NoParamFunctor : public MoveOnlyBase
-        {
-            char operator()() const { return 'c'; }
-        } a;
-
-        const auto f = create_task(std::move(a)).then([](char c) { return c; });
-        IsTrue(f.get() == 'c', L"initial task failed to accept move-only functor");
-#endif // _MSC_VER
-    }
-
     TEST(TestTasks_constant_this)
     {
 #ifdef _MSC_VER
@@ -1876,7 +1836,7 @@ SUITE(pplxtask_tests)
         checkTaskCtorResult<int>(true, std::move(intCompletionEvent), "TestTaskCtorArgsStaticValidation: move task_completion_event<int> -> task<int>");
     }
 
-    //TODO: tests for _AsyncTaskCtorArgsValidator
+    //TODO: tests for _AsyncTaskCtorArgsValidator (__cplusplus_winrt only)
 
 #if defined(_WIN32) && (_MSC_VER >= 1700) && (_MSC_VER < 1800)
 
@@ -1963,7 +1923,129 @@ SUITE(pplxtask_tests)
         }
     }
 
-#endif
+#endif // defined(_WIN32) && (_MSC_VER >= 1700) && (_MSC_VER < 1800)
+
+    TEST(MoveTaskFromAnother)
+	{
+		auto val = pplx::create_task([]() { return 17; });
+		auto val2 = std::move(val);
+		VERIFY_ARE_EQUAL(val2.get(), 17);
+	}
+
+	TEST(CreateTaskMoveFromAnother)
+	{
+		auto val = pplx::create_task([]() { return 17; });
+		auto val2 = create_task(std::move(val));
+		VERIFY_ARE_EQUAL(val2.get(), 17);
+	}
+
+	TEST(InvalidateMoveFromTask)
+	{
+		auto val = pplx::create_task([]() { return 17; });
+		auto val2 = std::move(val);
+		VERIFY_IS_NULL(val._GetImpl());
+	}
+
+	TEST(InvalidateTaskCtorFromMove)
+	{
+		auto val = pplx::create_task([]() { return 17; });
+		auto val2 = task<int>(std::move(val));
+		VERIFY_IS_NULL(val._GetImpl());
+	}
+
+    struct CopyOnlyFunctor
+	{
+		explicit CopyOnlyFunctor(int output) : output(output) {}
+        
+        // disable implicitly-declared move constructor and move assignment operator 
+        // generation by declare defaulted copy operations
+		CopyOnlyFunctor(const CopyOnlyFunctor&) = default;
+		CopyOnlyFunctor& operator=(const CopyOnlyFunctor&) = default;
+        
+		int output = 0;
+		int operator()() const { return output; }
+	};
+
+	TEST(create_task_with_copy_only_functor)
+	{
+		const pplx::task<int> t1(CopyOnlyFunctor(17));
+		const auto t2 = pplx::create_task(CopyOnlyFunctor(22));
+		VERIFY_ARE_EQUAL(t1.get(), 17);
+		VERIFY_ARE_EQUAL(t2.get(), 22);
+	}
+
+#if !(defined(_MSC_VER) && (_MSC_VER >= 1800) && !CPPREST_FORCE_PPLX)
+    struct MoveOnlyFunctor
+	{
+		explicit MoveOnlyFunctor(int output) : output(output) {}
+		MoveOnlyFunctor(MoveOnlyFunctor&&) = default;
+		MoveOnlyFunctor& operator=(MoveOnlyFunctor&&) = default;
+
+        // explicitly deleted copy operations
+        MoveOnlyFunctor(const MoveOnlyFunctor&) = delete;
+		MoveOnlyFunctor& operator=(const MoveOnlyFunctor&) = delete;
+
+		int output = 0;
+		int operator()() const { return output; }
+	};
+
+	struct MoveOnlyContinuationFunctor
+	{
+		MoveOnlyContinuationFunctor(int expectedInput, int output) : expectedInput(expectedInput), output(output) {}
+		MoveOnlyContinuationFunctor(MoveOnlyContinuationFunctor&&) = default;
+		MoveOnlyContinuationFunctor& operator=(MoveOnlyContinuationFunctor&&) = default;
+
+        // explicitly deleted copy operations
+        MoveOnlyContinuationFunctor(const MoveOnlyContinuationFunctor&) = delete;
+		MoveOnlyContinuationFunctor& operator=(const MoveOnlyContinuationFunctor&) = delete;
+
+		int expectedInput = 0;
+		int output = 0;
+		int operator()(int input) const
+		{
+			if (input != expectedInput)
+			{
+				throw 0;
+			}
+			return output;
+		}
+	};
+
+	TEST(create_task_with_move_only_functor)
+	{
+		const auto t = pplx::task<int>(MoveOnlyFunctor(17));
+		VERIFY_ARE_EQUAL(t.get(), 17);
+	}
+
+	TEST(copy_task_with_move_only_functor)
+	{
+		const auto initialTask = pplx::task<int>(MoveOnlyFunctor(17));
+		const auto copyTask = initialTask;
+		VERIFY_ARE_EQUAL(initialTask.get(), 17);
+		VERIFY_ARE_EQUAL(copyTask.get(), 17);
+	}
+
+	TEST(multiply_call_task_with_move_only_functor)
+	{
+		const auto t = pplx::task<int>(MoveOnlyFunctor(17));
+		VERIFY_ARE_EQUAL(t.get(), 17);
+		VERIFY_ARE_EQUAL(t.get(), 17);
+	}
+
+	TEST(create_task_with_move_only_continuation)
+	{
+		const auto coVal = pplx::create_task(MoveOnlyFunctor(17)).then(MoveOnlyContinuationFunctor(17, 22)).get();
+		VERIFY_ARE_EQUAL(coVal, 22);
+	}
+
+	TEST(task_completion_event_with_move_only_continuation)
+	{
+		pplx::task_completion_event<int> tce;
+		const auto co = pplx::create_task(tce).then(MoveOnlyContinuationFunctor(17, 22));
+		tce.set(17);
+		VERIFY_ARE_EQUAL(co.get(), 22);
+	}
+#endif // !(defined(_MSC_VER) && (_MSC_VER >= 1800) && !CPPREST_FORCE_PPLX)
 
 } // SUITE(pplxtask_tests)
 
