@@ -202,6 +202,28 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 
+function(configure_pch target precompile_header precomile_source) # optional additional compile arguments
+  if(MSVC)
+    get_target_property(_srcs ${target} SOURCES)
+
+    set(pch_output_filepath_arg)
+    if(NOT CMAKE_GENERATOR MATCHES "Visual Studio .*")
+      set_property(SOURCE ${precomile_source} APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/${target}.pch")
+      set_property(SOURCE ${_srcs} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${target}.pch")
+      set(pch_output_filepath_arg "/Fp${CMAKE_CURRENT_BINARY_DIR}/${target}.pch")
+    else()
+      # Don't specify output file so that VS may choose a config spefic location.
+	  # Otherwise Debug/Release builds will interfere with one another.
+    endif()
+
+    set_source_files_properties(${precomile_source} PROPERTIES COMPILE_FLAGS "/Yc${precompile_header}")
+    target_sources(${target} PRIVATE ${precomile_source})
+	# Note: as ${precomile_source} is also a SOURCE for ${target}, the below options will also be applied.
+	# ${precomile_source} has /Yc option that will cause the shared /Yu to be ignored.
+    target_compile_options(${target} PRIVATE /Yu${precompile_header} ${pch_output_filepath_arg} ${ARGN})
+  endif()
+endfunction()
+
 # These settings can be used by the test targets
 set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(Casablanca_LIBRARY cpprest)

@@ -341,7 +341,9 @@ SUITE(connections_and_errors)
             test_http_server::scoped_server server(m_uri);
             pplx::cancellation_token_source source;
 
+            const auto r = server.server()->next_request();
             responseTask = c.request(methods::GET, U("/"), source.get_token());
+            r.wait();
             source.cancel();
         }
 
