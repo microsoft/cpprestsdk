@@ -1444,8 +1444,8 @@ private:
             }
         }
 
-        m_content_length = std::numeric_limits<size_t>::max(); // Without Content-Length header, size should be same as
-                                                               // TCP stream - set it size_t max.
+        m_content_length = (std::numeric_limits<size_t>::max)(); // Without Content-Length header, size should be same as
+                                                                 // TCP stream - set it size_t max.
         m_response.headers().match(header_names::content_length, m_content_length);
 
         if (!this->handle_compression())
