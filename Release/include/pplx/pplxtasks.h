@@ -466,20 +466,20 @@ struct _TaskTypeTraits
 
 template<typename _Function, typename... Args>
 struct _CallableResult
-	: std::result_of<_Function(Args...)> //TODO: replace with std::invoke_result
+    : std::result_of<_Function(Args...)> //TODO: replace with std::invoke_result
 {};
 
 template<typename _Function, typename = void>
 struct _IsCallableNoArgs
-	: std::false_type
+    : std::false_type
 {};
 
 template<typename _Function>
 struct _IsCallableNoArgs<_Function, typename std::enable_if<
-	std::is_constructible<
-		std::function<typename _CallableResult<_Function>::type()>,
-		std::reference_wrapper<typename std::remove_reference<_Function>::type>
-	>::value
+    std::is_constructible<
+        std::function<typename _CallableResult<_Function>::type()>,
+        std::reference_wrapper<typename std::remove_reference<_Function>::type>
+    >::value
 >::type> : std::true_type
 {};
 
