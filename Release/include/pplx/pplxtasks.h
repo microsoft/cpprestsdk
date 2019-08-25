@@ -3102,7 +3102,7 @@ template<typename _ReturnType, typename _Ty>
 struct _TaskCallableResultValidator<_ReturnType, _Ty,
     typename std::enable_if<_IsCallableNoArgs<_Ty>::value &&
         (
-            std::is_convertible<typename _CallableResult<_Ty>::type, _ReturnType>::value || // unwrapped tasult
+            std::is_convertible<typename _CallableResult<_Ty>::type, _ReturnType>::value || // unwrapped result
             std::is_convertible<typename _UnwrapTaskType<typename _CallableResult<_Ty>::type>::_Type, _ReturnType>::value // wrapped result
         )
     >::type>
@@ -3129,7 +3129,7 @@ void _ValidateTaskCtorArgs()
     );
 
     static_assert(!_IsCallableNoArgs<_Ty>::value || _TaskCallableResultValidator<_ReturnType, _Ty>::value,
-        "incorrect argument for task constructor; callable result type does not math task the tesult type");
+        "incorrect argument for task constructor; callable result type does not math task's result type");
 
 #if defined(__cplusplus_winrt)
     static_assert(_AsyncTaskCtorArgsValidator<_ReturnType, _Ty>::value,
