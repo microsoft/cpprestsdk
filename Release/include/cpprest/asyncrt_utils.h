@@ -374,7 +374,7 @@ inline bool __cdecl is_alnum(Elem ch) CPPREST_NOEXCEPT
 }
 
 /// <summary>
-/// Our own implementation of alpha numeric instead of std::isalnum to avoid
+/// Our own implementation of whitespace test instead of std::isspace to avoid
 /// taking global lock for performance reasons.
 /// </summary>
 template<class Elem>
