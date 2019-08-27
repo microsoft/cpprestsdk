@@ -374,6 +374,26 @@ inline bool __cdecl is_alnum(Elem ch) CPPREST_NOEXCEPT
 }
 
 /// <summary>
+/// Our own implementation of alpha numeric instead of std::isalnum to avoid
+/// taking global lock for performance reasons.
+/// </summary>
+template<class Elem>
+inline bool __cdecl is_space(Elem ch) CPPREST_NOEXCEPT
+{
+    // 0x09 == Horizontal Tab
+    // 0x0A == Line Feed
+    // 0x0B == Vertical Tab
+    // 0x0C == Form Feed
+    // 0x0D == Carrage Return
+    // 0x20 == Space
+    // assumes 'x' == L'x' for the ASCII range
+    typedef typename std::make_unsigned<Elem>::type UElem;
+    const auto uch = static_cast<UElem>(ch);
+    return uch == 0x20u
+        || (uch >= 0x09u && uch <= 0x0Du);
+}
+
+/// <summary>
 /// Simplistic implementation of make_unique. A better implementation would be based on variadic templates
 /// and therefore not be compatible with Dev10.
 /// </summary>
