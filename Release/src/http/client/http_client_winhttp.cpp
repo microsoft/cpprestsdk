@@ -15,6 +15,7 @@
 #include "stdafx.h"
 
 #include "../common/x509_cert_utilities.h"
+#include "../common/internal_http_helpers.h"
 #include "cpprest/http_headers.h"
 #include "http_client_impl.h"
 #include <Wincrypt.h>
@@ -99,51 +100,6 @@ static http::status_code parse_status_code(HINTERNET request_handle)
     return (unsigned short)_wtoi(buffer.c_str());
 }
 
-// Helper function to trim leading and trailing null characters from a string.
-static void trim_nulls(utility::string_t& str)
-{
-    if (str.empty())
-    {
-        return;
-    }
-
-    auto first = str.begin();
-    auto last = str.end();
-
-    if (*first)
-    {
-        --last;
-        if (*last)
-        {
-            // no nulls to remove
-            return;
-        }
-
-        // nulls at the back to remove
-        do
-        {
-            --last;
-        } while (*last == utility::char_t {});
-        ++last;
-        str.erase(last, str.end());
-        return;
-    }
-
-    // nulls at the front, and maybe the back, to remove
-    first = std::find_if(str.begin(), last, [](const utility::char_t c) { return c != utility::char_t {}; });
-
-    if (first != last)
-    {
-        do
-        {
-            --last;
-        } while (*last == utility::char_t {});
-        ++last;
-    }
-
-    str.assign(first, last);
-}
-
 // Helper function to get the reason phrase from a WinHTTP response.
 static utility::string_t parse_reason_phrase(HINTERNET request_handle)
 {
@@ -159,7 +115,7 @@ static utility::string_t parse_reason_phrase(HINTERNET request_handle)
                         &length,
                         WINHTTP_NO_HEADER_INDEX);
     // WinHTTP reports back the wrong length, trim any null characters.
-    trim_nulls(phrase);
+    ::web::http::details::trim_nulls(phrase);
     return phrase;
 }
 
