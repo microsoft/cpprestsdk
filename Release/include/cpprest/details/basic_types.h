@@ -35,7 +35,7 @@
 
 namespace utility
 {
-#if defined(_WIN32) && !defined(CPPREST_FORCE_NARROW_STRINGS)
+#if defined(_WIN32)
 #define _UTF16_STRINGS
 #endif
 

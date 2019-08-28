@@ -15,17 +15,6 @@ set(SOURCES
   ${HEADERS_PPLX}
   ${HEADERS_DETAILS}
   pch/stdafx.h
-  json/json.cpp
-  json/json_parsing.cpp
-  json/json_serialization.cpp
-  utilities/asyncrt_utils.cpp
-  utilities/base64.cpp
-  utilities/string_utils.cpp
-  utilities/web_utilities.cpp
-)
-
-if(NOT CPPREST_EXCLUDE_HTTP_NARROW_STRING_WIP)
-LIST(APPEND SOURCES
   http/client/http_client.cpp
   http/client/http_client_impl.h
   http/client/http_client_msg.cpp
@@ -40,10 +29,16 @@ LIST(APPEND SOURCES
   http/listener/http_server_impl.h
   http/oauth/oauth1.cpp
   http/oauth/oauth2.cpp
+  json/json.cpp
+  json/json_parsing.cpp
+  json/json_serialization.cpp
   uri/uri.cpp
   uri/uri_builder.cpp
+  utilities/asyncrt_utils.cpp
+  utilities/base64.cpp
+  utilities/string_utils.cpp
+  utilities/web_utilities.cpp
 )
-endif()
 
 add_library(cpprest ${SOURCES})
 target_include_directories(cpprest
@@ -135,7 +130,6 @@ else()
 endif()
 
 # Http client component
-if(NOT CPPREST_EXCLUDE_HTTP_NARROW_STRING_WIP)
 if(CPPREST_HTTP_CLIENT_IMPL STREQUAL "asio")
   cpprest_find_boost()
   cpprest_find_openssl()
@@ -155,7 +149,6 @@ elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winrt")
   target_sources(cpprest PRIVATE http/client/http_client_winrt.cpp)
 else()
   message(FATAL_ERROR "Invalid implementation")
-endif()
 endif()
 
 # fileio streams component
@@ -186,18 +179,7 @@ else()
   message(FATAL_ERROR "Invalid implementation")
 endif()
 
-if(MSVC)
-  get_target_property(_srcs cpprest SOURCES)
-
-  if(NOT CMAKE_GENERATOR MATCHES "Visual Studio .*")
-    set_property(SOURCE pch/stdafx.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
-    set_property(SOURCE ${_srcs} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
-  endif()
-
-  set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h /Zm120")
-  target_sources(cpprest PRIVATE pch/stdafx.cpp)
-  target_compile_options(cpprest PRIVATE /Yustdafx.h /Zm120)
-endif()
+configure_pch(cpprest stdafx.h pch/stdafx.cpp /Zm120)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   if(WERROR)

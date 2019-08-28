@@ -369,6 +369,26 @@ inline bool __cdecl is_alnum(Elem ch) CPPREST_NOEXCEPT
     return (uch <= static_cast<UElem>('z') && is_alnum(static_cast<unsigned char>(uch)));
 }
 
+/// <summary>
+/// Our own implementation of whitespace test instead of std::isspace to avoid
+/// taking global lock for performance reasons.
+/// The following characters are considered whitespace:
+/// 0x09 == Horizontal Tab
+/// 0x0A == Line Feed
+/// 0x0B == Vertical Tab
+/// 0x0C == Form Feed
+/// 0x0D == Carrage Return
+/// 0x20 == Space
+/// </summary>
+template<class Elem>
+inline bool __cdecl is_space(Elem ch) CPPREST_NOEXCEPT
+{
+	// assumes 'x' == L'x' for the ASCII range
+	typedef typename std::make_unsigned<Elem>::type UElem;
+	const auto uch = static_cast<UElem>(ch);
+	return uch == 0x20u || (uch >= 0x09u && uch <= 0x0Du);
+}
+
 
 /// <summary>
 /// Cross platform utility function for performing case insensitive string equality comparison.

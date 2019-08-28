@@ -97,62 +97,53 @@ static utility::string_t parse_verb(const HTTP_REQUEST* p_http_request)
 }
 
 /// <summary>
-/// String values for all HTTP Server API known headers.
+/// String values for all HTTP Server API HTTP_REQUEST_HEADERS known headers.
 /// NOTE: the order here is important it is from the _HTTP_HEADER_ID enum.
 /// </summary>
-static utility::string_t HttpServerAPIKnownHeaders[] = {U("Cache-Control"),
-                                                        U("Connection"),
-                                                        U("Data"),
-                                                        U("Keep-Alive"),
-                                                        U("Pragma"),
-                                                        U("Trailer"),
-                                                        U("Transfer-Encoding"),
-                                                        U("Upgrade"),
-                                                        U("Via"),
-                                                        U("Warning"),
-                                                        U("Allow"),
-                                                        U("Content-Length"),
-                                                        U("Content-Type"),
-                                                        U("Content-Encoding"),
-                                                        U("Content-Language"),
-                                                        U("Content-Location"),
-                                                        U("Content-Md5"),
-                                                        U("Content-Range"),
-                                                        U("Expires"),
-                                                        U("Last-Modified"),
-                                                        U("Accept"),
-                                                        U("Accept-Charset"),
-                                                        U("Accept-Encoding"),
-                                                        U("Accept-Language"),
-                                                        U("Authorization"),
-                                                        U("Cookie"),
-                                                        U("Expect"),
-                                                        U("From"),
-                                                        U("Host"),
-                                                        U("If-Match"),
-                                                        U("If-Modified-Since"),
-                                                        U("If-None-Match"),
-                                                        U("If-Range"),
-                                                        U("If-Unmodified-Since"),
-                                                        U("Max-Forwards"),
-                                                        U("Proxy-Authorization"),
-                                                        U("Referer"),
-                                                        U("Range"),
-                                                        U("TE"),
-                                                        U("Translate"),
-                                                        U("User-Agent"),
-                                                        U("Request-Maximum"),
-                                                        U("Accept-Ranges"),
-                                                        U("Age"),
-                                                        U("Etag"),
-                                                        U("Location"),
-                                                        U("Proxy-Authenticate"),
-                                                        U("Retry-After"),
-                                                        U("Server"),
-                                                        U("Set-Cookie"),
-                                                        U("Vary"),
-                                                        U("Www-Authenticate"),
-                                                        U("Response-Maximum")};
+static utility::string_t HttpServerAPIRequestKnownHeaders[] =
+{
+    U("Cache-Control"),
+    U("Connection"),
+    U("Date"),
+    U("Keep-Alive"),
+    U("Pragma"),
+    U("Trailer"),
+    U("Transfer-Encoding"),
+    U("Upgrade"),
+    U("Via"),
+    U("Warning"),
+    U("Allow"),
+    U("Content-Length"),
+    U("Content-Type"),
+    U("Content-Encoding"),
+    U("Content-Language"),
+    U("Content-Location"),
+    U("Content-MD5"),
+    U("Content-Range"),
+    U("Expires"),
+    U("Last-Modified"),
+    U("Accept"),
+    U("Accept-Charset"),
+    U("Accept-Encoding"),
+    U("Accept-Language"),
+    U("Authorization"),
+    U("Cookie"),
+    U("Expect"),
+    U("From"),
+    U("Host"),
+    U("If-Match"),
+    U("If-Modified-Since"),
+    U("If-None-Match"),
+    U("If-Range"),
+    U("If-Unmodified-Since"),
+    U("Max-Forwards"),
+    U("Proxy-Authorization"),
+    U("Referer"),
+    U("Range"),
+    U("TE"),
+    U("Translate"),
+    U("User-Agent")
+};
 
 static utility::string_t char_to_wstring(const char* src)
 {
@@ -176,7 +167,7 @@ static std::map<utility::string_t, utility::string_t> parse_http_headers(const H
     {
         if (headers.KnownHeaders[i].RawValueLength != 0)
         {
-            headers_map[HttpServerAPIKnownHeaders[i]] = char_to_wstring(headers.KnownHeaders[i].pRawValue);
+            headers_map[HttpServerAPIRequestKnownHeaders[i]] = char_to_wstring(headers.KnownHeaders[i].pRawValue);
         }
     }
     return headers_map;
