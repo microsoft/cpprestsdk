@@ -3206,10 +3206,8 @@ struct _CopyableFunctor<
     typedef _NonCopyableFunctorWrapper<_Ty> _Type;
 };
 
-template<typename _Ty, typename _ReturnType, typename =
-    typename std::enable_if<!std::is_base_of<task<_ReturnType>, _Ty>::value>::type
->
-struct _EnableIfNotTaskRet
+template<typename _Ty, typename _ReturnType>
+struct _EnableIfNotTaskRet : public std::enable_if<!std::is_base_of<task<_ReturnType>, _Ty>::value>
 {};
 } // namespace details
 /// <summary>
@@ -3368,7 +3366,7 @@ public:
     ///     Runtime)"/>.</para>
     /// </remarks>
     /**/
-    template<typename _Ty, typename = typename details::_EnableIfNotTaskRet<typename std::decay<_Ty>::type, _ReturnType>>
+    template<typename _Ty, typename = typename details::_EnableIfNotTaskRet<typename std::decay<_Ty>::type, _ReturnType>::type>
     __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
         explicit task(_Ty&& _Param, const task_options& _TaskOptions = task_options())
     {
@@ -4408,7 +4406,7 @@ public:
     ///     Runtime)"/>.</para>
     /// </remarks>
     /**/
-    template<typename _Ty, typename = typename details::_EnableIfNotTaskRet<typename std::decay<_Ty>::type, void>>
+    template<typename _Ty, typename = typename details::_EnableIfNotTaskRet<typename std::decay<_Ty>::type, void>::type>
     __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
         explicit task(_Ty&& _Param, const task_options& _TaskOptions = task_options())
     {
@@ -4862,7 +4860,7 @@ struct _TaskTypeFromParam
 
 template<typename _Ty,
     typename _ReturnType = decltype(details::_GetTaskType(std::declval<_Ty>(), details::_IsCallableNoArgs<_Ty>())),
-    typename = _EnableIfNotTaskRet<_Ty, _ReturnType>
+    typename = _EnableIfNotTaskRet<_Ty, _ReturnType>::type
 >
 struct _EnableIfNotTask
 {};
