@@ -4859,10 +4859,8 @@ struct _TaskTypeFromParam
 };
 
 template<typename _Ty,
-    typename _ReturnType = decltype(details::_GetTaskType(std::declval<_Ty>(), details::_IsCallableNoArgs<_Ty>())),
-    typename = _EnableIfNotTaskRet<_Ty, _ReturnType>::type
->
-struct _EnableIfNotTask
+    typename _ReturnType = decltype(details::_GetTaskType(std::declval<_Ty>(), details::_IsCallableNoArgs<_Ty>()))>
+struct _EnableIfNotTask : public _EnableIfNotTaskRet<_Ty, _ReturnType>
 {};
 } // namespace details
 
@@ -4899,7 +4897,7 @@ struct _EnableIfNotTask
 /// <seealso cref="task Class"/>
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
-template<typename _Ty, typename = typename details::_EnableIfNotTask<typename std::decay<_Ty>::type>>
+template<typename _Ty, typename = typename details::_EnableIfNotTask<typename std::decay<_Ty>::type>::type>
 __declspec(noinline) auto create_task(_Ty&& _Param, task_options _TaskOptions = task_options())
     -> task<typename details::_TaskTypeFromParam<_Ty>::_Type>
 {
