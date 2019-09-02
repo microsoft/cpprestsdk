@@ -104,7 +104,7 @@ public:
 #if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
         , m_tlsext_sni_enabled(true)
 #endif
-#if (defined(_WIN32) && !defined(__cplusplus_winrt))
+#if (defined(_WIN32) && !defined(__cplusplus_winrt)) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
         , m_buffer_request(false)
 #endif
     {
@@ -262,7 +262,7 @@ public:
     void set_validate_certificates(bool validate_certs) { m_validate_certificates = validate_certs; }
 #endif
 
-#if (defined(_WIN32) && !defined(__cplusplus_winrt))
+#if (defined(_WIN32) && !defined(__cplusplus_winrt)) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
     /// <summary>
     /// Checks if request data buffering is turned on, the default is off.
     /// </summary>
@@ -389,7 +389,7 @@ private:
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
     bool m_tlsext_sni_enabled;
 #endif
-#if (defined(_WIN32) && !defined(__cplusplus_winrt))
+#if (defined(_WIN32) && !defined(__cplusplus_winrt)) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
     bool m_buffer_request;
 #endif
 };
@@ -716,7 +716,7 @@ private:
 
 namespace details
 {
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
 extern const utility::char_t* get_with_body_err_msg;
 #endif
 

@@ -41,8 +41,8 @@ static void verify_uri(const uri& uri)
 
 namespace details
 {
-#if defined(_WIN32)
-extern const utility::char_t* get_with_body_err_msg =
+#if defined(_WIN32) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
+const utility::char_t* get_with_body_err_msg =
     _XPLATSTR("A GET or HEAD request should not have an entity body.");
 #endif
 
