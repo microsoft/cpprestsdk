@@ -18,7 +18,7 @@
 #include "../common/internal_http_helpers.h"
 #include "cpprest/http_headers.h"
 #include "http_client_impl.h"
-#include "winhttppal/winhttppal.h"
+#include "winhttppal.h"
 #include <atomic>
 #include <memory>
 
@@ -620,7 +620,7 @@ struct ie_proxy_config : WINHTTP_CURRENT_USER_IE_PROXY_CONFIG
 };
 
 
-// CURL client.
+// WINHTTPPAL client.
 class curl_client final : public _http_client_communicator
 {
 public:
@@ -923,7 +923,7 @@ protected:
         DWORD ignoredCertificateValidationSteps = 0;
         if (client_config().validate_certificates())
         {
-            // Revocation is enabled by default in CURL
+            // Revocation is enabled by default in WINHTTPPAL
             // check if the user has overridden the desired Common Name with the host header
             const auto hostHeader = headers.find(_XPLATSTR("Host"));
             if (hostHeader != headers.end())

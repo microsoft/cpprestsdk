@@ -11,8 +11,8 @@ if(@CPPREST_USES_OPENSSL@)
   find_dependency(OpenSSL)
 endif()
 
-if(@CPPREST_USES_CURL@)
-  find_dependency(CURL)
+if(@CPPREST_USES_WINHTTPPAL@)
+  find_dependency(WINHTTPPAL)
 endif()
 
 if(@CPPREST_USES_BOOST@ AND OFF)

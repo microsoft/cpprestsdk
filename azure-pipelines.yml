@@ -312,7 +312,7 @@ jobs:
   #       cd Build_iOS
   #       ./configure.sh
   #     displayName: 'Build for iOS'
-  - job: Ubuntu_1604_Apt_Curl
+  - job: Ubuntu_1604_Apt_winhttppal
     pool:
       vmImage: 'Ubuntu 16.04'
     steps:
@@ -333,13 +333,21 @@ jobs:
         make
         sudo make install
         cd ..
+        git clone https://github.com/microsoft/WinHttpPAL.git
+        cd WinHttpPAL
+        mkdir build
+        cd build
+        cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+        make
+        make install
+        cd ../..
         mkdir build.debug
         cd build.debug
-        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCPPREST_HTTP_CLIENT_IMPL=curl ..
+        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCPPREST_HTTP_CLIENT_IMPL=winhttppal ..
         cd ..
         mkdir build.release
         cd build.release
-        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCPPREST_HTTP_CLIENT_IMPL=curl ..
+        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCPPREST_HTTP_CLIENT_IMPL=winhttppal ..
         cd ..
         ninja -C build.debug
         ninja -C build.release
