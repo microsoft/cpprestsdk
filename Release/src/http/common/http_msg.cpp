@@ -225,27 +225,27 @@ utility::string_t flatten_http_headers(const http_headers& headers)
     return flattened_headers;
 }
 
-#if defined(_WIN32)
-void parse_headers_string(_Inout_z_ utf16char* headersStr, http_headers& headers)
+void parse_headers_string(_Inout_z_ utility::char_t* headersStr, web::http::http_headers& headers)
 {
-    utf16char* context = nullptr;
-    utf16char* line = wcstok_s(headersStr, CRLF, &context);
-    while (line != nullptr)
+    utility::string_t str(headersStr);
+    std::size_t pos = str.find_first_of(_XPLATSTR("\r\n"));
+    std::size_t startpos = 0;
+    while (pos!=std::string::npos)
     {
-        const utility::string_t header_line(line);
+        const utility::string_t header_line(str, startpos, pos - startpos);
         const size_t colonIndex = header_line.find_first_of(_XPLATSTR(":"));
         if (colonIndex != utility::string_t::npos)
         {
             utility::string_t key = header_line.substr(0, colonIndex);
             utility::string_t value = header_line.substr(colonIndex + 1, header_line.length() - colonIndex - 1);
-            http::details::trim_whitespace(key);
-            http::details::trim_whitespace(value);
+            web::http::details::trim_whitespace(key);
+            web::http::details::trim_whitespace(value);
             headers.add(key, value);
         }
-        line = wcstok_s(nullptr, CRLF, &context);
+        startpos = pos + 1;
+        pos = str.find_first_of(_XPLATSTR("\r\n"), pos + 1);
     }
 }
-#endif
 
 } // namespace details
 

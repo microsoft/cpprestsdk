@@ -121,26 +121,6 @@ static utility::string_t parse_reason_phrase(HINTERNET request_handle)
     return phrase;
 }
 
-
-static void parse_headers_string(_Inout_z_ utility::char_t* headersStr, web::http::http_headers& headers)
-{
-    utility::char_t* line = strtok (headersStr, "\r\n");
-    while (line != nullptr)
-    {
-        const utility::string_t header_line(line);
-        const size_t colonIndex = header_line.find_first_of(_XPLATSTR(":"));
-        if (colonIndex != utility::string_t::npos)
-        {
-            utility::string_t key = header_line.substr(0, colonIndex);
-            utility::string_t value = header_line.substr(colonIndex + 1, header_line.length() - colonIndex - 1);
-            web::http::details::trim_whitespace(key);
-            web::http::details::trim_whitespace(value);
-            headers.add(key, value);
-        }
-        line = strtok(nullptr, "\r\n");
-    }
-}
-
 /// <summary>
 /// Parses a string containing HTTP headers.
 /// </summary>
@@ -153,7 +133,7 @@ static void parse_winhttp_headers(HINTERNET request_handle, _In_z_ utility::char
     response.set_status_code(parse_status_code(request_handle));
     response.set_reason_phrase(parse_reason_phrase(request_handle));
 
-    parse_headers_string(headersStr, response.headers());
+    web::http::details::parse_headers_string(headersStr, response.headers());
 }
 
 // Helper function to build error messages.
