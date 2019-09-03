@@ -339,7 +339,7 @@ jobs:
         cd build
         cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
         make
-        make install
+        sudo make install
         cd ../..
         mkdir build.debug
         cd build.debug
