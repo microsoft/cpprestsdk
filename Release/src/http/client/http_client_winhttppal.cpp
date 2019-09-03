@@ -18,11 +18,14 @@
 #include "../common/internal_http_helpers.h"
 #include "cpprest/http_headers.h"
 #include "http_client_impl.h"
+#ifdef WIN32
+#include <Wincrypt.h>
+#endif
+#if defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
 #include "winhttppal.h"
+#endif
 #include <atomic>
-#include <memory>
 
-#define GlobalFree free
 #if _WIN32_WINNT && (_WIN32_WINNT >= _WIN32_WINNT_VISTA)
 #include <VersionHelpers.h>
 #endif
@@ -99,7 +102,7 @@ static http::status_code parse_status_code(HINTERNET request_handle)
                         &buffer[0],
                         &length,
                         WINHTTP_NO_HEADER_INDEX);
-    return (unsigned short)atoi((LPCTSTR)(buffer.c_str()));
+    return (unsigned short)stoi(buffer);
 }
 
 // Helper function to get the reason phrase from a WinHTTP response.
@@ -555,7 +558,106 @@ public:
 
     void on_send_request_validate_cn()
     {
+#if defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
         // we do the validation inside curl
+        return;
+#else
+        if (m_customCnCheck.empty())
+        {
+            // no custom validation selected; either we've delegated that to winhttp or
+            // certificate checking is completely disabled
+            return;
+        }
+
+        winhttp_cert_context certContext;
+        DWORD bufferSize = sizeof(certContext.raw);
+        if (!WinHttpQueryOption(m_request_handle, WINHTTP_OPTION_SERVER_CERT_CONTEXT, &certContext.raw, &bufferSize))
+        {
+            auto errorCode = GetLastError();
+            if (errorCode == HRESULT_CODE(WININET_E_INCORRECT_HANDLE_STATE))
+            {
+                // typically happens when given a custom host with an initially HTTP connection
+                return;
+            }
+
+            report_error(errorCode,
+                         build_error_msg(errorCode, "WinHttpQueryOption WINHTTP_OPTION_SERVER_CERT_CONTEXT"));
+            cleanup();
+            return;
+        }
+
+        const auto encodedFirst = certContext.raw->pbCertEncoded;
+        const auto encodedLast = encodedFirst + certContext.raw->cbCertEncoded;
+        if (certContext.raw->cbCertEncoded == m_cachedEncodedCert.size() &&
+            std::equal(encodedFirst, encodedLast, m_cachedEncodedCert.begin()))
+        {
+            // already validated OK
+            return;
+        }
+
+        char oidPkixKpServerAuth[] = szOID_PKIX_KP_SERVER_AUTH;
+        char oidServerGatedCrypto[] = szOID_SERVER_GATED_CRYPTO;
+        char oidSgcNetscape[] = szOID_SGC_NETSCAPE;
+        char* chainUses[] = {
+            oidPkixKpServerAuth,
+            oidServerGatedCrypto,
+            oidSgcNetscape,
+        };
+
+        winhttp_cert_chain_context chainContext;
+        CERT_CHAIN_PARA chainPara = {sizeof(chainPara)};
+        chainPara.RequestedUsage.dwType = USAGE_MATCH_TYPE_OR;
+        chainPara.RequestedUsage.Usage.cUsageIdentifier = sizeof(chainUses) / sizeof(char*);
+        chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = chainUses;
+
+        // note that the following chain only checks the end certificate; we
+        // assume WinHTTP already validated everything but the common name.
+        if (!CertGetCertificateChain(NULL,
+                                     certContext.raw,
+                                     nullptr,
+                                     certContext.raw->hCertStore,
+                                     &chainPara,
+                                     CERT_CHAIN_CACHE_END_CERT,
+                                     NULL,
+                                     &chainContext.raw))
+        {
+            auto errorCode = GetLastError();
+            report_error(errorCode, build_error_msg(errorCode, "CertGetCertificateChain"));
+            cleanup();
+            return;
+        }
+
+        HTTPSPolicyCallbackData policyData = {
+            {sizeof(policyData)},
+            AUTHTYPE_SERVER,
+            // we assume WinHTTP already checked these:
+            0x00000080       /* SECURITY_FLAG_IGNORE_REVOCATION */
+                | 0x00000100 /* SECURITY_FLAG_IGNORE_UNKNOWN_CA */
+                | 0x00000200 /* SECURITY_FLAG_IGNORE_WRONG_USAGE */
+                | 0x00002000 /* SECURITY_FLAG_IGNORE_CERT_DATE_INVALID */,
+            &m_customCnCheck[0],
+        };
+        CERT_CHAIN_POLICY_PARA policyPara = {sizeof(policyPara)};
+        policyPara.pvExtraPolicyPara = &policyData;
+
+        CERT_CHAIN_POLICY_STATUS policyStatus = {sizeof(policyStatus)};
+        if (!CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL, chainContext.raw, &policyPara, &policyStatus))
+        {
+            auto errorCode = GetLastError();
+            report_error(errorCode, build_error_msg(errorCode, "CertVerifyCertificateChainPolicy"));
+            cleanup();
+            return;
+        }
+
+        if (policyStatus.dwError)
+        {
+            report_error(policyStatus.dwError, build_error_msg(policyStatus.dwError, "Incorrect common name"));
+            cleanup();
+            return;
+        }
+
+        m_cachedEncodedCert.assign(encodedFirst, encodedLast);
+#endif
     }
 
 protected:
@@ -585,6 +687,29 @@ private:
     {
     }
 };
+
+static DWORD ChooseAuthScheme(DWORD dwSupportedSchemes)
+{
+    //  It is the server's responsibility only to accept
+    //  authentication schemes that provide a sufficient
+    //  level of security to protect the servers resources.
+    //
+    //  The client is also obligated only to use an authentication
+    //  scheme that adequately protects its username and password.
+    //
+    if (dwSupportedSchemes & WINHTTP_AUTH_SCHEME_NEGOTIATE)
+        return WINHTTP_AUTH_SCHEME_NEGOTIATE;
+    else if (dwSupportedSchemes & WINHTTP_AUTH_SCHEME_NTLM)
+        return WINHTTP_AUTH_SCHEME_NTLM;
+    else if (dwSupportedSchemes & WINHTTP_AUTH_SCHEME_PASSPORT)
+        return WINHTTP_AUTH_SCHEME_PASSPORT;
+    else if (dwSupportedSchemes & WINHTTP_AUTH_SCHEME_DIGEST)
+        return WINHTTP_AUTH_SCHEME_DIGEST;
+    else if (dwSupportedSchemes & WINHTTP_AUTH_SCHEME_BASIC)
+        return WINHTTP_AUTH_SCHEME_BASIC;
+    else
+        return 0;
+}
 
 // Small RAII helper to ensure that the fields of this struct are always
 // properly freed.
@@ -678,8 +803,9 @@ protected:
         ie_proxy_config proxyIE;
 
         DWORD access_type;
-        LPCTSTR proxy_name;
+        LPCTSTR proxy_name = WINHTTP_NO_PROXY_NAME;
         LPCTSTR proxy_bypass = WINHTTP_NO_PROXY_BYPASS;
+        m_proxy_auto_config = false;
         utility::string_t proxy_str;
         http::uri uri;
 
@@ -692,15 +818,47 @@ protected:
         else if (proxy.is_disabled())
         {
             access_type = WINHTTP_ACCESS_TYPE_NO_PROXY;
-            proxy_name = WINHTTP_NO_PROXY_NAME;
         }
-        else if (config.proxy().is_default() || config.proxy().is_auto_discovery())
+        else if (proxy.is_auto_discovery())
         {
-            // Use the default WinHTTP proxy by default.
-            access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-            proxy_name = WINHTTP_NO_PROXY_NAME;
-			m_proxy_auto_config = true;
-            access_type = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
+            access_type = WinHttpDefaultProxyConstant();
+            if (access_type != WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY)
+            {
+                // Windows 8 or earlier, do proxy autodetection ourselves
+                m_proxy_auto_config = true;
+
+                proxy_info proxyDefault;
+                if (!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
+                    proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
+                {
+                    // ... then try to fall back on the default WinINET proxy, as
+                    // recommended for the desktop applications (if we're not
+                    // running under a user account, the function below will just
+                    // fail, so there is no real need to check for this explicitly)
+                    if (WinHttpGetIEProxyConfigForCurrentUser(&proxyIE))
+                    {
+                        if (proxyIE.fAutoDetect)
+                        {
+                            m_proxy_auto_config = true;
+                        }
+                        else if (proxyIE.lpszAutoConfigUrl)
+                        {
+                            m_proxy_auto_config = true;
+                            m_proxy_auto_config_url = proxyIE.lpszAutoConfigUrl;
+                        }
+                        else if (proxyIE.lpszProxy)
+                        {
+                            access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                            proxy_name = proxyIE.lpszProxy;
+
+                            if (proxyIE.lpszProxyBypass)
+                            {
+                                proxy_bypass = proxyIE.lpszProxyBypass;
+                            }
+                        }
+                    }
+                }
+            }
         }
         else
         {
@@ -825,12 +983,35 @@ protected:
         // and host won't resolve
         if (!::web::http::details::validate_method(method))
         {
-	    	request->report_exception(http_exception("The method string is invalid."));
-	    	return;
+            request->report_exception(http_exception("The method string is invalid."));
+            return;
         }
 
         if (m_proxy_auto_config)
         {
+            WINHTTP_AUTOPROXY_OPTIONS autoproxy_options {};
+            if (m_proxy_auto_config_url.empty())
+            {
+                autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
+                autoproxy_options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+            }
+            else
+            {
+                autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_CONFIG_URL;
+                autoproxy_options.lpszAutoConfigUrl = m_proxy_auto_config_url.c_str();
+            }
+
+            autoproxy_options.fAutoLogonIfChallenged = TRUE;
+
+            auto result = WinHttpGetProxyForUrl(m_hSession, m_uri.to_string().c_str(), &autoproxy_options, &info);
+            if (result)
+            {
+                proxy_info_required = true;
+            }
+            else
+            {
+                // Failure to download the auto-configuration script is not fatal. Fall back to the default proxy.
+            }
         }
 
         // Need to form uri path, query, and fragment for this request.
@@ -905,7 +1086,18 @@ protected:
         DWORD ignoredCertificateValidationSteps = 0;
         if (client_config().validate_certificates())
         {
-            // Revocation is enabled by default in WINHTTPPAL
+            // if we are validating certificates, also turn on revocation checking
+            DWORD dwEnableSSLRevocationOpt = WINHTTP_ENABLE_SSL_REVOCATION;
+            if (!WinHttpSetOption(winhttp_context->m_request_handle,
+                                  WINHTTP_OPTION_ENABLE_FEATURE,
+                                  &dwEnableSSLRevocationOpt,
+                                  sizeof(dwEnableSSLRevocationOpt)))
+            {
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
+                return;
+            }
+
             // check if the user has overridden the desired Common Name with the host header
             const auto hostHeader = headers.find(_XPLATSTR("Host"));
             if (hostHeader != headers.end())
@@ -1581,6 +1773,73 @@ private:
 
         //  If we got ERROR_WINHTTP_RESEND_REQUEST, the response header is not available,
         //  we cannot call WinHttpQueryAuthSchemes and WinHttpSetCredentials.
+        if (error != ERROR_WINHTTP_RESEND_REQUEST)
+        {
+            // Obtain the supported and preferred schemes.
+            DWORD dwSupportedSchemes;
+            DWORD dwFirstScheme;
+            DWORD dwAuthTarget;
+            if (!WinHttpQueryAuthSchemes(hRequestHandle, &dwSupportedSchemes, &dwFirstScheme, &dwAuthTarget))
+            {
+                // This will return the authentication failure to the user, without reporting fatal errors
+                return false;
+            }
+
+            DWORD dwSelectedScheme = ChooseAuthScheme(dwSupportedSchemes);
+            if (dwSelectedScheme == 0)
+            {
+                // This will return the authentication failure to the user, without reporting fatal errors
+                return false;
+            }
+
+            credentials cred;
+            if (dwAuthTarget == WINHTTP_AUTH_TARGET_SERVER && !p_request_context->m_server_authentication_tried)
+            {
+                cred = p_request_context->m_http_client->client_config().credentials();
+                p_request_context->m_server_authentication_tried = true;
+            }
+            else if (dwAuthTarget == WINHTTP_AUTH_TARGET_PROXY)
+            {
+                bool is_redirect = false;
+                try
+                {
+                    web::uri current_uri(get_request_url(hRequestHandle));
+                    is_redirect = p_request_context->m_request.absolute_uri().to_string() != current_uri.to_string();
+                }
+                catch (const std::exception&)
+                {
+                }
+
+                // If we have been redirected, then WinHttp needs the proxy credentials again to make the next request
+                // leg (which may be on a different server)
+                if (is_redirect || !p_request_context->m_proxy_authentication_tried)
+                {
+                    cred = p_request_context->m_http_client->client_config().proxy().credentials();
+                    p_request_context->m_proxy_authentication_tried = true;
+                }
+            }
+
+            // No credentials found so can't resend.
+            if (!cred.is_set())
+            {
+                return false;
+            }
+
+            // New scope to ensure plaintext password is cleared as soon as possible.
+            {
+                auto password = cred._internal_decrypt();
+                if (!WinHttpSetCredentials(hRequestHandle,
+                                           dwAuthTarget,
+                                           dwSelectedScheme,
+                                           cred.username().c_str(),
+                                           password->c_str(),
+                                           nullptr))
+                {
+                    return false;
+                }
+            }
+        }
+
         // Reset the request body type since it might have already started sending.
         size_t content_length;
         try
