@@ -136,7 +136,7 @@ elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttppal")
   cpprest_find_openssl()
   cpprest_find_winhttppal()
   target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
-  target_sources(cpprest PRIVATE http/client/http_client_winhttppal.cpp http/client/x509_cert_utilities.cpp)
+  target_sources(cpprest PRIVATE http/client/http_client_winhttp.cpp http/client/x509_cert_utilities.cpp)
   target_link_libraries(cpprest PUBLIC cpprestsdk_boost_internal cpprestsdk_openssl_internal cpprestsdk_winhttppal_internal)
 elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttp")
   target_link_libraries(cpprest PRIVATE
