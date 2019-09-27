@@ -1,0 +1,40 @@
+parameters:
+  name: 'Windows_VS2019_x86'
+  targetPlatform: 'x86'
+  image: 'windows-latest'
+
+jobs:
+- job: ${{ parameters.name }}
+  pool:
+    vmImage: ${{ parameters.image }}
+  variables:
+    vcpkgLocation: '$(Build.SourcesDirectory)/vcpkg'
+    vcpkgResponseFile: $(Build.SourcesDirectory)/azure-devops/vcpkg-windows.txt
+  steps:
+    - task: CacheBeta@0
+      displayName: Cache vcpkg
+      inputs:
+        key: $(vcpkgResponseFile) | $(Build.SourcesDirectory)/.git/modules/vcpkg/HEAD | ${{ parameters.targetPlatform }} | ${{ parameters.image }}
+        path: '$(vcpkgLocation)'
+    - task: run-vcpkg@0
+      displayName: 'Run vcpkg'
+      inputs:
+        vcpkgArguments: '@$(vcpkgResponseFile)'
+        vcpkgDirectory: '$(vcpkgLocation)'
+        vcpkgTriplet: ${{ parameters.targetPlatform }}-windows
+    - task: run-cmake@0
+      displayName: 'Run CMake with Ninja'
+      enabled: true
+      inputs:
+        cmakeListsTxtPath: 'CMakeSettings.json'
+        useVcpkgToolchainFile: true
+        configurationRegexFilter: '.*${{ parameters.targetPlatform }}.*'
+        buildDirectory: $(Build.ArtifactStagingDirectory)/${{ parameters.targetPlatform }}
+    - script: |
+        cd out\build\${{ parameters.targetPlatform }}_Release\Binaries\Debug
+        .\test_runner.exe *testd.dll
+      displayName: 'Run tests, debug'
+    - script: |
+        cd out\build\${{ parameters.targetPlatform }}_Release\Binaries\Release
+        .\test_runner.exe *test.dll
+      displayName: 'Run tests, release'
