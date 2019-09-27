@@ -32,6 +32,9 @@ jobs:
         buildDirectory: $(Build.ArtifactStagingDirectory)/${{ parameters.targetPlatform }}_Debug
         cmakeAppendedArgs: '-DCPPREST_EXCLUDE_BROTLI=OFF'
     - script: |
+        echo $(Build.ArtifactStagingDirectory)\${{ parameters.targetPlatform }}_Debug\Binaries\Release
+        pwd
+        dir /s
         cd $(Build.ArtifactStagingDirectory)\${{ parameters.targetPlatform }}_Debug\Binaries\Release
         .\test_runner.exe *testd.dll
       displayName: 'Run tests, debug'
@@ -45,6 +48,7 @@ jobs:
         buildDirectory: $(Build.ArtifactStagingDirectory)/${{ parameters.targetPlatform }}_Release
         cmakeAppendedArgs: '-DCPPREST_EXCLUDE_BROTLI=OFF'
     - script: |
+        echo $(Build.ArtifactStagingDirectory)\${{ parameters.targetPlatform }}_Release\Binaries\Release
         cd $(Build.ArtifactStagingDirectory)\${{ parameters.targetPlatform }}_Release\Binaries\Release
         .\test_runner.exe *test.dll
       displayName: 'Run tests, release'
