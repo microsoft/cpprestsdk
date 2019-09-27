@@ -23,18 +23,28 @@ jobs:
         vcpkgDirectory: '$(vcpkgLocation)'
         vcpkgTriplet: ${{ parameters.targetPlatform }}-windows
     - task: run-cmake@0
-      displayName: 'Run CMake with Ninja'
+      displayName: 'Run CMake with Ninja (Debug)'
       enabled: true
       inputs:
-        cmakeListsTxtPath: 'CMakeSettings.json'
+        cmakeListsOrSettingsJson: 'CMakeListsTxtBasic'
+        cmakeBuildType: 'Debug'
         useVcpkgToolchainFile: true
-        configurationRegexFilter: '.*${{ parameters.targetPlatform }}.*'
-        buildDirectory: $(Build.ArtifactStagingDirectory)/${{ parameters.targetPlatform }}
+        buildDirectory: $(Build.ArtifactStagingDirectory)/${{ parameters.targetPlatform }}_Debug
+        cmakeAppendedArgs: '-DCPPREST_EXCLUDE_BROTLI=OFF'
     - script: |
-        cd out\build\${{ parameters.targetPlatform }}_Release\Binaries\Debug
+        cd $(Build.ArtifactStagingDirectory)\${{ parameters.targetPlatform }}_Debug\Binaries\Release
         .\test_runner.exe *testd.dll
       displayName: 'Run tests, debug'
+    - task: run-cmake@0
+      displayName: 'Run CMake with Ninja (Release)'
+      enabled: true
+      inputs:
+        cmakeListsOrSettingsJson: 'CMakeListsTxtBasic'
+        cmakeBuildType: 'Release'
+        useVcpkgToolchainFile: true
+        buildDirectory: $(Build.ArtifactStagingDirectory)/${{ parameters.targetPlatform }}_Release
+        cmakeAppendedArgs: '-DCPPREST_EXCLUDE_BROTLI=OFF'
     - script: |
-        cd out\build\${{ parameters.targetPlatform }}_Release\Binaries\Release
+        cd $(Build.ArtifactStagingDirectory)\${{ parameters.targetPlatform }}_Release\Binaries\Release
         .\test_runner.exe *test.dll
       displayName: 'Run tests, release'
