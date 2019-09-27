@@ -214,3 +214,47 @@ jobs:
   #       cd Build_iOS
   #       ./configure.sh
   #     displayName: 'Build for iOS'
+  - job: Ubuntu_1604_Apt_winhttppal
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+    - script: |
+        set -e
+        sudo apt -y remove php*
+        sudo apt install -y ppa-purge
+        sudo ppa-purge -y ppa:ondrej/php
+        unset BOOST_ROOT
+        sudo apt install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev openssl libssl-dev ninja-build wget
+        wget http://curl.haxx.se/download/curl-7.57.0.tar.gz
+        sudo apt install -y libtool
+        sudo apt install -y make
+        tar -xvf curl-7.57.0.tar.gz
+        cd curl-7.57.0
+        ./buildconf
+        ./configure --with-ssl --prefix=/usr
+        make
+        sudo make install
+        cd ..
+        git clone https://github.com/microsoft/WinHttpPAL.git
+        cd WinHttpPAL
+        mkdir build
+        cd build
+        cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+        make
+        sudo make install
+        cd ../..
+        mkdir build.debug
+        cd build.debug
+        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCPPREST_HTTP_CLIENT_IMPL=winhttppal ..
+        cd ..
+        mkdir build.release
+        cd build.release
+        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCPPREST_HTTP_CLIENT_IMPL=winhttppal ..
+        cd ..
+        ninja -C build.debug
+        ninja -C build.release
+        cd build.debug/Release/Binaries
+        #./test_runner *test.so
+        cd ../../../build.release/Release/Binaries
+        #./test_runner *test.so
+      displayName: Run build

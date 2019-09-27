@@ -61,6 +61,7 @@ endif()
 
 include(cmake/cpprest_find_boost.cmake)
 include(cmake/cpprest_find_zlib.cmake)
+include(cmake/cpprest_find_winhttppal.cmake)
 include(cmake/cpprest_find_openssl.cmake)
 include(cmake/cpprest_find_websocketpp.cmake)
 include(cmake/cpprest_find_brotli.cmake)

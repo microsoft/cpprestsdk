@@ -30,13 +30,10 @@ namespace details
 /// Serialize the http_headers into name:value pairs separated by a carriage return and line feed.
 /// </summary>
 utility::string_t flatten_http_headers(const http_headers& headers);
-#if defined(_WIN32)
 /// <summary>
 /// Parses a string containing Http headers.
 /// </summary>
-void parse_headers_string(_Inout_z_ utf16char* headersStr, http_headers& headers);
-#endif
-
+void parse_headers_string(_Inout_z_ utility::char_t* headersStr, http_headers& headers);
 } // namespace details
 } // namespace http
 } // namespace web
