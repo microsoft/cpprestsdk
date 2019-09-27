@@ -4,3 +4,4 @@
 [submodule "websocketspp"]
 	path = Release/libs/websocketpp
 	url = https://github.com/zaphoyd/websocketpp/
+	fetchRecurseSubmodules = false
