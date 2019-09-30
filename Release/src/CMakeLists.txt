@@ -140,7 +140,6 @@ elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttppal")
   target_link_libraries(cpprest PUBLIC cpprestsdk_boost_internal cpprestsdk_openssl_internal cpprestsdk_winhttppal_internal)
 elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttp")
   target_link_libraries(cpprest PRIVATE
-    httpapi.lib
     Winhttp.lib
   )
   target_sources(cpprest PRIVATE http/client/http_client_winhttp.cpp)
@@ -175,6 +174,9 @@ elseif(CPPREST_HTTP_LISTENER_IMPL STREQUAL "httpsys")
   target_sources(cpprest PRIVATE
     http/listener/http_server_httpsys.cpp
     http/listener/http_server_httpsys.h
+  )
+  target_link_libraries(cpprest PRIVATE
+    httpapi.lib
   )
 elseif(CPPREST_HTTP_LISTENER_IMPL STREQUAL "none")
 else()
