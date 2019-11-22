@@ -628,6 +628,14 @@ public:
     bool operator==(datetime dt) const { return m_interval == dt.m_interval; }
 
     bool operator!=(const datetime& dt) const { return !(*this == dt); }
+   
+    bool operator>(const datetime& dt) const { return this->m_interval > dt.m_interval; }
+   
+    bool operator<(const datetime& dt) const { return this->m_interval < dt.m_interval; }
+      
+    bool operator>=(const datetime& dt) const { return this->m_interval >= dt.m_interval; }
+   
+    bool operator<=(const datetime& dt) const { return this->m_interval <= dt.m_interval; }
 
     static interval_type from_milliseconds(unsigned int milliseconds) { return milliseconds * _msTicks; }
 
