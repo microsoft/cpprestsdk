@@ -268,6 +268,7 @@ public:
     utility::size64_t m_remaining_to_write;
 
     std::char_traits<uint8_t>::pos_type m_startingPosition;
+    bool m_usingStream;
 
     // If the user specified that to guarantee data buffering of request data, in case of challenged authentication
     // requests, etc... Then if the request stream buffer doesn't support seeking we need to copy the body chunks as it
@@ -682,6 +683,7 @@ private:
         , m_bodyType(no_body)
         , m_remaining_to_write(0)
         , m_startingPosition(std::char_traits<uint8_t>::eof())
+        , m_usingStream(false)
         , m_readStream(request.body())
         , m_body_data()
     {
@@ -1240,6 +1242,8 @@ private:
             // and needs to seek back to where reading is started from.
             winhttp_context->m_startingPosition = rbuf.getpos(std::ios_base::in);
 
+            winhttp_context->m_usingStream = true;
+
             // If we find ourselves here, we either don't know how large the message
             totalLength = winhttp_context->m_bodyType == content_length_chunked ? (DWORD)content_length
                                                                                 : WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH;
@@ -1768,6 +1772,11 @@ private:
                     return false;
                 }
             }
+        }
+        else if (p_request_context->m_usingStream)
+        {
+            // streambuf::getpos returns EOF on error, which means that the stream is probably not seekable.
+            return false;
         }
         p_request_context->m_compression_state = winhttp_request_context::compression_state();
 
