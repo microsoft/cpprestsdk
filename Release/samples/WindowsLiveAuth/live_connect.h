@@ -338,7 +338,7 @@ public:
 
         web::http::http_request req(web::http::methods::PUT);
         req.set_request_uri(bldr.to_string());
-        req.set_body(stream, content_length, U(""));
+        req.set_body(stream, content_length, utility::string_t{});
 
         return _make_request(req).then([](web::http::http_response response) { return _json_extract(response); });
     }
@@ -368,7 +368,7 @@ public:
 
                         web::http::http_request req(web::http::methods::PUT);
                         req.set_request_uri(bldr.to_string());
-                        req.set_body(stream, size, U(""));
+                        req.set_body(stream, size, utility::string_t{});
 
                         return _make_request(req)
                             .then([](web::http::http_response response) { return response.content_ready(); })

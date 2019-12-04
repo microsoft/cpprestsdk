@@ -20,7 +20,7 @@
 #include <Wincrypt.h>
 #include <atomic>
 
-#ifndef CPPREST_TARGET_XP
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #include <VersionHelpers.h>
 #endif
 
@@ -102,13 +102,46 @@ static http::status_code parse_status_code(HINTERNET request_handle)
 // Helper function to trim leading and trailing null characters from a string.
 static void trim_nulls(utility::string_t& str)
 {
-    size_t index;
-    for (index = 0; index < str.size() && str[index] == 0; ++index)
-        ;
-    str.erase(0, index);
-    for (index = str.size(); index > 0 && str[index - 1] == 0; --index)
-        ;
-    str.erase(index);
+    if (str.empty())
+    {
+        return;
+    }
+
+    auto first = str.begin();
+    auto last = str.end();
+
+    if (*first)
+    {
+        --last;
+        if (*last)
+        {
+            // no nulls to remove
+            return;
+        }
+
+        // nulls at the back to remove
+        do
+        {
+            --last;
+        } while (*last == utility::char_t {});
+        ++last;
+        str.erase(last, str.end());
+        return;
+    }
+
+    // nulls at the front, and maybe the back, to remove
+    first = std::find_if(str.begin(), last, [](const utility::char_t c) { return c != utility::char_t {}; });
+
+    if (first != last)
+    {
+        do
+        {
+            --last;
+        } while (*last == utility::char_t {});
+        ++last;
+    }
+
+    str.assign(first, last);
 }
 
 // Helper function to get the reason phrase from a WinHTTP response.
@@ -210,6 +243,24 @@ enum msg_body_type
     transfer_encoding_chunked
 };
 
+static DWORD WinHttpDefaultProxyConstant() CPPREST_NOEXCEPT
+{
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#if _WIN32_WINNT < _WIN32_WINNT_WINBLUE
+    if (!IsWindows8Point1OrGreater())
+    {
+        // Not Windows 8.1 or later, use the default proxy setting
+        return WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+    }
+#endif // _WIN32_WINNT < _WIN32_WINNT_WINBLUE
+
+    // Windows 8.1 or later, use the automatic proxy setting
+    return WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
+#else  // ^^^ _WIN32_WINNT >= _WIN32_WINNT_VISTA ^^^ // vvv _WIN32_WINNT < _WIN32_WINNT_VISTA vvv
+    return WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
+}
+
 // Additional information necessary to track a WinHTTP request.
 class winhttp_request_context final : public request_context
 {
@@ -245,7 +296,7 @@ public:
 
     HINTERNET m_request_handle;
     std::weak_ptr<winhttp_request_context>*
-        m_request_handle_context; // owned by m_request_handle to be delete'd by WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING
+        m_request_handle_context; // owned by m_request_handle to be deleted by WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING
 
     bool m_proxy_authentication_tried;
     bool m_server_authentication_tried;
@@ -464,7 +515,7 @@ public:
                         if (m_bytes_remaining)
                         {
                             // We're at the offset of a chunk of consumable data; let the caller process it
-                            l = std::min(m_bytes_remaining, buffer_size - n);
+                            l = (std::min)(m_bytes_remaining, buffer_size - n);
                             m_bytes_remaining -= l;
                             if (!m_bytes_remaining)
                             {
@@ -785,38 +836,30 @@ protected:
         ie_proxy_config proxyIE;
 
         DWORD access_type;
-        LPCWSTR proxy_name;
+        LPCWSTR proxy_name = WINHTTP_NO_PROXY_NAME;
         LPCWSTR proxy_bypass = WINHTTP_NO_PROXY_BYPASS;
+        m_proxy_auto_config = false;
         utility::string_t proxy_str;
         http::uri uri;
 
         const auto& config = client_config();
-
-        if (config.proxy().is_disabled())
+        const auto& proxy = config.proxy();
+        if (proxy.is_default())
+        {
+            access_type = WinHttpDefaultProxyConstant();
+        }
+        else if (proxy.is_disabled())
         {
             access_type = WINHTTP_ACCESS_TYPE_NO_PROXY;
-            proxy_name = WINHTTP_NO_PROXY_NAME;
         }
-        else if (config.proxy().is_default() || config.proxy().is_auto_discovery())
+        else if (proxy.is_auto_discovery())
         {
-            // Use the default WinHTTP proxy by default.
-            access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-            proxy_name = WINHTTP_NO_PROXY_NAME;
-
-#ifdef CPPREST_TARGET_XP
-            if (config.proxy().is_auto_discovery())
+            access_type = WinHttpDefaultProxyConstant();
+            if (access_type != WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY)
             {
+                // Windows 8 or earlier, do proxy autodetection ourselves
                 m_proxy_auto_config = true;
-            }
-#else  // ^^^ CPPREST_TARGET_XP ^^^ // vvv !CPPREST_TARGET_XP vvv
-            if (IsWindows8Point1OrGreater())
-            {
-                // Windows 8.1 and newer supports automatic proxy discovery and auto-fallback to IE proxy settings
-                access_type = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
-            }
-            else
-            {
-                // However, if it is not configured...
+
                 proxy_info proxyDefault;
                 if (!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
                     proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
@@ -848,13 +891,7 @@ protected:
                         }
                     }
                 }
-
-                if (config.proxy().is_auto_discovery())
-                {
-                    m_proxy_auto_config = true;
-                }
             }
-#endif // CPPREST_TARGET_XP
         }
         else
         {
@@ -908,7 +945,7 @@ protected:
         }
 
         // Enable TLS 1.1 and 1.2
-#if !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
         BOOL win32_result(FALSE);
 
         DWORD secure_protocols(WINHTTP_FLAG_SECURE_PROTOCOL_SSL3 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 |
@@ -974,9 +1011,7 @@ protected:
 
         if (m_proxy_auto_config)
         {
-            WINHTTP_AUTOPROXY_OPTIONS autoproxy_options;
-            memset(&autoproxy_options, 0, sizeof(WINHTTP_AUTOPROXY_OPTIONS));
-
+            WINHTTP_AUTOPROXY_OPTIONS autoproxy_options {};
             if (m_proxy_auto_config_url.empty())
             {
                 autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
@@ -1074,11 +1109,11 @@ protected:
         if (client_config().validate_certificates())
         {
             // if we are validating certificates, also turn on revocation checking
-            DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
+            DWORD dwEnableSSLRevocationOpt = WINHTTP_ENABLE_SSL_REVOCATION;
             if (!WinHttpSetOption(winhttp_context->m_request_handle,
                                   WINHTTP_OPTION_ENABLE_FEATURE,
-                                  &dwEnableSSLRevocOpt,
-                                  sizeof(dwEnableSSLRevocOpt)))
+                                  &dwEnableSSLRevocationOpt,
+                                  sizeof(dwEnableSSLRevocationOpt)))
             {
                 auto errorCode = GetLastError();
                 request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
@@ -1134,7 +1169,7 @@ protected:
             }
 
             // There is a request body that needs to be transferred.
-            if (content_length == std::numeric_limits<size_t>::max())
+            if (content_length == (std::numeric_limits<size_t>::max)())
             {
                 // The content length is not set and the application set a stream. This is an
                 // indication that we will use transfer encoding chunked.  We still want to
@@ -1315,11 +1350,11 @@ private:
                 chunk_size =
                     p_request_context->m_body_data.size() - http::details::chunked_encoding::additional_encoding_space;
             }
-            else if (p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+            else if (p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
             {
                 // Choose a semi-intelligent size based on how much total data is left to compress
-                chunk_size = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write) + 128,
-                                      p_request_context->m_http_client->client_config().chunksize());
+                chunk_size = (std::min)(static_cast<size_t>(p_request_context->m_remaining_to_write) + 128,
+                                        p_request_context->m_http_client->client_config().chunksize());
             }
             else
             {
@@ -1331,8 +1366,8 @@ private:
         {
             // We're not compressing; use the smaller of the remaining data (if known) and the configured (or default)
             // chunk size
-            chunk_size = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write),
-                                  p_request_context->m_http_client->client_config().chunksize());
+            chunk_size = (std::min)(static_cast<size_t>(p_request_context->m_remaining_to_write),
+                                    p_request_context->m_http_client->client_config().chunksize());
         }
         p_request_context->allocate_request_space(
             nullptr, chunk_size + http::details::chunked_encoding::additional_encoding_space);
@@ -1370,7 +1405,7 @@ private:
                 chunk_size + http::details::chunked_encoding::additional_encoding_space,
                 bytes_read);
 
-            if (!compressor && p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+            if (!compressor && p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
             {
                 if (bytes_read == 0 && p_request_context->m_remaining_to_write)
                 {
@@ -1465,7 +1500,7 @@ private:
                          p_request_context->m_compression_state.m_bytes_read)
                 {
                     if (p_request_context->m_remaining_to_write &&
-                        p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+                        p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
                     {
                         // The stream ended earlier than we detected it should
                         return pplx::task_from_exception<size_t>(http_exception(
@@ -1518,7 +1553,7 @@ private:
                         p_request_context->m_compression_state.m_bytes_processed += r.input_bytes_processed;
                         _ASSERTE(p_request_context->m_compression_state.m_bytes_processed <=
                                  p_request_context->m_compression_state.m_bytes_read);
-                        if (p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+                        if (p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
                         {
                             _ASSERTE(p_request_context->m_remaining_to_write >= r.input_bytes_processed);
                             p_request_context->m_remaining_to_write -= r.input_bytes_processed;
@@ -1568,7 +1603,7 @@ private:
                             return;
                         }
                         else if (p_request_context->m_remaining_to_write &&
-                                 p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+                                 p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
                         {
                             // Unexpected end-of-stream.
                             p_request_context->report_error(GetLastError(),
@@ -1586,8 +1621,8 @@ private:
                 }
                 else
                 {
-                    length = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write),
-                                      p_request_context->m_http_client->client_config().chunksize());
+                    length = (std::min)(static_cast<size_t>(p_request_context->m_remaining_to_write),
+                                        p_request_context->m_http_client->client_config().chunksize());
                     if (p_request_context->m_compression_state.m_buffer.capacity() < length)
                     {
                         p_request_context->m_compression_state.m_buffer.reserve(length);
@@ -1842,7 +1877,7 @@ private:
         if (content_length > 0)
         {
             // There is a request body that needs to be transferred.
-            if (content_length == std::numeric_limits<size_t>::max())
+            if (content_length == (std::numeric_limits<size_t>::max)())
             {
                 // The content length is unknown and the application set a stream. This is an
                 // indication that we will need to chunk the data.
@@ -1873,7 +1908,7 @@ private:
     static void CALLBACK completion_callback(
         HINTERNET hRequestHandle, DWORD_PTR context, DWORD statusCode, _In_ void* statusInfo, DWORD statusInfoLength)
     {
-        CASABLANCA_UNREFERENCED_PARAMETER(statusInfoLength);
+        (void)statusInfoLength;
 
         std::weak_ptr<winhttp_request_context>* p_weak_request_context =
             reinterpret_cast<std::weak_ptr<winhttp_request_context>*>(context);
@@ -2208,8 +2243,8 @@ private:
 
                 if (p_request_context->m_decompressor)
                 {
-                    size_t chunk_size = std::max(static_cast<size_t>(bytesRead),
-                                                 p_request_context->m_http_client->client_config().chunksize());
+                    size_t chunk_size = (std::max)(static_cast<size_t>(bytesRead),
+                                                   p_request_context->m_http_client->client_config().chunksize());
                     p_request_context->m_compression_state.m_bytes_read = static_cast<size_t>(bytesRead);
                     p_request_context->m_compression_state.m_chunk_bytes = 0;
 
@@ -2396,24 +2431,23 @@ private:
                                         return keep_going(p_request_context.get());
                                     });
                             });
-                    })
-                        .then([p_request_context](pplx::task<bool> op) {
-                            try
+                    }).then([p_request_context](pplx::task<bool> op) {
+                        try
+                        {
+                            bool ignored = op.get();
+                        }
+                        catch (...)
+                        {
+                            // We're only here to pick up any exception that may have been thrown, and to clean up
+                            // if needed
+                            if (p_request_context->m_compression_state.m_acquired)
                             {
-                                bool ignored = op.get();
+                                p_request_context->_get_writebuffer().commit(0);
+                                p_request_context->m_compression_state.m_acquired = nullptr;
                             }
-                            catch (...)
-                            {
-                                // We're only here to pick up any exception that may have been thrown, and to clean up
-                                // if needed
-                                if (p_request_context->m_compression_state.m_acquired)
-                                {
-                                    p_request_context->_get_writebuffer().commit(0);
-                                    p_request_context->m_compression_state.m_acquired = nullptr;
-                                }
-                                p_request_context->report_exception(std::current_exception());
-                            }
-                        });
+                            p_request_context->report_exception(std::current_exception());
+                        }
+                    });
                 }
                 else
                 {

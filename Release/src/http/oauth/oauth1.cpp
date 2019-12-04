@@ -15,7 +15,7 @@
 
 #include "cpprest/asyncrt_utils.h"
 
-#if !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
 using namespace utility;
 using web::http::client::http_client;
@@ -136,7 +136,7 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& ke
 
 std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& key, const utility::string_t& data)
 {
-    unsigned char digest[HMAC_MAX_MD_CBLOCK];
+    unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int digest_len = 0;
 
     HMAC(EVP_sha1(),
@@ -455,4 +455,4 @@ const oauth1_token& oauth1_config::token() const
 } // namespace http
 } // namespace web
 
-#endif
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA

@@ -92,6 +92,8 @@ done
 
 # Variables setup
 
+unset BOOST_ROOT
+
 if [ ! -e "${ANDROID_NDK}/ndk-build" ]
 then
     echo "ANDROID_NDK does not point to a valid NDK."
@@ -153,7 +155,7 @@ if [ "${DO_OPENSSL}" == "1" ]; then (
 if [ "${DO_BOOST}" == "1" ]; then (
     if [ ! -d 'Boost-for-Android' ]; then git clone https://github.com/moritz-wundke/Boost-for-Android; fi
     cd Boost-for-Android
-    git checkout 1356b87fed389b4abf1ff671adec0b899877174b
+    git checkout aed656a97fb3af7322fd2c3da5995a2d09d87d4b
     PATH="$PATH:$NDK_DIR" \
     CXXFLAGS="-std=gnu++11" \
     ./build-android.sh \

@@ -73,3 +73,5 @@ Build_android/build/
 Generated Files/
 # Ignore iOS temp build directories
 Build_iOS/Apple-Boost-BuildScript
+
+/out/

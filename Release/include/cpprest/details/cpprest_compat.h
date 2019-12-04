@@ -24,8 +24,6 @@
 #define CPPREST_CONSTEXPR const
 #endif // _MSC_VER >= 1900
 
-#define CASABLANCA_UNREFERENCED_PARAMETER(x) (x)
-
 #include <sal.h>
 
 #else // ^^^ _WIN32 ^^^ // vvv !_WIN32 vvv
@@ -38,7 +36,6 @@
     {                                                                                                                  \
         if (!(x)) __builtin_unreachable();                                                                             \
     } while (false)
-#define CASABLANCA_UNREFERENCED_PARAMETER(x) (void)x
 #define CPPREST_NOEXCEPT noexcept
 #define CPPREST_CONSTEXPR constexpr
 

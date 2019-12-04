@@ -238,7 +238,7 @@ static int parse_command_line(int argc, char** argv)
             }
             else
             {
-                UnitTest::GlobalSettings::Add(arg.substr(1), "");
+                UnitTest::GlobalSettings::Add(arg.substr(1), std::string{});
             }
         }
         else if (arg.find("/debug") == 0)
@@ -262,9 +262,9 @@ static bool matched_properties(const UnitTest::TestProperties& test_props)
     // This starts with visual studio versions after VS 2012.
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #ifdef WINRT_TEST_RUNNER
-    UnitTest::GlobalSettings::Add("winrt", "");
+    UnitTest::GlobalSettings::Add("winrt", std::string{});
 #elif defined DESKTOP_TEST_RUNNER
-    UnitTest::GlobalSettings::Add("desktop", "");
+    UnitTest::GlobalSettings::Add("desktop", std::string{});
 #endif
 #endif
 

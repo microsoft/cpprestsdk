@@ -105,9 +105,9 @@ void CALLBACK IoCompletionCallback(PTP_CALLBACK_INSTANCE instance,
                                    ULONG_PTR numberOfBytesTransferred,
                                    PTP_IO io)
 {
-    CASABLANCA_UNREFERENCED_PARAMETER(io);
-    CASABLANCA_UNREFERENCED_PARAMETER(ctxt);
-    CASABLANCA_UNREFERENCED_PARAMETER(instance);
+    (void)io;
+    (void)ctxt;
+    (void)instance;
 
     EXTENDED_OVERLAPPED* pExtOverlapped = static_cast<EXTENDED_OVERLAPPED*>(pOverlapped);
     pExtOverlapped->func(result, static_cast<DWORD>(numberOfBytesTransferred), static_cast<LPOVERLAPPED>(pOverlapped));

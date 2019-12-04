@@ -330,8 +330,7 @@ public:
 
     virtual pplx::task<void> close() = 0;
 
-    virtual pplx::task<void> close(websocket_close_status close_status,
-                                   const utility::string_t& close_reason = _XPLATSTR("")) = 0;
+    virtual pplx::task<void> close(websocket_close_status close_status, const utility::string_t& close_reason = {}) = 0;
 
     virtual void set_close_handler(
         const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>&
@@ -478,7 +477,7 @@ public:
     /// frame.</param> <param name="close_reason">While closing an established connection, an endpoint may indicate the
     /// reason for closure.</param> <returns>An asynchronous operation that is completed the connection has been
     /// successfully closed.</returns>
-    pplx::task<void> close(websocket_close_status close_status, const utility::string_t& close_reason = _XPLATSTR(""))
+    pplx::task<void> close(websocket_close_status close_status, const utility::string_t& close_reason = {})
     {
         return m_client->callback_client()->close(close_status, close_reason);
     }
@@ -566,7 +565,7 @@ public:
     /// frame.</param> <param name="close_reason">While closing an established connection, an endpoint may indicate the
     /// reason for closure.</param> <returns>An asynchronous operation that is completed the connection has been
     /// successfully closed.</returns>
-    pplx::task<void> close(websocket_close_status close_status, const utility::string_t& close_reason = _XPLATSTR(""))
+    pplx::task<void> close(websocket_close_status close_status, const utility::string_t& close_reason = {})
     {
         return m_client->close(close_status, close_reason);
     }

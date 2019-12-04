@@ -25,10 +25,10 @@ public:
 
     void Clear()
     {
-        playerBalance->Text = L"";
-        playerBet->Text = L"";
-        playerName->Text = L"";
-        playerInsurance->Text = L"";
+        playerBalance->Text.clear();
+        playerBet->Text.clear();
+        playerName->Text.clear();
+        playerInsurance->Text.clear();
         m_cards.clear();
         playerCardGrid->Children->Clear();
     }

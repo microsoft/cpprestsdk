@@ -16,5 +16,4 @@
 #include "unittestpp.h"
 #include <random>
 
-#define NOMINMAX
 #include "json_tests.h"
