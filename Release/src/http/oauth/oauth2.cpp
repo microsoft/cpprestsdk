@@ -143,7 +143,7 @@ pplx::task<void> oauth2_config::_request_token(uri_builder& request_body_ub, ins
     return token_client.request(request)
         .then([](http_response resp) { return resp.extract_json(); })
         .then([this,inspect_func = std::move(inspect_func)](json::value json_resp) -> void {
-            inspect_func( json_resp );
+            inspect_func(json_resp);
             set_token(_parse_token_from_json(json_resp));
         });
 }
