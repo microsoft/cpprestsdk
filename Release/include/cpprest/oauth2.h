@@ -234,6 +234,8 @@ public:
     /// <returns>Authorization URI string.</returns>
     _ASYNCRTIMP utility::string_t build_authorization_uri(bool generate_state);
 
+    using inspect_response_json_t = std::function<void(const web::json::value&)>;
+    
     /// <summary>
     /// Fetch an access token (and possibly a refresh token) based on redirected URI.
     /// Behavior depends on the implicit_grant() setting.
@@ -247,8 +249,8 @@ public:
     /// </summary>
     /// <param name="redirected_uri">The URI where web browser/view was redirected after resource owner's
     /// authorization.</param> <returns>Task that fetches the token(s) based on redirected URI.</returns>
-    _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(const web::http::uri& redirected_uri);
-
+    _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(const web::http::uri& redirected_uri, inspect_response_json_t inspect_func = [](auto){});
+    
     /// <summary>
     /// Fetches an access token (and possibly a refresh token) from the token endpoint.
     /// The task creates an HTTP request to the token_endpoint() which exchanges
@@ -258,13 +260,13 @@ public:
     /// </summary>
     /// <param name="authorization_code">Code received via redirect upon successful authorization.</param>
     /// <returns>Task that fetches token(s) based on the authorization code.</returns>
-    pplx::task<void> token_from_code(utility::string_t authorization_code)
+    pplx::task<void> token_from_code(utility::string_t authorization_code, inspect_response_json_t inspect_func = [](auto){})
     {
         uri_builder ub;
         ub.append_query(details::oauth2_strings::grant_type, details::oauth2_strings::authorization_code, false);
         ub.append_query(details::oauth2_strings::code, uri::encode_data_string(std::move(authorization_code)), false);
         ub.append_query(details::oauth2_strings::redirect_uri, uri::encode_data_string(redirect_uri()), false);
-        return _request_token(ub);
+        return _request_token(ub, std::move(inspect_func));
     }
 
     /// <summary>
@@ -275,13 +277,13 @@ public:
     /// This also sets a new refresh token if one was returned.
     /// </summary>
     /// <returns>Task that fetches the token(s) using the refresh token.</returns>
-    pplx::task<void> token_from_refresh()
+    pplx::task<void> token_from_refresh(inspect_response_json_t inspect_func = [](auto){})
     {
         uri_builder ub;
         ub.append_query(details::oauth2_strings::grant_type, details::oauth2_strings::refresh_token, false);
         ub.append_query(
             details::oauth2_strings::refresh_token, uri::encode_data_string(token().refresh_token()), false);
-        return _request_token(ub);
+        return _request_token(ub, std::move(inspect_func));
     }
 
     /// <summary>
@@ -471,7 +473,7 @@ private:
 
     oauth2_config() : m_implicit_grant(false), m_bearer_auth(true), m_http_basic_auth(true) {}
 
-    _ASYNCRTIMP pplx::task<void> _request_token(uri_builder& request_body);
+    _ASYNCRTIMP pplx::task<void> _request_token(uri_builder& request_body, inspect_response_json_t inspect_func );
 
     oauth2_token _parse_token_from_json(const json::value& token_json);
 

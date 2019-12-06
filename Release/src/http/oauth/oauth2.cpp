@@ -63,7 +63,7 @@ utility::string_t oauth2_config::build_authorization_uri(bool generate_state)
     return ub.to_string();
 }
 
-pplx::task<void> oauth2_config::token_from_redirected_uri(const web::http::uri& redirected_uri)
+pplx::task<void> oauth2_config::token_from_redirected_uri(const web::http::uri& redirected_uri, inspect_response_json_t inspect_func)
 {
     auto query = uri::split_query((implicit_grant()) ? redirected_uri.fragment() : redirected_uri.query());
 
@@ -85,7 +85,7 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(const web::http::uri& 
     auto code_param = query.find(oauth2_strings::code);
     if (code_param != query.end())
     {
-        return token_from_code(code_param->second);
+        return token_from_code(code_param->second, std::move(inspect_func));
     }
 
     // NOTE: The redirected URI contains access token only in the implicit grant.
@@ -101,7 +101,7 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(const web::http::uri& 
     return pplx::task_from_result();
 }
 
-pplx::task<void> oauth2_config::_request_token(uri_builder& request_body_ub)
+pplx::task<void> oauth2_config::_request_token(uri_builder& request_body_ub, inspect_response_json_t inspect_func )
 {
     http_request request;
     request.set_method(methods::POST);
@@ -142,7 +142,10 @@ pplx::task<void> oauth2_config::_request_token(uri_builder& request_body_ub)
 
     return token_client.request(request)
         .then([](http_response resp) { return resp.extract_json(); })
-        .then([this](json::value json_resp) -> void { set_token(_parse_token_from_json(json_resp)); });
+        .then([this,inspect_func = std::move(inspect_func)](json::value json_resp) -> void {
+            inspect_func( json_resp );
+            set_token(_parse_token_from_json(json_resp));
+        });
 }
 
 oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json)
