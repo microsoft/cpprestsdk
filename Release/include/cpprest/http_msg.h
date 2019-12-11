@@ -1039,7 +1039,7 @@ public:
     /// </summary>
     /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utility::string_t> extract_string(bool ignore_content_type = false)
+    pplx::task<utility::string_t> extract_string(bool ignore_content_type = false) const
     {
         auto impl = _m_impl;
         return pplx::create_task(_m_impl->_get_data_available()).then([impl, ignore_content_type](utility::size64_t) {
@@ -1054,7 +1054,7 @@ public:
     /// </summary>
     /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utf8string> extract_utf8string(bool ignore_content_type = false)
+    pplx::task<utf8string> extract_utf8string(bool ignore_content_type = false) const
     {
         auto impl = _m_impl;
         return pplx::create_task(_m_impl->_get_data_available()).then([impl, ignore_content_type](utility::size64_t) {
@@ -1069,7 +1069,7 @@ public:
     /// </summary>
     /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-16.</param>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utf16string> extract_utf16string(bool ignore_content_type = false)
+    pplx::task<utf16string> extract_utf16string(bool ignore_content_type = false) const
     {
         auto impl = _m_impl;
         return pplx::create_task(_m_impl->_get_data_available()).then([impl, ignore_content_type](utility::size64_t) {
