@@ -172,7 +172,6 @@ jobs:
       vmImage: 'macOS-latest'
     steps:
     - script: |
-        brew install gcc ninja
         ./vcpkg/bootstrap-vcpkg.sh
         ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
       displayName: Vcpkg install dependencies
@@ -204,15 +203,15 @@ jobs:
         cd build.release/Release/Binaries
         ./test_runner *test.dylib
       displayName: 'Run tests, release'
-  # iOS is disabled for now because the dependency Apple-Boost-BuildScript appears to be broken with the version of XCode in use in Pipelines.
-  # - job: MacOS_iOS
-  #   pool:
-  #     vmImage: 'macOS-latest'
-  #   steps:
-  #   - script: |
-  #       cd Build_iOS
-  #       ./configure.sh
-  #     displayName: 'Build for iOS'
+  iOS is disabled for now because the dependency Apple-Boost-BuildScript appears to be broken with the version of XCode in use in Pipelines.
+  - job: MacOS_iOS
+    pool:
+      vmImage: 'macOS-latest'
+    steps:
+    - script: |
+        cd Build_iOS
+        ./configure.sh
+      displayName: 'Build for iOS'
   - job: Ubuntu_1604_Apt_winhttppal
     pool:
       vmImage: 'Ubuntu 16.04'
