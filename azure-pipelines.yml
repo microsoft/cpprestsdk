@@ -203,7 +203,6 @@ jobs:
         cd build.release/Release/Binaries
         ./test_runner *test.dylib
       displayName: 'Run tests, release'
-  iOS is disabled for now because the dependency Apple-Boost-BuildScript appears to be broken with the version of XCode in use in Pipelines.
   - job: MacOS_iOS
     pool:
       vmImage: 'macOS-latest'
