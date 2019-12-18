@@ -129,36 +129,6 @@ SUITE(authentication_tests)
     }
 
 // These tests are specific to our websocketpp based implementation.
-#if !defined(__cplusplus_winrt)
-
-    // WinRT doesn't expose option for disabling.
-    // No stable server is available to reliably test this.
-    // The configuration below relies on a timeout in the success case.
-    TEST(disable_sni)
-    {
-        websocket_client_config config;
-        config.set_server_name("expired.badssl.com");
-        config.disable_sni();
-        websocket_client client(config);
-
-        try
-        {
-            client.connect(U("wss://badssl.com")).wait();
-
-            // Should never be reached.
-            VERIFY_IS_TRUE(false);
-        }
-        catch (const websocket_exception& e)
-        {
-            // Should fail for a reason different than invalid HTTP status.
-            if (e.error_code().value() != 20)
-            {
-                return;
-            }
-            throw;
-        }
-    }
-
     void handshake_error_test_impl(const ::utility::string_t& host)
     {
         websocket_client client;
@@ -184,8 +154,6 @@ SUITE(authentication_tests)
     TEST(hostname_mismatch) { handshake_error_test_impl(U("wss://wrong.host.badssl.com/")); }
 
     TEST(cert_expired) { handshake_error_test_impl(U("wss://expired.badssl.com/")); }
-
-#endif
 
 } // SUITE(authentication_tests)
 
