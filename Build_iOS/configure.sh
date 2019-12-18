@@ -96,7 +96,7 @@ if [ ! -e $ABS_PATH/boost.framework ] && [ ! -d $ABS_PATH/boost ]; then
         git clone https://github.com/faithfracture/Apple-Boost-BuildScript ${ABS_PATH}/Apple-Boost-BuildScript
     fi
     pushd ${ABS_PATH}/Apple-Boost-BuildScript
-    git checkout 1ebe6e7654d9c9e1792076ee3827a45d5d2f34c5
+    git checkout 8c42427b4ebc7865eb99b0a0b9607888af2c6abc
     BOOST_LIBS="thread chrono filesystem regex system random" ./boost.sh -ios -tvos --boost-version $BOOST_VERSION
     popd
     mv ${ABS_PATH}/Apple-Boost-BuildScript/build/boost/${BOOST_VERSION}/ios/framework/boost.framework ${ABS_PATH}
@@ -112,7 +112,7 @@ if [ ! -e ${ABS_PATH}/openssl/lib/libcrypto.a ]; then
        git clone --depth=1 https://github.com/x2on/OpenSSL-for-iPhone.git ${ABS_PATH}/OpenSSL-for-iPhone
     fi
     pushd ${ABS_PATH}/OpenSSL-for-iPhone
-    git checkout 10019638e80e8a8a5fc19642a840d8a69fac7349
+    git checkout 6c665e2a15ba7e834875eecaf4eb93c11605dd9a
     ./build-libssl.sh --version=${OPENSSL_VERSION}
     popd
     mkdir -p ${ABS_PATH}/openssl/lib
