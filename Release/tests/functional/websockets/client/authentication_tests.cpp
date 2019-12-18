@@ -128,7 +128,6 @@ SUITE(authentication_tests)
         }
     }
 
-// These tests are specific to our websocketpp based implementation.
     void handshake_error_test_impl(const ::utility::string_t& host)
     {
         websocket_client client;
