@@ -155,7 +155,7 @@ if [ "${DO_OPENSSL}" == "1" ]; then (
 if [ "${DO_BOOST}" == "1" ]; then (
     if [ ! -d 'Boost-for-Android' ]; then git clone https://github.com/moritz-wundke/Boost-for-Android; fi
     cd Boost-for-Android
-    git checkout aed656a97fb3af7322fd2c3da5995a2d09d87d4b
+    git checkout 245ea53385a55742a9ab08a8bd32c6a2dc0bbea4
     PATH="$PATH:$NDK_DIR" \
     CXXFLAGS="-std=gnu++11" \
     ./build-android.sh \
