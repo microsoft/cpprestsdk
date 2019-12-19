@@ -183,7 +183,7 @@ SUITE(client_construction)
 
         config.set_ssl_context_callback([&called](boost::asio::ssl::context& ctx) { called = true; });
 
-        http_client client("https://www.google.com/", config);
+        http_client client(U("https://www.google.com/"), config);
 
         try
         {
@@ -204,7 +204,7 @@ SUITE(client_construction)
 
         config.set_ssl_context_callback([&called](boost::asio::ssl::context& ctx) { called = true; });
 
-        http_client client("http://www.google.com/", config);
+        http_client client(U("http://www.google.com/"), config);
 
         try
         {
