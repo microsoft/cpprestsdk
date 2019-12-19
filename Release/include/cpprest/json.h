@@ -918,7 +918,7 @@ public:
         msl::safeint3::SafeInt<size_type> nMinSize(index);
         nMinSize += 1;
         msl::safeint3::SafeInt<size_type> nlastSize(m_elements.size());
-        if (nlastSize < nMinSize) m_elements.resize(nMinSize);
+        if (nlastSize < nMinSize) m_elements.resize((size_type)nMinSize);
 
         return m_elements[index];
     }

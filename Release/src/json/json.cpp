@@ -288,7 +288,7 @@ bool web::json::number::is_int32() const
         case signed_type:
             return m_intval >= (std::numeric_limits<int32_t>::min)() &&
                    m_intval <= (std::numeric_limits<int32_t>::max)();
-        case unsigned_type: return m_uintval <= (std::numeric_limits<int32_t>::max)();
+        case unsigned_type: return m_uintval <= (uint32_t)(std::numeric_limits<int32_t>::max)();
         case double_type:
         default: return false;
     }

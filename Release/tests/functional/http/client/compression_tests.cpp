@@ -206,7 +206,7 @@ SUITE(compression_tests)
         std::vector<uint8_t> cmp_buffer(buffer_size);
         size_t cmpsize = buffer_size;
         size_t csize = 0;
-        operation_result r = {0};
+        operation_result r = {};
         operation_hint hint = operation_hint::has_more;
         for (i = 0; i < buffer_size || csize == cmpsize || !r.done; i += r.input_bytes_processed)
         {
@@ -361,9 +361,9 @@ SUITE(compression_tests)
                 if (!cfactory)
                 {
                     auto size = tuples[i][0];
-                    compress_and_decompress(utility::details::make_unique<fake_provider>(tuples[i][0]),
-                                            utility::details::make_unique<fake_provider>(tuples[i][0]),
-                                            tuples[i][0],
+                    compress_and_decompress(utility::details::make_unique<fake_provider>(size),
+                                            utility::details::make_unique<fake_provider>(size),
+                                            size,
                                             tuples[i][1],
                                             !!j);
                 }
