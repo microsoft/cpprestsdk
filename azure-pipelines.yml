@@ -169,7 +169,7 @@ jobs:
   #     displayName: 'Run ninja, release static'
   - job: MacOS_Vcpkg
     pool:
-      vmImage: 'macOS-latest'
+      vmImage: 'macOS-10.15'
     steps:
     - script: |
         ./vcpkg/bootstrap-vcpkg.sh
