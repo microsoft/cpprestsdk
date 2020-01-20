@@ -628,13 +628,13 @@ public:
     bool operator==(datetime dt) const { return m_interval == dt.m_interval; }
 
     bool operator!=(const datetime& dt) const { return !(*this == dt); }
-   
+
     bool operator>(const datetime& dt) const { return this->m_interval > dt.m_interval; }
-   
+
     bool operator<(const datetime& dt) const { return this->m_interval < dt.m_interval; }
-      
+
     bool operator>=(const datetime& dt) const { return this->m_interval >= dt.m_interval; }
-   
+
     bool operator<=(const datetime& dt) const { return this->m_interval <= dt.m_interval; }
 
     static interval_type from_milliseconds(unsigned int milliseconds) { return milliseconds * _msTicks; }
@@ -664,6 +664,12 @@ private:
     // Storing as hundreds of nanoseconds 10e-7, i.e. 1 here equals 100ns.
     interval_type m_interval;
 };
+
+inline ::utility::ostream_t & operator<< (::utility::ostream_t & out, datetime const & data)
+{
+    out << data.to_string();
+    return out;
+}
 
 inline int operator-(datetime t1, datetime t2)
 {
