@@ -268,7 +268,7 @@ public:
 class gzip_decompressor : public zlib_decompressor_base
 {
 public:
-    gzip_decompressor() : zlib_decompressor_base(16) // gzip auto-detect
+    gzip_decompressor() : zlib_decompressor_base(31) // 15 is MAX_WBITS in zconf.h; add 16 for gzip
     {
     }
 };
