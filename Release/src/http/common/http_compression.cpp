@@ -17,18 +17,9 @@
 // it. CPPREST_EXCLUDE_BROTLI is set if we want to explicitly disable Brotli compression support.
 // CPPREST_EXCLUDE_WEBSOCKETS is a flag that now essentially means "no external dependencies". TODO: Rename
 
-#if __APPLE__
-#include "TargetConditionals.h"
-#if defined(TARGET_OS_MAC)
-#if !defined(CPPREST_EXCLUDE_COMPRESSION)
-#define CPPREST_HTTP_COMPRESSION
-#endif // !defined(CPPREST_EXCLUDE_COMPRESSION)
-#endif // defined(TARGET_OS_MAC)
-#elif defined(_WIN32) && (!defined(WINAPI_FAMILY) || WINAPI_PARTITION_DESKTOP)
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS) && !defined(CPPREST_EXCLUDE_COMPRESSION)
 #define CPPREST_HTTP_COMPRESSION
 #endif // !defined(CPPREST_EXCLUDE_WEBSOCKETS) && !defined(CPPREST_EXCLUDE_COMPRESSION)
-#endif
 
 #if defined(CPPREST_HTTP_COMPRESSION)
 #include <zlib.h>
