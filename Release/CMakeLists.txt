@@ -142,6 +142,10 @@ else()
   message("CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
 endif()
 
+# Pull in websocketpp if present
+hunter_add_package(websocketpp)
+find_package(websocketpp CONFIG)
+
 # Reconfigure final output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
@@ -150,13 +154,29 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 # These settings can be used by the test targets
 set(Casablanca_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-find_path(WEBSOCKETPP_CONFIG websocketpp-config.cmake
-                       HINTS /usr/lib/cmake/websocketpp)
-find_path(WEBSOCKETPP_CONFIG_VERSION websocketpp-configVersion.cmake
-                       HINTS /usr/lib/cmake/websocketpp)
+if(WEBSOCKETPP_ROOT)
+  find_path(WEBSOCKETPP_CONFIG websocketppConfig.cmake
+                         HINTS ${WEBSOCKETPP_ROOT}/lib/cmake/websocketpp)
+  find_path(WEBSOCKETPP_CONFIG_VERSION websocketppConfigVersion.cmake
+                         HINTS ${WEBSOCKETPP_ROOT}/lib/cmake/websocketpp)
+else()
+  find_path(WEBSOCKETPP_CONFIG websocketpp-config.cmake
+                         HINTS /usr/lib/cmake/websocketpp)
+  find_path(WEBSOCKETPP_CONFIG_VERSION websocketpp-configVersion.cmake
+                         HINTS /usr/lib/cmake/websocketpp)
+endif()
+
 if(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
-  include(${WEBSOCKETPP_CONFIG}/websocketpp-config.cmake)
-  include(${WEBSOCKETPP_CONFIG}/websocketpp-configVersion.cmake)
+  if(EXISTS ${WEBSOCKETPP_CONFIG}/websocketpp-config.cmake)
+    include(${WEBSOCKETPP_CONFIG}/websocketpp-config.cmake)
+  else()
+    include(${WEBSOCKETPP_CONFIG}/websocketppConfig.cmake)
+  endif()
+  if(EXISTS ${WEBSOCKETPP_CONFIG}/websocketpp-configVersion.cmake)
+    include(${WEBSOCKETPP_CONFIG}/websocketpp-configVersion.cmake)
+  else()
+    include(${WEBSOCKETPP_CONFIG}/websocketppConfigVersion.cmake)
+  endif()
   message("-- Found websocketpp version " ${PACKAGE_VERSION} " on system")
   set(Casablanca_INCLUDE_DIRS ${Casablanca_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${WEBSOCKETPP_INCLUDE_DIR})
 else(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
