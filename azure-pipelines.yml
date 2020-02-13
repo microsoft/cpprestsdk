@@ -1,73 +1,41 @@
 # CppRestSdk Azure Pipelines Configuration
 
 jobs:
-  - job: Windows_VS2017_x86
+  - template: azure-devops/build-windows.yml
+    parameters:
+      name: 'Windows_VS2019_x86'
+      targetPlatform: x86
+      image: 'windows-latest'
+  - template: azure-devops/build-windows.yml
+    parameters:
+      name: 'Windows_VS2019_x64'
+      targetPlatform: x64
+      image: 'windows-latest'
+  - template: azure-devops/build-windows.yml
+    parameters:
+      name: 'Windows_VS2017_x86'
+      targetPlatform: x86
+      image: 'vs2017-win2016'
+  - template: azure-devops/build-windows.yml
+    parameters:
+      name: 'Windows_VS2017_x64'
+      targetPlatform: x64
+      image: 'vs2017-win2016'
+  - template: azure-devops/build-windows.yml
+    parameters:
+      name: 'Windows_VS2015_x86'
+      targetPlatform: x86
+      image: 'vs2015-win2012r2'
+      useStringViews: 'OFF'
+  - template: azure-devops/build-windows.yml
+    parameters:
+      name: 'Windows_VS2015_x64'
+      targetPlatform: x64
+      image: 'vs2015-win2012r2'
+      useStringViews: 'OFF'
+  - job: Windows_VS2019_UWP
     pool:
-      vmImage: 'vs2017-win2016'
-    steps:
-    - script: .\vcpkg\bootstrap-vcpkg.bat
-      displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --vcpkg-root .\vcpkg
-      displayName: vcpkg install dependencies
-    - script: mkdir build.common
-      displayName: Make Build Directory
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.common'
-        cmakeArgs: '-DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCPPREST_EXCLUDE_BROTLI=OFF -DCPPREST_USE_STRING_VIEWS=ON ..'
-    - task: MSBuild@1
-      inputs:
-        solution: 'build.common/ALL_BUILD.vcxproj'
-        maximumCpuCount: true
-    - script: |
-        cd build.common\Release\Binaries\Debug
-        .\test_runner.exe *testd.dll
-      displayName: 'Run tests, debug'
-    - task: MSBuild@1
-      inputs:
-        solution: 'build.common/ALL_BUILD.vcxproj'
-        maximumCpuCount: true
-        configuration: 'Release'
-    - script: |
-        cd build.common\Release\Binaries\Release
-        .\test_runner.exe *test.dll
-      displayName: 'Run tests, release'
-  - job: Windows_VS2017_x64
-    pool:
-      vmImage: 'vs2017-win2016'
-    steps:
-    - script: .\vcpkg\bootstrap-vcpkg.bat
-      displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --triplet x64-windows --vcpkg-root .\vcpkg
-      displayName: vcpkg install dependencies
-    - script: mkdir build.common
-      displayName: Make Build Directory
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.common'
-        cmakeArgs: '-A x64 -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCPPREST_EXCLUDE_BROTLI=OFF -DCPPREST_USE_STRING_VIEWS=ON ..'
-    - task: MSBuild@1
-      inputs:
-        solution: 'build.common/ALL_BUILD.vcxproj'
-        maximumCpuCount: true
-        platform: 'x64'
-    - script: |
-        cd build.common\Release\Binaries\Debug
-        .\test_runner.exe *testd.dll
-      displayName: 'Run tests, debug'
-    - task: MSBuild@1
-      inputs:
-        solution: 'build.common/ALL_BUILD.vcxproj'
-        maximumCpuCount: true
-        platform: 'x64'
-        configuration: 'Release'
-    - script: |
-        cd build.common\Release\Binaries\Release
-        .\test_runner.exe *test.dll
-      displayName: 'Run tests, release'
-  - job: Windows_VS2017_UWP
-    pool:
-      vmImage: 'vs2017-win2016'
+      vmImage: 'windows-latest'
     steps:
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
@@ -84,70 +52,6 @@ jobs:
         solution: 'build.common/ALL_BUILD.vcxproj'
         maximumCpuCount: true
         platform: 'x64'
-  - job: Windows_VS2015_x86
-    pool:
-      vmImage: 'vs2015-win2012r2'
-    steps:
-    - script: .\vcpkg\bootstrap-vcpkg.bat
-      displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --vcpkg-root .\vcpkg
-      displayName: vcpkg install dependencies
-    - script: mkdir build.common
-      displayName: Make Build Directory
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.common'
-        cmakeArgs: '-DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCPPREST_EXCLUDE_BROTLI=OFF -DCPPREST_USE_STRING_VIEWS=OFF ..'
-    - task: MSBuild@1
-      inputs:
-        solution: 'build.common/ALL_BUILD.vcxproj'
-        maximumCpuCount: true
-    - script: |
-        cd build.common\Release\Binaries\Debug
-        .\test_runner.exe *testd.dll
-      displayName: 'Run tests, debug'
-    - task: MSBuild@1
-      inputs:
-        solution: 'build.common/ALL_BUILD.vcxproj'
-        maximumCpuCount: true
-        configuration: 'Release'
-    - script: |
-        cd build.common\Release\Binaries\Release
-        .\test_runner.exe *test.dll
-      displayName: 'Run tests, release'
-  - job: Windows_VS2015_x64
-    pool:
-      vmImage: 'vs2015-win2012r2'
-    steps:
-    - script: .\vcpkg\bootstrap-vcpkg.bat
-      displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --triplet x64-windows --vcpkg-root .\vcpkg
-      displayName: vcpkg install dependencies
-    - script: mkdir build.common
-      displayName: Make Build Directory
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.common'
-        cmakeArgs: '-A x64 -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCPPREST_EXCLUDE_BROTLI=OFF -DCPPREST_USE_STRING_VIEWS=OFF ..'
-    - task: MSBuild@1
-      inputs:
-        solution: 'build.common/ALL_BUILD.vcxproj'
-        maximumCpuCount: true
-        platform: 'x64'
-    - script: |
-        cd build.common\Release\Binaries\Debug
-        .\test_runner.exe *testd.dll
-      displayName: 'Run tests, debug'
-    - task: MSBuild@1
-      inputs:
-        solution: 'build.common/ALL_BUILD.vcxproj'
-        maximumCpuCount: true
-        platform: 'x64'
-        configuration: 'Release'
-    - script: |
-        cd build.common\Release\Binaries\Release
-        .\test_runner.exe *test.dll
-      displayName: 'Run tests, release'
   - job: Ubuntu_1604_Apt
     pool:
       vmImage: 'Ubuntu 16.04'
@@ -222,10 +126,9 @@ jobs:
         export NCPU=2
         ../configure.sh --ndk /usr/local/lib/android/sdk/ndk-bundle
       displayName: 'Build for Android'
-  # Homebrew is disabled for now because it apparently is deploying a Boost version that the version of xcode deployed in Pipelines cannot build.
   # - job: MacOS_Homebrew
   #   pool:
-  #     vmImage: 'macOS-10.14'
+  #     vmImage: 'macOS-latest'
   #   steps:
   #   - script: brew install boost openssl ninja
   #     displayName: Brew install dependencies
@@ -266,49 +169,91 @@ jobs:
   #       cd build.release.static
   #       ninja
   #     displayName: 'Run ninja, release static'
-  - job: MacOS_Vcpkg
-    pool:
-      vmImage: 'macOS-10.14'
-    steps:
-    - script: |
-        brew install gcc ninja
-        ./vcpkg/bootstrap-vcpkg.sh
-        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
-      displayName: Vcpkg install dependencies
-    - script: |
-        mkdir build.debug
-        mkdir build.release
-      displayName: Make Build Directories
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.debug'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.release'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
-    - script: |
-        cd build.debug
-        ninja
-      displayName: 'Run ninja debug'
-    - script: |
-        cd build.debug/Release/Binaries
-        ./test_runner *test.dylib
-      displayName: 'Run Tests debug'
-    - script: |
-        cd build.release
-        ninja
-      displayName: 'Run ninja, release'
-    - script: |
-        cd build.release/Release/Binaries
-        ./test_runner *test.dylib
-      displayName: 'Run tests, release'
-  # iOS is disabled for now because the dependency Apple-Boost-BuildScript appears to be broken with the version of XCode in use in Pipelines.
+  # - job: MacOS_Vcpkg
+  #   pool:
+  #     vmImage: 'macOS-latest'
+  #   steps:
+  #   - script: |
+  #       ./vcpkg/bootstrap-vcpkg.sh
+  #       ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
+  #     displayName: Vcpkg install dependencies
+  #   - script: |
+  #       mkdir build.debug
+  #       mkdir build.release
+  #     displayName: Make Build Directories
+  #   - task: CMake@1
+  #     inputs:
+  #       workingDirectory: 'build.debug'
+  #       cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+  #   - task: CMake@1
+  #     inputs:
+  #       workingDirectory: 'build.release'
+  #       cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+  #   - script: |
+  #       cd build.debug
+  #       ninja
+  #     displayName: 'Run ninja debug'
+  #   - script: |
+  #       cd build.debug/Release/Binaries
+  #       ./test_runner *test.dylib
+  #     displayName: 'Run Tests debug'
+  #   - script: |
+  #       cd build.release
+  #       ninja
+  #     displayName: 'Run ninja, release'
+  #   - script: |
+  #       cd build.release/Release/Binaries
+  #       ./test_runner *test.dylib
+  #     displayName: 'Run tests, release'
   # - job: MacOS_iOS
   #   pool:
-  #     vmImage: 'macOS-10.14'
+  #     vmImage: 'macOS-latest'
   #   steps:
   #   - script: |
   #       cd Build_iOS
   #       ./configure.sh
   #     displayName: 'Build for iOS'
+  - job: Ubuntu_1604_Apt_winhttppal
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+    - script: |
+        set -e
+        sudo apt -y remove php*
+        sudo apt install -y ppa-purge
+        sudo ppa-purge -y ppa:ondrej/php
+        unset BOOST_ROOT
+        sudo apt install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev openssl libssl-dev ninja-build wget
+        wget http://curl.haxx.se/download/curl-7.57.0.tar.gz
+        sudo apt install -y libtool
+        sudo apt install -y make
+        tar -xvf curl-7.57.0.tar.gz
+        cd curl-7.57.0
+        ./buildconf
+        ./configure --with-ssl --prefix=/usr
+        make
+        sudo make install
+        cd ..
+        git clone https://github.com/microsoft/WinHttpPAL.git
+        cd WinHttpPAL
+        mkdir build
+        cd build
+        cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+        make
+        sudo make install
+        cd ../..
+        mkdir build.debug
+        cd build.debug
+        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCPPREST_HTTP_CLIENT_IMPL=winhttppal ..
+        cd ..
+        mkdir build.release
+        cd build.release
+        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCPPREST_HTTP_CLIENT_IMPL=winhttppal ..
+        cd ..
+        ninja -C build.debug
+        ninja -C build.release
+        cd build.debug/Release/Binaries
+        #./test_runner *test.so
+        cd ../../../build.release/Release/Binaries
+        #./test_runner *test.so
+      displayName: Run build

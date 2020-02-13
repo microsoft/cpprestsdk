@@ -136,9 +136,15 @@ if(CPPREST_HTTP_CLIENT_IMPL STREQUAL "asio")
   target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_HTTP_CLIENT_ASIO)
   target_sources(cpprest PRIVATE http/client/http_client_asio.cpp http/client/x509_cert_utilities.cpp)
   target_link_libraries(cpprest PUBLIC cpprestsdk_boost_internal cpprestsdk_openssl_internal)
+elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttppal")
+  cpprest_find_boost()
+  cpprest_find_openssl()
+  cpprest_find_winhttppal()
+  target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
+  target_sources(cpprest PRIVATE http/client/http_client_winhttp.cpp http/client/x509_cert_utilities.cpp)
+  target_link_libraries(cpprest PUBLIC cpprestsdk_boost_internal cpprestsdk_openssl_internal cpprestsdk_winhttppal_internal)
 elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttp")
   target_link_libraries(cpprest PRIVATE
-    httpapi.lib
     Winhttp.lib
   )
   target_sources(cpprest PRIVATE http/client/http_client_winhttp.cpp)
@@ -173,6 +179,9 @@ elseif(CPPREST_HTTP_LISTENER_IMPL STREQUAL "httpsys")
   target_sources(cpprest PRIVATE
     http/listener/http_server_httpsys.cpp
     http/listener/http_server_httpsys.h
+  )
+  target_link_libraries(cpprest PRIVATE
+    httpapi.lib
   )
 elseif(CPPREST_HTTP_LISTENER_IMPL STREQUAL "none")
 else()
@@ -242,6 +251,7 @@ if(CPPREST_INSTALL)
   set(CPPREST_USES_ZLIB OFF)
   set(CPPREST_USES_BROTLI OFF)
   set(CPPREST_USES_OPENSSL OFF)
+  set(CPPREST_USES_WINHTTPPAL OFF)
 
   set(CPPREST_TARGETS cpprest)
   if(TARGET cpprestsdk_boost_internal)
@@ -259,6 +269,10 @@ if(CPPREST_INSTALL)
   if(TARGET cpprestsdk_openssl_internal)
     list(APPEND CPPREST_TARGETS cpprestsdk_openssl_internal)
     set(CPPREST_USES_OPENSSL ON)
+  endif()
+  if(TARGET cpprestsdk_winhttppal_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_winhttppal_internal)
+    set(CPPREST_USES_WINHTTPPAL ON)
   endif()
   if(TARGET cpprestsdk_websocketpp_internal)
     list(APPEND CPPREST_TARGETS cpprestsdk_websocketpp_internal)

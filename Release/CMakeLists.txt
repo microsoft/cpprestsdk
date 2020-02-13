@@ -85,6 +85,7 @@ endif()
 
 include(cmake/cpprest_find_boost.cmake)
 include(cmake/cpprest_find_zlib.cmake)
+include(cmake/cpprest_find_winhttppal.cmake)
 include(cmake/cpprest_find_openssl.cmake)
 include(cmake/cpprest_find_websocketpp.cmake)
 include(cmake/cpprest_find_brotli.cmake)
@@ -225,10 +226,10 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
   if (WINDOWS_STORE OR WINDOWS_PHONE)
     add_compile_options(/ZW)
-  endif()
-
-  if (NOT (MSVC_VERSION LESS 1920))
-	add_compile_options(/permissive-)
+  else()
+    if (NOT (MSVC_VERSION LESS 1920))
+      add_compile_options(/permissive-)
+    endif()
   endif()
 
   # Suppress C++17 deprecation warning in aiso per https://github.com/chriskohlhoff/asio/issues/290#issuecomment-371867040

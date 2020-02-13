@@ -228,7 +228,7 @@ SUITE(outside_tests)
 
     TEST(server_hostname_mismatch) { test_failed_ssl_cert(U("https://wrong.host.badssl.com/")); }
 
-#if !defined(__cplusplus_winrt)
+#if !defined(__cplusplus_winrt) && !defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
     TEST(server_hostname_host_override)
     {
         handle_timeout([] {
@@ -253,7 +253,7 @@ SUITE(outside_tests)
         const auto statusCode = response.status_code();
         CHECK(statusCode == status_codes::OK || statusCode == status_codes::MovedPermanently);
     }
-#endif // !defined(__cplusplus_winrt)
+#endif // !defined(__cplusplus_winrt) && !defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
 
     TEST(server_cert_expired) { test_failed_ssl_cert(U("https://expired.badssl.com/")); }
 

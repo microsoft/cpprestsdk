@@ -6022,6 +6022,8 @@ public:
         m_int = (T)(b ? 1 : 0);
     }
 
+    constexpr SafeInt(const SafeInt<T, E>& u) SAFEINT_CPP_THROW = default;
+
     template<typename U>
     SafeInt(const SafeInt<U, E>& u) SAFEINT_CPP_THROW
     {
