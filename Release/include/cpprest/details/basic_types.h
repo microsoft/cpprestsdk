@@ -32,7 +32,7 @@
 
 namespace utility
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(CPPREST_FORCE_NARROW_STRINGS)
 #define _UTF16_STRINGS
 #endif
 
@@ -97,7 +97,7 @@ typedef std::ostream utf8ostream;
 typedef std::istream utf8istream;
 typedef std::istringstream utf8istringstream;
 
-#ifdef _UTF16_STRINGS
+#if defined(_UTF16_STRINGS) || defined(_WIN32)
 typedef wchar_t utf16char;
 typedef std::wstring utf16string;
 typedef std::wstringstream utf16stringstream;

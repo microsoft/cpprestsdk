@@ -196,7 +196,7 @@ public:
     /// <param name="whatArg">Error message string.</param>
     http_exception(const utility::string_t& whatArg) : m_msg(utility::conversions::to_utf8string(whatArg)) {}
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     /// <summary>
     /// Creates an <c>http_exception</c> with just a string message and no error code.
     /// </summary>
@@ -225,8 +225,8 @@ public:
     {
     }
 
-#ifdef _WIN32
-    /// <summary>
+#if defined(_UTF16_STRINGS)
+	/// <summary>
     /// Creates an <c>http_exception</c> with from a error code using the current platform error category.
     /// </summary>
     /// <param name="errorCode">Error code value.</param>
@@ -258,8 +258,8 @@ public:
     {
     }
 
-#ifdef _WIN32
-    /// <summary>
+#if defined(_UTF16_STRINGS)
+	/// <summary>
     /// Creates an <c>http_exception</c> with from a error code with a category, and a string message.
     /// </summary>
     /// <param name="errorCode">Error code value.</param>

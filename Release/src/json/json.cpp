@@ -195,7 +195,7 @@ web::json::value web::json::value::string(utility::string_t value, bool has_esca
     );
 }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 web::json::value web::json::value::string(const std::string& value)
 {
     std::unique_ptr<details::_Value> ptr =

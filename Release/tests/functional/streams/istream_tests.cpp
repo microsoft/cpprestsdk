@@ -69,7 +69,7 @@ void fill_file_with_lines(const utility::string_t& name, const std::string& end,
         stream << "abcdefghijklmnopqrstuvwxyz" << end;
 }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 
 // Disabling warning in test because we check for nullptr.
 #pragma warning(push)
@@ -820,7 +820,7 @@ SUITE(istream_tests)
         VERIFY_ARE_EQUAL(str1, "abc");
         VERIFY_ARE_EQUAL(str2, "defgsf");
     }
-#ifdef _WIN32 // On Linux, this becomes the exact copy of istream_extract_string1, hence disabled
+#if defined(_UTF16_STRINGS)
     TEST(istream_extract_wstring_1)
     {
         producer_consumer_buffer<char> rbuf;
@@ -905,7 +905,7 @@ SUITE(istream_tests)
         VERIFY_ARE_EQUAL(i1, 1024);
         VERIFY_ARE_EQUAL(i2, (uint64_t)12000000000);
     }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(istream_extract_int64w)
     {
         producer_consumer_buffer<wchar_t> rbuf;
@@ -972,7 +972,7 @@ SUITE(istream_tests)
         VERIFY_ARE_EQUAL(i2, (uint32_t)3000000000);
         VERIFY_THROWS(is.extract<uint32_t>().get(), std::range_error);
     }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(istream_extract_int32w)
     {
         producer_consumer_buffer<wchar_t> rbuf;
@@ -1042,7 +1042,7 @@ SUITE(istream_tests)
         VERIFY_THROWS(is.extract<uint16_t>().get(), std::range_error);
     }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(istream_extract_int16w)
     {
         producer_consumer_buffer<wchar_t> rbuf;
@@ -1110,7 +1110,7 @@ SUITE(istream_tests)
         VERIFY_ARE_EQUAL(i2, '1');
     }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(istream_extract_int8w)
     {
         producer_consumer_buffer<wchar_t> rbuf;
@@ -1181,7 +1181,7 @@ SUITE(istream_tests)
         VERIFY_THROWS(is.extract<bool>().get(), std::runtime_error);
     }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(istream_extract_bool_w)
     {
         producer_consumer_buffer<wchar_t> rbuf;
@@ -1237,7 +1237,7 @@ SUITE(istream_tests)
     {
         istream_extract_long_impl<char, long>(
             container_buffer<std::string>("123 -567 120000000000000000000000000000000000000000000000"));
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
         istream_extract_long_impl<wchar_t, long>(container_buffer<std::wstring>(L"123 -567 12000000000"));
 #endif
     }
@@ -1257,7 +1257,7 @@ SUITE(istream_tests)
     TEST(istream_extract_unsigned_long)
     {
         istream_extract_unsigned_long_impl<char, unsigned long>(container_buffer<std::string>("876 3 -44"));
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
         istream_extract_unsigned_long_impl<wchar_t, unsigned long>(container_buffer<std::wstring>(L"876 3 -44"));
 #endif
     }
@@ -1265,7 +1265,7 @@ SUITE(istream_tests)
     TEST(istream_extract_long_long)
     {
         istream_extract_long_impl<char, long long>(container_buffer<std::string>("123 -567 92233720368547758078"));
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
         istream_extract_long_impl<wchar_t, long long>(container_buffer<std::wstring>(L"123 -567 92233720368547758078"));
 #endif
     }
@@ -1273,7 +1273,7 @@ SUITE(istream_tests)
     TEST(istream_extract_unsigned_long_long)
     {
         istream_extract_unsigned_long_impl<char, unsigned long long>(container_buffer<std::string>("876 3 -44"));
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
         istream_extract_unsigned_long_impl<wchar_t, unsigned long long>(container_buffer<std::wstring>(L"876 3 -44"));
 #endif
     }
@@ -1555,7 +1555,7 @@ SUITE(istream_tests)
 
         const std::string strValue = inStream.extract<std::string>().get();
         VERIFY_ARE_EQUAL("", strValue);
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
         const std::wstring wstrValue = inStream.extract<std::wstring>().get();
         VERIFY_ARE_EQUAL(L"", wstrValue);
 #endif

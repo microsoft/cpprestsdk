@@ -20,6 +20,7 @@ set(CPPREST_EXCLUDE_WEBSOCKETS OFF CACHE BOOL "Exclude websockets functionality.
 set(CPPREST_EXCLUDE_COMPRESSION OFF CACHE BOOL "Exclude compression functionality.")
 set(CPPREST_EXCLUDE_BROTLI ON CACHE BOOL "Exclude Brotli compression functionality.")
 set(CPPREST_EXPORT_DIR cpprestsdk CACHE STRING "Directory to install CMake config files.")
+option(CPPREST_FORCE_NARROW_STRINGS "Keep strings narrow/UTF8 (even if WIN32)" OFF)
 set(CPPREST_INSTALL_HEADERS ON CACHE BOOL "Install header files.")
 set(CPPREST_INSTALL ON CACHE BOOL "Add install commands.")
 
@@ -113,8 +114,30 @@ else()
   message(FATAL_ERROR "Unknown platform. Cannot determine appropriate feature implementations.")
 endif()
 
+# CPPREST_EXCLUDE_HTTP_NARROW_STRING_WIP is not a formal option. It exists to
+# allow a successfull Windows build with CPPREST_FORCE_NARROW_STRINGS enabled
+# until HTTP related code can be updated with support.
+set(CPPREST_EXCLUDE_HTTP_NARROW_STRING_WIP OFF)
+if(CPPREST_FORCE_NARROW_STRINGS AND WIN32)
+  if(NOT CPPREST_EXCLUDE_WEBSOCKETS)
+    message(FATAL_ERROR "CPPREST_EXCLUDE_WEBSOCKETS must be OFF when forcing narrow strings on Windows (WIP)")
+  endif()
+  if(NOT CPPREST_HTTP_LISTENER_IMPL STREQUAL "none")
+    message(FATAL_ERROR "CPPREST_HTTP_LISTENER_IMPL must be 'none' when forcing narrow strings on Windows (per http_server_httpsys.cpp WIP)")
+  endif()
+  set(CPPREST_EXCLUDE_HTTP_NARROW_STRING_WIP ON)
+  if(BUILD_SAMPLES)
+    message(WARNING "Most samples will fail build when forcing narrow strings on Windows (WIP)")
+  endif()
+endif()
+
 set(WARNINGS)
 set(ANDROID_LIBS)
+
+# Generic build settings
+if(CPPREST_FORCE_NARROW_STRINGS)
+	add_definitions(-DCPPREST_FORCE_NARROW_STRINGS)
+endif()
 
 # Platform (not compiler) specific settings
 if(ANDROID)

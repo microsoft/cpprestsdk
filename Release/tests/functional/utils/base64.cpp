@@ -13,6 +13,8 @@
 
 #include "stdafx.h"
 
+#include "cpprest/base64_utils.h"
+
 using namespace utility;
 
 namespace tests
