@@ -88,7 +88,7 @@ SUITE(request_uri_tests)
 
         // WinRT implementation percent encodes the '#'.
         utility::string_t expected_value = U("/heheh?key1=value2#fragment");
-#ifdef __cplusplus_winrt
+#if defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
         expected_value = percent_encode_pound(expected_value);
 #endif
 
@@ -137,7 +137,7 @@ SUITE(request_uri_tests)
             p_server->next_request().then([&](test_request* p_request) {
                 // WinRT implementation percent encodes the '#'.
                 utility::string_t expected_value = U("/path1?key1=value1&key2=value2#frag");
-#ifdef __cplusplus_winrt
+#if defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
                 expected_value = percent_encode_pound(expected_value);
 #endif
                 http_asserts::assert_test_request_equals(p_request, methods::GET, expected_value);
@@ -157,7 +157,7 @@ SUITE(request_uri_tests)
             p_server->next_request().then([&](test_request* p_request) {
                 // WinRT implementation percent encodes the '#'.
                 utility::string_t expected_value = U("/path1/path2?key2=value2#fragmentfg2");
-#ifdef __cplusplus_winrt
+#if defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
                 expected_value = percent_encode_pound(expected_value);
 #endif
                 http_asserts::assert_test_request_equals(p_request, methods::GET, expected_value);
