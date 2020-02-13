@@ -173,7 +173,7 @@ SUITE(client_construction)
         VERIFY_ARE_EQUAL(baseclient2.base_uri(), m_uri);
     }
 
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 
     // Verify that the callback of sslcontext is called for HTTPS
     TEST_FIXTURE(uri_address, ssl_context_callback_https)
@@ -183,7 +183,7 @@ SUITE(client_construction)
 
         config.set_ssl_context_callback([&called](boost::asio::ssl::context& ctx) { called = true; });
 
-        http_client client("https://www.google.com/", config);
+        http_client client(U("https://www.google.com/"), config);
 
         try
         {
@@ -204,7 +204,7 @@ SUITE(client_construction)
 
         config.set_ssl_context_callback([&called](boost::asio::ssl::context& ctx) { called = true; });
 
-        http_client client("http://www.google.com/", config);
+        http_client client(U("http://www.google.com/"), config);
 
         try
         {

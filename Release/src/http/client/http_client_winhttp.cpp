@@ -18,10 +18,15 @@
 #include "../common/internal_http_helpers.h"
 #include "cpprest/http_headers.h"
 #include "http_client_impl.h"
+#ifdef WIN32
 #include <Wincrypt.h>
+#endif
+#if defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
+#include "winhttppal.h"
+#endif
 #include <atomic>
 
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#if _WIN32_WINNT && (_WIN32_WINNT >= _WIN32_WINNT_VISTA)
 #include <VersionHelpers.h>
 #endif
 
@@ -97,7 +102,7 @@ static http::status_code parse_status_code(HINTERNET request_handle)
                         &buffer[0],
                         &length,
                         WINHTTP_NO_HEADER_INDEX);
-    return (unsigned short)_wtoi(buffer.c_str());
+    return (unsigned short)stoi(buffer);
 }
 
 // Helper function to get the reason phrase from a WinHTTP response.
@@ -122,7 +127,7 @@ static utility::string_t parse_reason_phrase(HINTERNET request_handle)
 /// <summary>
 /// Parses a string containing HTTP headers.
 /// </summary>
-static void parse_winhttp_headers(HINTERNET request_handle, _In_z_ utf16char* headersStr, http_response& response)
+static void parse_winhttp_headers(HINTERNET request_handle, _In_z_ utility::char_t* headersStr, http_response& response)
 {
     // Clear the header map for each new response; otherwise, the header values will be combined.
     response.headers().clear();
@@ -141,7 +146,7 @@ static std::string build_error_msg(unsigned long code, const std::string& locati
     msg.append(": ");
     msg.append(std::to_string(code));
     msg.append(": ");
-    msg.append(utility::details::windows_category().message(code));
+    msg.append(utility::details::platform_category().message(static_cast<int>(code)));
     return msg;
 }
 
@@ -158,6 +163,7 @@ static std::string build_error_msg(_In_ WINHTTP_ASYNC_RESULT* error_result)
         default: return build_error_msg(error_result->dwError, "Unknown WinHTTP Function");
     }
 }
+
 
 class memory_holder
 {
@@ -289,7 +295,7 @@ public:
         {
         }
 
-#if defined(_MSC_VER) && _MSC_VER < 1900
+#if (defined(_MSC_VER) && _MSC_VER < 1900) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
         compression_state(const compression_state&) = delete;
         compression_state(compression_state&& other)
             : m_buffer(std::move(other.m_buffer))
@@ -552,6 +558,10 @@ public:
 
     void on_send_request_validate_cn()
     {
+#if defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
+        // we do the validation inside curl
+        return;
+#else
         if (m_customCnCheck.empty())
         {
             // no custom validation selected; either we've delegated that to winhttp or
@@ -647,6 +657,7 @@ public:
         }
 
         m_cachedEncodedCert.assign(encodedFirst, encodedLast);
+#endif
     }
 
 protected:
@@ -666,13 +677,13 @@ private:
     winhttp_request_context(const std::shared_ptr<_http_client_communicator>& client, const http_request& request)
         : request_context(client, request)
         , m_request_handle(nullptr)
-        , m_bodyType(no_body)
-        , m_startingPosition(std::char_traits<uint8_t>::eof())
-        , m_body_data()
-        , m_remaining_to_write(0)
         , m_proxy_authentication_tried(false)
         , m_server_authentication_tried(false)
+        , m_bodyType(no_body)
+        , m_remaining_to_write(0)
+        , m_startingPosition(std::char_traits<uint8_t>::eof())
         , m_readStream(request.body())
+        , m_body_data()
     {
     }
 };
@@ -731,10 +742,10 @@ class winhttp_client final : public _http_client_communicator
 public:
     winhttp_client(http::uri address, http_client_config client_config)
         : _http_client_communicator(std::move(address), std::move(client_config))
-        , m_secure(m_uri.scheme() == _XPLATSTR("https"))
         , m_opened(false)
         , m_hSession(nullptr)
         , m_hConnection(nullptr)
+        , m_secure(m_uri.scheme() == _XPLATSTR("https"))
     {
     }
 
@@ -752,7 +763,7 @@ public:
         if (m_hSession != nullptr)
         {
             // Unregister the callback.
-            WinHttpSetStatusCallback(m_hSession, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, NULL);
+            WinHttpSetStatusCallback(m_hSession, nullptr, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0);
 
             WinHttpCloseHandle(m_hSession);
         }
@@ -792,8 +803,8 @@ protected:
         ie_proxy_config proxyIE;
 
         DWORD access_type;
-        LPCWSTR proxy_name = WINHTTP_NO_PROXY_NAME;
-        LPCWSTR proxy_bypass = WINHTTP_NO_PROXY_BYPASS;
+        LPCTSTR proxy_name = WINHTTP_NO_PROXY_NAME;
+        LPCTSTR proxy_bypass = WINHTTP_NO_PROXY_BYPASS;
         m_proxy_auto_config = false;
         utility::string_t proxy_str;
         http::uri uri;
@@ -901,7 +912,7 @@ protected:
         }
 
         // Enable TLS 1.1 and 1.2
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#if (_WIN32_WINNT >= _WIN32_WINNT_VISTA) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
         BOOL win32_result(FALSE);
 
         DWORD secure_protocols(WINHTTP_FLAG_SECURE_PROTOCOL_SSL3 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 |
@@ -964,6 +975,17 @@ protected:
 
         proxy_info info;
         bool proxy_info_required = false;
+
+        const auto& method = msg.method();
+
+        // stop injection of headers via method
+        // resource should be ok, since it's been encoded
+        // and host won't resolve
+        if (!::web::http::details::validate_method(method))
+        {
+            request->report_exception(http_exception("The method string is invalid."));
+            return;
+        }
 
         if (m_proxy_auto_config)
         {
@@ -1416,7 +1438,6 @@ private:
                 {
                     return pplx::task_from_exception<size_t>(std::current_exception());
                 }
-                _ASSERTE(bytes_read >= 0);
 
                 uint8_t* buffer = p_request_context->m_compression_state.m_acquired;
                 if (buffer == nullptr)
@@ -1689,16 +1710,16 @@ private:
         }
     }
 
-    static std::wstring get_request_url(HINTERNET hRequestHandle)
+    static utility::string_t get_request_url(HINTERNET hRequestHandle)
     {
-        std::wstring url;
+        utility::string_t url;
         auto urlSize = static_cast<unsigned long>(url.capacity()) * 2; // use initial small string optimization capacity
         for (;;)
         {
-            url.resize(urlSize / sizeof(wchar_t));
-            if (WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, &url[0], &urlSize))
+            url.resize(urlSize / sizeof(utility::char_t));
+            if (WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, &url[0], (LPDWORD)&urlSize))
             {
-                url.resize(wcslen(url.c_str()));
+                url.resize(url.length());
                 return url;
             }
 
@@ -2014,7 +2035,7 @@ private:
                 // Now allocate buffer for headers and query for them.
                 std::vector<unsigned char> header_raw_buffer;
                 header_raw_buffer.resize(headerBufferLength);
-                utf16char* header_buffer = reinterpret_cast<utf16char*>(&header_raw_buffer[0]);
+                utility::char_t* header_buffer = reinterpret_cast<utility::char_t*>(&header_raw_buffer[0]);
                 if (!WinHttpQueryHeaders(hRequestHandle,
                                          WINHTTP_QUERY_RAW_HEADERS_CRLF,
                                          WINHTTP_HEADER_NAME_BY_INDEX,
@@ -2052,7 +2073,7 @@ private:
                     !p_request_context->m_http_client->client_config().request_compressed_response())
                 {
                     p_request_context->m_compression_state.m_chunk =
-                        std::make_unique<winhttp_request_context::compression_state::_chunk_helper>();
+                        ::utility::details::make_unique<winhttp_request_context::compression_state::_chunk_helper>();
                     p_request_context->m_compression_state.m_chunked = true;
                 }
 
@@ -2390,7 +2411,7 @@ private:
                     }).then([p_request_context](pplx::task<bool> op) {
                         try
                         {
-                            bool ignored = op.get();
+                            op.get();
                         }
                         catch (...)
                         {
@@ -2465,6 +2486,7 @@ std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(
 {
     return std::make_shared<details::winhttp_client>(std::move(base_uri), std::move(client_config));
 }
+
 
 } // namespace details
 } // namespace client

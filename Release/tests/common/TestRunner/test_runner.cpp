@@ -557,8 +557,8 @@ int main(int argc, char* argv[])
         breakOnError = true;
     }
 
-    // Determine if list or listProperties.
-    bool listOption = false, listPropertiesOption = false;
+    // The list_test_options() function determines if list or listProperties.
+    bool listOption = false;
     if (UnitTest::GlobalSettings::Has("list"))
     {
         listOption = true;
@@ -566,7 +566,6 @@ int main(int argc, char* argv[])
     if (UnitTest::GlobalSettings::Has("listproperties"))
     {
         listOption = true;
-        listPropertiesOption = true;
     }
 #ifdef _WIN32
     if (UnitTest::GlobalSettings::Has("detectleaks"))
