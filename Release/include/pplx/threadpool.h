@@ -29,6 +29,7 @@
 #endif
 
 #include "cpprest/details/cpprest_compat.h"
+#include <memory>
 
 namespace crossplat
 {

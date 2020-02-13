@@ -86,8 +86,8 @@ public:
 /// Function to create in data from a file and search for a given string writing all lines containing the string to
 /// memory_buffer.
 /// </summary>
-static pplx::task<void> find_matches_in_file(const string_t& fileName,
-                                             const std::string& searchString,
+static pplx::task<void> find_matches_in_file(utility::string_view_t fileName,
+                                             utility::nstring_view_t searchString,
                                              basic_ostream<char> results)
 {
     return file_stream<char>::open_istream(fileName).then([=](basic_istream<char> inFile) {
@@ -130,7 +130,7 @@ static pplx::task<void> find_matches_in_file(const string_t& fileName,
 /// <summary>
 /// Function to write out results from matched_lines type to file
 /// </summary>
-static pplx::task<void> write_matches_to_file(const string_t& fileName, matched_lines results)
+static pplx::task<void> write_matches_to_file(utility::string_view_t fileName, matched_lines results)
 {
     // Create a shared pointer to the matched_lines structure to copying repeatedly.
     auto sharedResults = std::make_shared<matched_lines>(std::move(results));
@@ -162,9 +162,9 @@ int main(int argc, char* args[])
         printf("Usage: SearchFile.exe input_file search_string output_file\n");
         return -1;
     }
-    const string_t inFileName = args[1];
-    const std::string searchString = utility::conversions::to_utf8string(args[2]);
-    const string_t outFileName = args[3];
+    const auto inFileName = utility::conversions::to_string_t(args[1]);
+    const auto searchString = utility::conversions::to_utf8string(args[2]);
+    const auto outFileName = utility::conversions::to_string_t(args[3]);
     producer_consumer_buffer<char> lineResultsBuffer;
 
     // Find all matches in file.

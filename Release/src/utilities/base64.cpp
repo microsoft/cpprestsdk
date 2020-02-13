@@ -10,13 +10,16 @@
  ****/
 #include "stdafx.h"
 
-using namespace web;
+#include "cpprest/base64_utils.h"
+
+#include <array>
+
 using namespace utility;
 
-std::vector<unsigned char> _from_base64(const utility::string_t& str);
+std::vector<unsigned char> _from_base64(utility::string_view_t str);
 utility::string_t _to_base64(const unsigned char* ptr, size_t size);
 
-std::vector<unsigned char> __cdecl conversions::from_base64(const utility::string_t& str) { return _from_base64(str); }
+std::vector<unsigned char> __cdecl conversions::from_base64(utility::string_view_t str) { return _from_base64(str); }
 
 utility::string_t __cdecl conversions::to_base64(const std::vector<unsigned char>& input)
 {
@@ -26,7 +29,7 @@ utility::string_t __cdecl conversions::to_base64(const std::vector<unsigned char
         return utility::string_t();
     }
 
-    return _to_base64(&input[0], input.size());
+    return _to_base64(input.data(), input.size());
 }
 
 utility::string_t __cdecl conversions::to_base64(uint64_t input)
@@ -79,7 +82,7 @@ struct _single_byte
 // gcc is concerned about the bitfield uses in the code, something we simply need to ignore.
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
-std::vector<unsigned char> _from_base64(const utility::string_t& input)
+std::vector<unsigned char> _from_base64(utility::string_view_t input)
 {
     std::vector<unsigned char> result;
 
@@ -124,7 +127,7 @@ std::vector<unsigned char> _from_base64(const utility::string_t& input)
     }
 
     auto size = input.size();
-    const char_t* ptr = &input[0];
+    const char_t* ptr = input.data();
 
     auto outsz = (size / 4) * 3;
     outsz -= padding;

@@ -29,7 +29,7 @@ using namespace utility::conversions;
 // JSON Serialization
 //
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 void web::json::value::serialize(std::ostream& stream) const
 {
     // This has better performance than writing directly to stream.
@@ -56,7 +56,7 @@ void web::json::value::format(std::basic_string<char>& string) const { m_value->
 
 template<typename CharType>
 void web::json::details::append_escape_string(std::basic_string<CharType>& str,
-                                              const std::basic_string<CharType>& escaped)
+                                              utility::string_view<CharType> escaped)
 {
     for (const auto& ch : escaped)
     {
@@ -112,18 +112,18 @@ void web::json::details::append_escape_string(std::basic_string<CharType>& str,
     }
 }
 
-void web::json::details::format_string(const utility::string_t& key, utility::string_t& str)
+void web::json::details::format_string(utility::string_view_t key, utility::string_t& str)
 {
     str.push_back('"');
-    append_escape_string(str, key);
+    append_escape_string<utility::char_t>(str, key);
     str.push_back('"');
 }
 
-#ifdef _WIN32
-void web::json::details::format_string(const utility::string_t& key, std::string& str)
+#if defined(_UTF16_STRINGS)
+void web::json::details::format_string(utility::string_view_t key, std::string& str)
 {
     str.push_back('"');
-    append_escape_string(str, utility::conversions::to_utf8string(key));
+    append_escape_string<char>(str, utility::conversions::to_utf8string(key));
     str.push_back('"');
 }
 #endif
@@ -134,7 +134,7 @@ void web::json::details::_String::format(std::basic_string<char>& str) const
 
     if (m_has_escape_char)
     {
-        append_escape_string(str, utility::conversions::to_utf8string(m_string));
+        append_escape_string<char>(str, utility::conversions::to_utf8string(m_string));
     }
     else
     {
@@ -190,7 +190,7 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
     }
 }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 
 void web::json::details::_String::format(std::basic_string<wchar_t>& str) const
 {
@@ -198,7 +198,7 @@ void web::json::details::_String::format(std::basic_string<wchar_t>& str) const
 
     if (m_has_escape_char)
     {
-        append_escape_string(str, m_string);
+        append_escape_string<wchar_t>(str, m_string);
     }
     else
     {

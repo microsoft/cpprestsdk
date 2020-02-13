@@ -333,7 +333,7 @@ SUITE(strings)
         std::locale changedLocale;
         try
         {
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
             changedLocale = std::locale("fr-FR");
 #else
             changedLocale = std::locale("fr_FR.UTF-8");
@@ -358,7 +358,7 @@ SUITE(strings)
         std::locale changedLocale;
         try
         {
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
             changedLocale = std::locale("fr-FR");
 #else
             changedLocale = std::locale("fr_FR.UTF-8");

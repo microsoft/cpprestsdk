@@ -18,6 +18,9 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#if defined(CPPREST_USE_STRING_VIEWS)
+#include <string_view>
+#endif
 
 #ifndef _WIN32
 #ifndef __STDC_LIMIT_MACROS
@@ -32,7 +35,7 @@
 
 namespace utility
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 #define _UTF16_STRINGS
 #endif
 
@@ -44,11 +47,22 @@ typedef uint64_t size64_t;
 typedef uint32_t HRESULT; // Needed for PPLX
 #endif
 
+#if defined(CPPREST_USE_STRING_VIEWS)
+typedef std::string_view nstring_view_t;
+typedef std::wstring_view wstring_view_t;
+template<typename CharType> using string_view = std::basic_string_view<CharType>;
+#else
+typedef const std::string & nstring_view_t;
+typedef const std::wstring & wstring_view_t;
+template<typename CharType> using string_view = const std::basic_string<CharType> &;
+#endif
+
 #ifdef _UTF16_STRINGS
 //
 // On Windows, all strings are wide
 //
 typedef wchar_t char_t;
+typedef wstring_view_t string_view_t;
 typedef std::wstring string_t;
 #define _XPLATSTR(x) L##x
 typedef std::wostringstream ostringstream_t;
@@ -66,6 +80,7 @@ typedef std::wstringstream stringstream_t;
 // On POSIX platforms, all strings are narrow
 //
 typedef char char_t;
+typedef nstring_view_t string_view_t;
 typedef std::string string_t;
 #define _XPLATSTR(x) x
 typedef std::ostringstream ostringstream_t;
@@ -90,6 +105,7 @@ typedef std::stringstream stringstream_t;
 } // namespace utility
 
 typedef char utf8char;
+typedef utility::nstring_view_t utf8string_view;
 typedef std::string utf8string;
 typedef std::stringstream utf8stringstream;
 typedef std::ostringstream utf8ostringstream;
@@ -97,8 +113,9 @@ typedef std::ostream utf8ostream;
 typedef std::istream utf8istream;
 typedef std::istringstream utf8istringstream;
 
-#ifdef _UTF16_STRINGS
+#if defined(_UTF16_STRINGS) || defined(_WIN32)
 typedef wchar_t utf16char;
+typedef utility::wstring_view_t utf16string_view;
 typedef std::wstring utf16string;
 typedef std::wstringstream utf16stringstream;
 typedef std::wostringstream utf16ostringstream;
@@ -107,6 +124,11 @@ typedef std::wistream utf16istream;
 typedef std::wistringstream utf16istringstream;
 #else
 typedef char16_t utf16char;
+#if defined(CPPREST_USE_STRING_VIEWS)
+typedef std::u16string_view utf16string_view;
+#else
+typedef const std::u16string & utf16string_view;
+#endif
 typedef std::u16string utf16string;
 typedef std::basic_stringstream<utf16char> utf16stringstream;
 typedef std::basic_ostringstream<utf16char> utf16ostringstream;

@@ -26,7 +26,7 @@ SUITE(win32_encryption)
 {
     TEST(win32_encryption_random_string)
     {
-        utility::string_t rndStr = utility::conversions::to_string_t("random string");
+        const auto rndStr = utility::conversions::to_string_t("random string");
         web::details::win32_encryption enc(rndStr);
 
         VERIFY_ARE_EQUAL(*enc.decrypt(), rndStr);
@@ -34,7 +34,7 @@ SUITE(win32_encryption)
 
     TEST(win32_encryption_empty_string)
     {
-        utility::string_t emptyStr = utility::conversions::to_string_t("");
+        const auto emptyStr = utility::conversions::to_string_t("");
         web::details::win32_encryption enc(emptyStr);
 
         VERIFY_ARE_EQUAL(*enc.decrypt(), emptyStr);

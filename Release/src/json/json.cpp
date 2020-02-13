@@ -195,8 +195,8 @@ web::json::value web::json::value::string(utility::string_t value, bool has_esca
     );
 }
 
-#ifdef _WIN32
-web::json::value web::json::value::string(const std::string& value)
+#if defined(_UTF16_STRINGS)
+web::json::value web::json::value::string(utility::nstring_view_t value)
 {
     std::unique_ptr<details::_Value> ptr =
         utility::details::make_unique<details::_String>(utility::conversions::to_utf16string(value));
@@ -355,44 +355,44 @@ bool json::value::is_double() const
     return m_value->is_double();
 }
 
-json::value& web::json::details::_Object::index(const utility::string_t& key) { return m_object[key]; }
+json::value& web::json::details::_Object::index(utility::string_view_t key) { return m_object[key]; }
 
-bool web::json::details::_Object::has_field(const utility::string_t& key) const
+bool web::json::details::_Object::has_field(utility::string_view_t key) const
 {
     return m_object.find(key) != m_object.end();
 }
 
-bool web::json::value::has_number_field(const utility::string_t& key) const
+bool web::json::value::has_number_field(utility::string_view_t key) const
 {
     return has_field(key) && at(key).is_number();
 }
 
-bool web::json::value::has_integer_field(const utility::string_t& key) const
+bool web::json::value::has_integer_field(utility::string_view_t key) const
 {
     return has_field(key) && at(key).is_integer();
 }
 
-bool web::json::value::has_double_field(const utility::string_t& key) const
+bool web::json::value::has_double_field(utility::string_view_t key) const
 {
     return has_field(key) && at(key).is_double();
 }
 
-bool web::json::value::has_boolean_field(const utility::string_t& key) const
+bool web::json::value::has_boolean_field(utility::string_view_t key) const
 {
     return has_field(key) && at(key).is_boolean();
 }
 
-bool web::json::value::has_string_field(const utility::string_t& key) const
+bool web::json::value::has_string_field(utility::string_view_t key) const
 {
     return has_field(key) && at(key).is_string();
 }
 
-bool web::json::value::has_array_field(const utility::string_t& key) const
+bool web::json::value::has_array_field(utility::string_view_t key) const
 {
     return has_field(key) && at(key).is_array();
 }
 
-bool web::json::value::has_object_field(const utility::string_t& key) const
+bool web::json::value::has_object_field(utility::string_view_t key) const
 {
     return has_field(key) && at(key).is_object();
 }
@@ -428,18 +428,18 @@ bool json::value::operator==(const json::value& other) const
 
 void web::json::value::erase(size_t index) { return this->as_array().erase(index); }
 
-void web::json::value::erase(const utility::string_t& key) { return this->as_object().erase(key); }
+void web::json::value::erase(utility::string_view_t key) { return this->as_object().erase(key); }
 
 // at() overloads
 web::json::value& web::json::value::at(size_t index) { return this->as_array().at(index); }
 
 const web::json::value& web::json::value::at(size_t index) const { return this->as_array().at(index); }
 
-web::json::value& web::json::value::at(const utility::string_t& key) { return this->as_object().at(key); }
+web::json::value& web::json::value::at(utility::string_view_t key) { return this->as_object().at(key); }
 
-const web::json::value& web::json::value::at(const utility::string_t& key) const { return this->as_object().at(key); }
+const web::json::value& web::json::value::at(utility::string_view_t key) const { return this->as_object().at(key); }
 
-web::json::value& web::json::value::operator[](const utility::string_t& key)
+web::json::value& web::json::value::operator[](utility::string_view_t key)
 {
     if (this->is_null())
     {

@@ -2,6 +2,7 @@ parameters:
   name: 'Windows_VS2019_x86'
   targetPlatform: 'x86'
   image: 'windows-latest'
+  useStringViews: 'ON'
 
 jobs:
 - job: ${{ parameters.name }}
@@ -30,7 +31,7 @@ jobs:
         cmakeBuildType: 'Debug'
         useVcpkgToolchainFile: true
         buildDirectory: $(Build.ArtifactStagingDirectory)/${{ parameters.targetPlatform }}_Debug
-        cmakeAppendedArgs: '-DCPPREST_EXCLUDE_BROTLI=OFF'
+        cmakeAppendedArgs: '-DCPPREST_EXCLUDE_BROTLI=OFF -DCPPREST_USE_STRING_VIEWS=${{ parameters.useStringViews }}'
     - script: |
         cd $(Build.ArtifactStagingDirectory)\${{ parameters.targetPlatform }}_Debug\Release\Binaries
         .\test_runner.exe *testd.dll
@@ -43,7 +44,7 @@ jobs:
         cmakeBuildType: 'Release'
         useVcpkgToolchainFile: true
         buildDirectory: $(Build.ArtifactStagingDirectory)/${{ parameters.targetPlatform }}_Release
-        cmakeAppendedArgs: '-DCPPREST_EXCLUDE_BROTLI=OFF'
+        cmakeAppendedArgs: '-DCPPREST_EXCLUDE_BROTLI=OFF -DCPPREST_USE_STRING_VIEWS=${{ parameters.useStringViews }}'
     - script: |
         cd $(Build.ArtifactStagingDirectory)\${{ parameters.targetPlatform }}_Release\Release\Binaries
         .\test_runner.exe *test.dll

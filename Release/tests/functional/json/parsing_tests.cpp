@@ -649,7 +649,7 @@ SUITE(parsing_tests)
     TEST(non_default_locale, "Ignore:Android", "Locale unsupported on Android")
     {
         std::string originalLocale = setlocale(LC_ALL, nullptr);
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
         std::string changedLocale("fr-FR");
 #else
         std::string changedLocale("fr_FR.utf8");
@@ -718,7 +718,7 @@ SUITE(parsing_tests)
         error_code_helper(arrayStringStream);
         error_code_helper(objStringStream);
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
         std::wstringbuf buf;
 
         buf.sputn(valueStr.c_str(), valueStr.size());
@@ -752,7 +752,7 @@ SUITE(parsing_tests)
         VERIFY_IS_TRUE(streamErr.value() > 0);
         VERIFY_IS_TRUE(parsedObject.is_null());
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
         std::wstringbuf buf;
         buf.sputn(str.c_str(), str.size());
         std::wistream iStream(&buf);

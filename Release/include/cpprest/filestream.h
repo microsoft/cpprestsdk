@@ -17,6 +17,7 @@
 
 #include "cpprest/astreambuf.h"
 #include "cpprest/details/fileio.h"
+#include "cpprest/memory_utils.h"
 #include "cpprest/streams.h"
 #include <assert.h>
 
@@ -712,7 +713,7 @@ private:
 
 #if !defined(__cplusplus_winrt)
     static pplx::task<std::shared_ptr<basic_streambuf<_CharType>>> open(
-        const utility::string_t& _Filename,
+        utility::string_view_t _Filename,
         std::ios_base::openmode _Mode = std::ios_base::out,
 #ifdef _WIN32
         int _Prot = (int)std::ios_base::_Openprot
@@ -723,7 +724,7 @@ private:
     {
         auto result_tce = pplx::task_completion_event<std::shared_ptr<basic_streambuf<_CharType>>>();
         auto callback = new _filestream_callback_open(result_tce);
-        _open_fsb_str(callback, _Filename.c_str(), _Mode, _Prot);
+        _open_fsb_str(callback, _Filename.data(), _Mode, _Prot);
         return pplx::create_task(result_tce);
     }
 
@@ -954,7 +955,7 @@ public:
     /// <param name="mode">The opening mode of the file</param>
     /// <param name="prot">The file protection mode</param>
     /// <returns>A <c>task</c> that returns an opened stream buffer on completion.</returns>
-    static pplx::task<streambuf<_CharType>> open(const utility::string_t& file_name,
+    static pplx::task<streambuf<_CharType>> open(utility::string_view_t file_name,
                                                  std::ios_base::openmode mode = std::ios_base::out,
 #ifdef _WIN32
                                                  int prot = _SH_DENYRD
@@ -1009,7 +1010,7 @@ public:
     /// <param name="mode">The opening mode of the file</param>
     /// <param name="prot">The file protection mode</param>
     /// <returns>A <c>task</c> that returns an opened input stream on completion.</returns>
-    static pplx::task<streams::basic_istream<_CharType>> open_istream(const utility::string_t& file_name,
+    static pplx::task<streams::basic_istream<_CharType>> open_istream(utility::string_view_t file_name,
                                                                       std::ios_base::openmode mode = std::ios_base::in,
 #ifdef _WIN32
                                                                       int prot = (int)std::ios_base::_Openprot
@@ -1034,7 +1035,7 @@ public:
     /// <param name="mode">The opening mode of the file</param>
     /// <param name="prot">The file protection mode</param>
     /// <returns>A <c>task</c> that returns an opened output stream on completion.</returns>
-    static pplx::task<streams::basic_ostream<_CharType>> open_ostream(const utility::string_t& file_name,
+    static pplx::task<streams::basic_ostream<_CharType>> open_ostream(utility::string_view_t file_name,
                                                                       std::ios_base::openmode mode = std::ios_base::out,
 #ifdef _WIN32
                                                                       int prot = (int)std::ios_base::_Openprot

@@ -46,7 +46,7 @@ __declspec(noreturn)
 #else
     __attribute__((noreturn))
 #endif
-    void CreateException(const Token& tk, const utility::string_t& message)
+    void CreateException(const Token& tk, utility::string_view_t message)
 {
     std::string str("* Line ");
     str += std::to_string(tk.start.m_line);
@@ -211,7 +211,7 @@ template<typename CharType>
 class JSON_StringParser : public JSON_Parser<CharType>
 {
 public:
-    JSON_StringParser(const std::basic_string<CharType>& string) : m_position(&string[0])
+    JSON_StringParser(utility::string_view<CharType> string) : m_position(string.data())
     {
         m_startpos = m_position;
         m_endpos = m_position + string.size();
@@ -356,24 +356,32 @@ inline bool JSON_Parser<CharType>::ParseInt64(CharType first, uint64_t& value)
 // This namespace hides the x-plat helper functions
 namespace
 {
-#if defined(_WIN32)
+#ifdef _WIN32
+
 static int print_llu(char* ptr, size_t n, uint64_t val64)
 {
     return _snprintf_s_l(ptr, n, _TRUNCATE, "%I64u", utility::details::scoped_c_thread_locale::c_locale(), val64);
 }
 
+#if defined(_UTF16_STRINGS)
 static int print_llu(wchar_t* ptr, size_t n, uint64_t val64)
 {
     return _snwprintf_s_l(ptr, n, _TRUNCATE, L"%I64u", utility::details::scoped_c_thread_locale::c_locale(), val64);
 }
+#endif
+
 static double anystod(const char* str)
 {
     return _strtod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
 }
+
+#if defined(_UTF16_STRINGS)
 static double anystod(const wchar_t* str)
 {
     return _wcstod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
 }
+#endif
+
 #else
 static int __attribute__((__unused__)) print_llu(char* ptr, size_t n, unsigned long long val64)
 {
@@ -1166,7 +1174,7 @@ static web::json::value _parse_stream(utility::istream_t& stream, std::error_cod
     return returnObject;
 }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 static web::json::value _parse_narrow_stream(std::istream& stream)
 {
     web::json::details::JSON_StreamParser<char> parser(stream);
@@ -1215,7 +1223,7 @@ static web::json::value _parse_narrow_stream(std::istream& stream, std::error_co
 }
 #endif
 
-web::json::value web::json::value::parse(const utility::string_t& str)
+web::json::value web::json::value::parse(utility::string_view_t str)
 {
     web::json::details::JSON_StringParser<utility::char_t> parser(str);
     web::json::details::JSON_Parser<utility::char_t>::Token tkn;
@@ -1239,7 +1247,7 @@ web::json::value web::json::value::parse(const utility::string_t& str)
     return value;
 }
 
-web::json::value web::json::value::parse(const utility::string_t& str, std::error_code& error)
+web::json::value web::json::value::parse(utility::string_view_t str, std::error_code& error)
 {
     web::json::details::JSON_StringParser<utility::char_t> parser(str);
     web::json::details::JSON_Parser<utility::char_t>::Token tkn;
@@ -1269,7 +1277,7 @@ web::json::value web::json::value::parse(utility::istream_t& stream, std::error_
     return _parse_stream(stream, error);
 }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 web::json::value web::json::value::parse(std::istream& stream) { return _parse_narrow_stream(stream); }
 
 web::json::value web::json::value::parse(std::istream& stream, std::error_code& error)

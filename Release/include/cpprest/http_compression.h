@@ -12,6 +12,11 @@
  ****/
 #pragma once
 
+#include "cpprest/details/basic_types.h"
+#include "pplx/pplxtasks.h"
+#include <memory>
+#include <vector>
+
 namespace web
 {
 namespace http

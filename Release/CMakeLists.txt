@@ -13,6 +13,29 @@ set(CPPREST_VERSION_MAJOR 2)
 set(CPPREST_VERSION_MINOR 10)
 set(CPPREST_VERSION_REVISION 14)
 
+# Note: when bumping CMake version to 3.3 or higher if(... IN_LIST ...) may be used
+list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_std_17 COMPILER_HAS_CXX_STD_17)
+set(CPPREST_USE_STRING_VIEWS_DEFAULT_PER_CXX_STANDARD OFF)
+if(COMPILER_HAS_CXX_STD_17 EQUAL "-1")
+  if(CPPREST_USE_STRING_VIEWS)
+    if(CMAKE_VERSION VERSION_LESS 3.8)
+      message(FATAL_ERROR "CPPREST_USE_STRING_VIEWS cannot be enabled. CMake 3.8 or higher required to support C++17.")
+    else()
+      message(FATAL_ERROR "CPPREST_USE_STRING_VIEWS cannot be enabled. Compiler (${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}) does not support C++17.")
+    endif()
+  endif()
+elseif(CMAKE_CXX_STANDARD LESS 17)
+  if(CPPREST_USE_STRING_VIEWS)
+    message(FATAL_ERROR "CPPREST_USE_STRING_VIEWS cannot be enabled when C++ standard is less than 17")
+  endif()
+elseif((NOT CMAKE_CXX_STANDARD GREATER 16.99) AND (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR IOS OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"))
+  if(CPPREST_USE_STRING_VIEWS)
+    message(FATAL_ERROR "CPPREST_USE_STRING_VIEWS cannot be enabled without setting C++ standard to 17 or greater for current configuration") # see compiler specific settings below
+  endif()
+else()
+  set(CPPREST_USE_STRING_VIEWS_DEFAULT_PER_CXX_STANDARD ON)
+endif()
+
 enable_testing()
 
 set(WERROR ON CACHE BOOL "Treat Warnings as Errors.")
@@ -20,6 +43,7 @@ set(CPPREST_EXCLUDE_WEBSOCKETS OFF CACHE BOOL "Exclude websockets functionality.
 set(CPPREST_EXCLUDE_COMPRESSION OFF CACHE BOOL "Exclude compression functionality.")
 set(CPPREST_EXCLUDE_BROTLI ON CACHE BOOL "Exclude Brotli compression functionality.")
 set(CPPREST_EXPORT_DIR cpprestsdk CACHE STRING "Directory to install CMake config files.")
+option(CPPREST_USE_STRING_VIEWS "Use string_view types" ${CPPREST_USE_STRING_VIEWS_DEFAULT_PER_CXX_STANDARD})
 set(CPPREST_INSTALL_HEADERS ON CACHE BOOL "Install header files.")
 set(CPPREST_INSTALL ON CACHE BOOL "Add install commands.")
 
@@ -116,6 +140,11 @@ endif()
 set(WARNINGS)
 set(ANDROID_LIBS)
 
+# Generic build settings
+if(CPPREST_USE_STRING_VIEWS)
+  add_definitions(-DCPPREST_USE_STRING_VIEWS)
+endif()
+
 # Platform (not compiler) specific settings
 if(ANDROID)
   # These are used in the shared library case
@@ -140,6 +169,15 @@ else()
 endif()
 
 # Compiler (not platform) specific settings
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR IOS OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  if(NOT CMAKE_CXX_STANDARD GREATER 0)
+    if(CPPREST_USE_STRING_VIEWS)
+      message(FATAL_ERROR "internal cpprestsdk cmake error: CPPREST_USE_STRING_VIEWS ON while C++ standard not set")
+    endif()
+    set(CMAKE_CXX_STANDARD 11)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  endif()
+endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR IOS)
   message("-- Setting clang options")
 
@@ -157,10 +195,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR IOS)
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Wno-return-type-c-linkage -Wno-unneeded-internal-declaration")
     set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
-    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
+    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++${CMAKE_CXX_STANDARD}")
   endif()
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
 
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   message("-- Setting gcc options")
@@ -168,7 +206,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(WARNINGS -Wall -Wextra -Wunused-parameter -Wcast-align -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls -Wunreachable-code)
   set(LD_FLAGS "${LD_FLAGS} -Wl,-z,defs")
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -D_GLIBCXX_USE_SCHED_YIELD -D_GLIBCXX_USE_NANOSLEEP")
   endif()
@@ -193,6 +231,13 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
       add_compile_options(/permissive-)
     endif()
   endif()
+
+  # Suppress C++17 deprecation warning in aiso per https://github.com/chriskohlhoff/asio/issues/290#issuecomment-371867040
+  # MSVC has addressed issue in 16.0 per https://devblogs.microsoft.com/cppblog/cpp17-20-features-and-fixes-in-vs-2019/
+  if(MSVC_VERSION GREATER 1912 AND MSVC_VERSION LESS 1920)
+    add_definitions(-D_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING)
+  endif()
+
 else()
   message("-- Unknown compiler, success is doubtful.")
   message("CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")

@@ -36,6 +36,7 @@ set(SOURCES
   uri/uri_builder.cpp
   utilities/asyncrt_utils.cpp
   utilities/base64.cpp
+  utilities/string_utils.cpp
   utilities/web_utilities.cpp
 )
 
@@ -46,6 +47,10 @@ target_include_directories(cpprest
   PRIVATE
     pch
 )
+
+if(CPPREST_USE_STRING_VIEWS)
+  target_compile_features(cpprest PUBLIC cxx_std_17)
+endif()
 
 ## Sub-components
 # Websockets component
