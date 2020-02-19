@@ -36,6 +36,8 @@ jobs:
     pool:
       vmImage: 'windows-latest'
     steps:
+    - script: git submodule update --init vcpkg
+      displayName: Checkout vcpkg submodule
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
     - script: .\vcpkg\vcpkg.exe install zlib --triplet x64-uwp --vcpkg-root .\vcpkg
@@ -84,6 +86,7 @@ jobs:
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt -y update
         sudo apt install g++-9 ninja-build -y
+        git submodule update --init vcpkg
         ./vcpkg/bootstrap-vcpkg.sh
         ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
       displayName: Vcpkg install dependencies
@@ -119,6 +122,13 @@ jobs:
     pool:
       vmImage: 'Ubuntu 16.04'
     steps:
+    - script: |
+        git submodule update --init Release/libs/websocketpp
+        cd Release/libs/websocketpp
+        git remote add BillyONeal https://github.com/BillyONeal/websocketpp
+        git fetch BillyONeal
+        git reset --hard ba543baf79a378c2463bcc5fd948c9110f55d5bc
+      displayName: Prepare websocketpp
     - script: |
         mkdir Build_android/build
         cd Build_android/build
