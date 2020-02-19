@@ -123,8 +123,6 @@ jobs:
       vmImage: 'Ubuntu 16.04'
     steps:
     - script: |
-        git submodule update --init Release/libs/websocketpp
-        unset BOOST_ROOT
         mkdir Build_android/build
         cd Build_android/build
         export NCPU=2

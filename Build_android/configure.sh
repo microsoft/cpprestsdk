@@ -194,6 +194,7 @@ if [ "${DO_CPPRESTSDK}" == "1" ]; then
             -DANDROID_TOOLCHAIN=clang \
             -DANDROID_ABI=$2 \
             -DBOOST_VERSION="${BOOSTVER}" \
+            -DCPPREST_EXCLUDE_WEBSOCKETS=ON \
             -DCMAKE_BUILD_TYPE=$3 \
 	    -S "${DIR}/.." \
 	    -B $1
