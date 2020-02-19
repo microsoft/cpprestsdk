@@ -127,7 +127,7 @@ jobs:
         cd Release/libs/websocketpp
         git remote add BillyONeal https://github.com/BillyONeal/websocketpp
         git fetch BillyONeal
-        git reset --hard ba543baf79a378c2463bcc5fd948c9110f55d5bc
+        git reset --hard cb6afd08e225b8802173c46af803470b651e6915
       displayName: Prepare websocketpp
     - script: |
         mkdir Build_android/build
