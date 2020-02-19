@@ -104,10 +104,10 @@ NDK_DIR=`cd "${ANDROID_NDK}" && pwd`
 SRC_DIR=`pwd`
 
 if [ -z "$NCPU" ]; then
-	NCPU=4
-	if uname -s | grep -i "linux" > /dev/null ; then
-		NCPU=`cat /proc/cpuinfo | grep -c -i processor`
-	fi
+    NCPU=4
+    if uname -s | grep -i "linux" > /dev/null ; then
+        NCPU=`cat /proc/cpuinfo | grep -c -i processor`
+    fi
 fi
 
 # -----------------------
@@ -196,8 +196,8 @@ if [ "${DO_CPPRESTSDK}" == "1" ]; then
             -DBOOST_VERSION="${BOOSTVER}" \
             -DCPPREST_EXCLUDE_WEBSOCKETS=ON \
             -DCMAKE_BUILD_TYPE=$3 \
-	    -S "${DIR}/.." \
-	    -B $1
+            -S "${DIR}/.." \
+            -B $1
         make -j $NCPU -C $1
     ) }
 
