@@ -124,12 +124,7 @@ jobs:
     steps:
     - script: |
         git submodule update --init Release/libs/websocketpp
-        cd Release/libs/websocketpp
-        git remote add BillyONeal https://github.com/BillyONeal/websocketpp
-        git fetch BillyONeal
-        git reset --hard cb6afd08e225b8802173c46af803470b651e6915
-      displayName: Prepare websocketpp
-    - script: |
+        unset BOOST_ROOT
         mkdir Build_android/build
         cd Build_android/build
         export NCPU=2

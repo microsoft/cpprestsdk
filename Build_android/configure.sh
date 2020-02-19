@@ -54,8 +54,8 @@ do
         DO_OPENSSL=0
         ;;
     "--skip-cmake")
-	DO_CMAKE=0
-	;;
+        DO_CMAKE=0
+        ;;
     "--skip-cpprestsdk")
         DO_CPPRESTSDK=0
         ;;
@@ -187,7 +187,7 @@ if [ "${DO_CMAKE}" == "1" ]; then (
 if [ "${DO_CPPRESTSDK}" == "1" ]; then
     # Use the builtin CMake toolchain configuration that comes with the NDK
     function build_cpprestsdk { (
-	rm -rf $1
+    rm -rf $1
         ./cmake-${CMAKEVER}/bin/cmake \
             -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
             -DANDROID_NDK="${ANDROID_NDK}" \
