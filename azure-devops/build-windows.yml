@@ -11,6 +11,8 @@ jobs:
     vcpkgLocation: '$(Build.SourcesDirectory)/vcpkg'
     vcpkgResponseFile: $(Build.SourcesDirectory)/azure-devops/vcpkg-windows.txt
   steps:
+    - script: git submodule update --init vcpkg
+      displayName: Checkout vcpkg submodule
     - task: CacheBeta@0
       displayName: Cache vcpkg
       inputs:

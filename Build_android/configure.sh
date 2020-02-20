@@ -25,7 +25,7 @@ DO_OPENSSL=1
 DO_CMAKE=1
 DO_CPPRESTSDK=1
 
-BOOSTVER=1.69.0
+BOOSTVER=1.70.0
 OPENSSLVER=1.1.0j
 CMAKEVER=3.14.0
 
@@ -54,8 +54,8 @@ do
         DO_OPENSSL=0
         ;;
     "--skip-cmake")
-	DO_CMAKE=0
-	;;
+        DO_CMAKE=0
+        ;;
     "--skip-cpprestsdk")
         DO_CPPRESTSDK=0
         ;;
@@ -104,10 +104,10 @@ NDK_DIR=`cd "${ANDROID_NDK}" && pwd`
 SRC_DIR=`pwd`
 
 if [ -z "$NCPU" ]; then
-	NCPU=4
-	if uname -s | grep -i "linux" > /dev/null ; then
-		NCPU=`cat /proc/cpuinfo | grep -c -i processor`
-	fi
+    NCPU=4
+    if uname -s | grep -i "linux" > /dev/null ; then
+        NCPU=`cat /proc/cpuinfo | grep -c -i processor`
+    fi
 fi
 
 # -----------------------
@@ -151,11 +151,12 @@ if [ "${DO_OPENSSL}" == "1" ]; then (
 # -----
 # Uses the build script from Moritz Wundke (formerly MysticTreeGames)
 # https://github.com/moritz-wundke/Boost-for-Android
+# (plus the patch https://github.com/o01eg/Boost-for-Android/tree/ndk-bump-21)
 
 if [ "${DO_BOOST}" == "1" ]; then (
-    if [ ! -d 'Boost-for-Android' ]; then git clone https://github.com/moritz-wundke/Boost-for-Android; fi
+    if [ ! -d 'Boost-for-Android' ]; then git clone https://github.com/o01eg/Boost-for-Android/; fi
     cd Boost-for-Android
-    git checkout 245ea53385a55742a9ab08a8bd32c6a2dc0bbea4
+    git checkout 7626dd6f7cab7866dce20e685d4a1b11194366a7
     PATH="$PATH:$NDK_DIR" \
     CXXFLAGS="-std=gnu++11" \
     ./build-android.sh \
@@ -186,16 +187,17 @@ if [ "${DO_CMAKE}" == "1" ]; then (
 if [ "${DO_CPPRESTSDK}" == "1" ]; then
     # Use the builtin CMake toolchain configuration that comes with the NDK
     function build_cpprestsdk { (
-	rm -rf $1
+    rm -rf $1
         ./cmake-${CMAKEVER}/bin/cmake \
             -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
             -DANDROID_NDK="${ANDROID_NDK}" \
             -DANDROID_TOOLCHAIN=clang \
             -DANDROID_ABI=$2 \
             -DBOOST_VERSION="${BOOSTVER}" \
+            -DCPPREST_EXCLUDE_WEBSOCKETS=ON \
             -DCMAKE_BUILD_TYPE=$3 \
-	    -S "${DIR}/.." \
-	    -B $1
+            -S "${DIR}/.." \
+            -B $1
         make -j $NCPU -C $1
     ) }
 
