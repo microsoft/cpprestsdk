@@ -21,20 +21,23 @@ jobs:
       name: 'Windows_VS2017_x64'
       targetPlatform: x64
       image: 'vs2017-win2016'
-  - template: azure-devops/build-windows.yml
-    parameters:
-      name: 'Windows_VS2015_x86'
-      targetPlatform: x86
-      image: 'vs2015-win2012r2'
-  - template: azure-devops/build-windows.yml
-    parameters:
-      name: 'Windows_VS2015_x64'
-      targetPlatform: x64
-      image: 'vs2015-win2012r2'
+  # VS2015 is disabled for now pending https://github.com/microsoft/vcpkg/pull/10126
+  # - template: azure-devops/build-windows.yml
+  #   parameters:
+  #     name: 'Windows_VS2015_x86'
+  #     targetPlatform: x86
+  #     image: 'vs2015-win2012r2'
+  # - template: azure-devops/build-windows.yml
+  #   parameters:
+  #     name: 'Windows_VS2015_x64'
+  #     targetPlatform: x64
+  #     image: 'vs2015-win2012r2'
   - job: Windows_VS2019_UWP
     pool:
       vmImage: 'windows-latest'
     steps:
+    - script: git submodule update --init vcpkg
+      displayName: Checkout vcpkg submodule
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
     - script: .\vcpkg\vcpkg.exe install zlib --triplet x64-uwp --vcpkg-root .\vcpkg
@@ -83,6 +86,7 @@ jobs:
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt -y update
         sudo apt install g++-9 ninja-build -y
+        git submodule update --init vcpkg
         ./vcpkg/bootstrap-vcpkg.sh
         ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
       displayName: Vcpkg install dependencies
