@@ -11,8 +11,8 @@
  * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  ****/
 
-#include "stdafx.h"
-
+#include "cpprest/json.h"
+#include "unittestpp.h"
 #include <clocale>
 #include <iomanip>
 
