@@ -12,6 +12,7 @@
 
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/uri.h"
+#include <memory>
 
 namespace web
 {
@@ -31,7 +32,7 @@ class winrt_encryption
 {
 public:
     winrt_encryption() = default;
-    _ASYNCRTIMP winrt_encryption(const std::wstring& data);
+    _ASYNCRTIMP winrt_encryption(const ::utility::string_t& data);
     _ASYNCRTIMP plaintext_string decrypt() const;
 
 private:
@@ -42,7 +43,7 @@ class win32_encryption
 {
 public:
     win32_encryption() = default;
-    _ASYNCRTIMP win32_encryption(const std::wstring& data);
+    _ASYNCRTIMP win32_encryption(const ::utility::string_t& data);
     _ASYNCRTIMP ~win32_encryption();
     _ASYNCRTIMP plaintext_string decrypt() const;
 

@@ -41,7 +41,7 @@ SUITE(json_fuzz_tests)
 
     TEST(fuzz_json_parser, "Requires", "fuzzedinputfile")
     {
-        std::wstring ipfile = utility::conversions::to_utf16string(get_fuzzed_file_path());
+        utility::string_t ipfile = utility::conversions::to_string_t(get_fuzzed_file_path());
         if (true == ipfile.empty())
         {
             VERIFY_IS_TRUE(false, "Input file is empty");
@@ -52,22 +52,27 @@ SUITE(json_fuzz_tests)
         concurrency::streams::container_buffer<std::string> cbuf;
         fs.read_to_end(cbuf).get();
         fs.close().get();
-        auto json_str = cbuf.collection();
+        auto utf8_json_str = cbuf.collection();
 
         // Look for UTF-8 BOM
-        if ((uint8_t)json_str[0] != 0xEF || (uint8_t)json_str[1] != 0xBB || (uint8_t)json_str[2] != 0xBF)
+        if ((uint8_t)utf8_json_str[0] != 0xEF || (uint8_t)utf8_json_str[1] != 0xBB || (uint8_t)utf8_json_str[2] != 0xBF)
         {
             VERIFY_IS_TRUE(false, "Input file encoding is not UTF-8. Test will not parse the file.");
             return;
         }
 
-        auto utf16_json_str = utility::conversions::utf8_to_utf16(json_str);
+        auto json_str = utility::conversions::to_string_t(utf8_json_str);
+#if defined(_UTF16_STRINGS)
         // UTF8 to UTF16 conversion will retain the BOM, remove it.
-        if (utf16_json_str.front() == 0xFEFF) utf16_json_str.erase(0, 1);
+        if (json_str.front() == 0xFEFF) json_str.erase(0, 1);
+#else
+        // remove the BOM
+        json_str.erase(0, 3);
+#endif
 
         try
         {
-            json::value::parse(std::move(utf16_json_str));
+            json::value::parse(std::move(json_str));
             std::cout << "Input file parsed successfully.";
         }
         catch (const json::json_exception& ex)

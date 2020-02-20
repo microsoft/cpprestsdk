@@ -14,6 +14,7 @@
 #define CASA_HTTP_LISTENER_H
 
 #include "cpprest/http_msg.h"
+#include "cpprest/memory_utils.h"
 #include <functional>
 #include <limits>
 #if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)

@@ -39,7 +39,7 @@ using namespace ::pplx;
 utility::string_t get_full_name(const utility::string_t& name);
 
 void fill_file(const utility::string_t& name, size_t repetitions = 1);
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
 void fill_file_w(const utility::string_t& name, size_t repetitions = 1);
 #endif
 
@@ -179,7 +179,7 @@ SUITE(file_buffer_tests)
         VERIFY_IS_TRUE(close.is_done());
         VERIFY_IS_FALSE(stream.is_open());
     }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(WriteSingleCharTest1w)
     {
         auto open = OPEN_W<wchar_t>(U("WriteSingleCharTest1w.txt"));
@@ -227,7 +227,7 @@ SUITE(file_buffer_tests)
         VERIFY_IS_TRUE(close.is_done());
         VERIFY_IS_FALSE(stream.is_open());
     }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(WriteBufferTest1w)
     {
         auto open = OPEN_W<wchar_t>(U("WriteBufferTest1w.txt"));
@@ -345,7 +345,7 @@ SUITE(file_buffer_tests)
             t[i].wait();
     }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(ReadSingleChar_bumpcw)
     {
         utility::string_t fname = U("ReadSingleChar_bumpcw.txt");
@@ -467,7 +467,7 @@ SUITE(file_buffer_tests)
 
         VERIFY_IS_FALSE(stream.is_open());
     }
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(ReadSingleChar_nextcw)
     {
         utility::string_t fname = U("ReadSingleChar_nextcw.txt");
@@ -558,7 +558,7 @@ SUITE(file_buffer_tests)
         VERIFY_IS_FALSE(stream.is_open());
     }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(ReadSingleChar_getc1w)
     {
         utility::string_t fname = U("ReadSingleChar_getc1w.txt");
@@ -669,7 +669,7 @@ SUITE(file_buffer_tests)
         VERIFY_IS_FALSE(stream.is_open());
     }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(ReadBuffer1w)
     {
         // Test that seeking works.
@@ -881,7 +881,7 @@ SUITE(file_buffer_tests)
         VERIFY_ARE_EQUAL(istream.size(), 2600);
     }
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
     TEST(file_size_w)
     {
         utility::string_t fname = U("file_size_w.txt");
@@ -912,9 +912,8 @@ SUITE(file_buffer_tests)
     TEST(read_one_byte_at_4G)
     {
         // Create a file with one byte.
-        string_t filename = U("read_one_byte_at_4G.txt");
         // create a sparse file with sparse file apis
-        auto handle = CreateSparseFile(filename.c_str());
+        auto handle = CreateSparseFile(TEXT("read_one_byte_at_4G.txt"));
         VERIFY_ARE_NOT_EQUAL(handle, INVALID_HANDLE_VALUE);
 
         // write 1 byte
@@ -930,7 +929,7 @@ SUITE(file_buffer_tests)
         CloseHandle(handle);
 
         // read the file with casablanca streams
-        concurrency::streams::streambuf<char> file_buf = OPEN<char>(filename, std::ios_base::in).get();
+        concurrency::streams::streambuf<char> file_buf = OPEN<char>(U("read_one_byte_at_4G.txt"), std::ios_base::in).get();
         file_buf.seekoff(4 * 1024 * 1024 * 1024ll, ::std::ios_base::beg, ::std::ios_base::in);
 
         int aCharacter = file_buf.getc().get();

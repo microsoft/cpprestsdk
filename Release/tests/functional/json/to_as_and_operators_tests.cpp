@@ -500,7 +500,7 @@ SUITE(to_as_and_operators_tests)
         value.serialize(ss);
         VERIFY_ARE_EQUAL(len, ss.str().length());
 
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
         // Check wide string implementation
         std::basic_stringstream<wchar_t> wss;
         value.serialize(wss);

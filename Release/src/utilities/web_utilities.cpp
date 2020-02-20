@@ -47,15 +47,15 @@ void winrt_secure_zero_buffer(Windows::Storage::Streams::IBuffer ^ buffer)
     }
 }
 
-winrt_encryption::winrt_encryption(const std::wstring& data)
+winrt_encryption::winrt_encryption(const ::utility::string_t& data)
 {
     auto provider = ref new Windows::Security::Cryptography::DataProtection::DataProtectionProvider(
         ref new Platform::String(L"Local=user"));
 
     // Create buffer containing plain text password.
     Platform::ArrayReference<unsigned char> arrayref(
-        reinterpret_cast<unsigned char*>(const_cast<std::wstring::value_type*>(data.c_str())),
-        static_cast<unsigned int>(data.size()) * sizeof(std::wstring::value_type));
+        reinterpret_cast<unsigned char*>(const_cast<::utility::string_t::value_type*>(data.c_str())),
+        static_cast<unsigned int>(data.size()) * sizeof(::utility::string_t::value_type));
     Windows::Storage::Streams::IBuffer ^ plaintext =
         Windows::Security::Cryptography::CryptographicBuffer::CreateFromByteArray(arrayref);
     m_buffer = pplx::create_task(provider->ProtectAsync(plaintext));
@@ -84,14 +84,14 @@ plaintext_string winrt_encryption::decrypt() const
 
     // Construct string and zero out memory from plain text buffer.
     auto data = plaintext_string(
-        new std::wstring(reinterpret_cast<const std::wstring::value_type*>(rawPlaintext), plaintext->Length / 2));
+        new ::utility::string_t(reinterpret_cast<const ::utility::string_t::value_type*>(rawPlaintext), plaintext->Length / 2));
     SecureZeroMemory(rawPlaintext, plaintext->Length);
     return std::move(data);
 }
 
 #else  // ^^^ __cplusplus_winrt ^^^ // vvv !__cplusplus_winrt vvv
 
-win32_encryption::win32_encryption(const std::wstring& data) : m_numCharacters(data.size())
+win32_encryption::win32_encryption(const ::utility::string_t& data) : m_numCharacters(data.size())
 {
     // Early return because CryptProtectMemory crashes with empty string
     if (m_numCharacters == 0)
@@ -99,12 +99,12 @@ win32_encryption::win32_encryption(const std::wstring& data) : m_numCharacters(d
         return;
     }
 
-    if (data.size() > (std::numeric_limits<DWORD>::max)() / sizeof(wchar_t))
+    if (data.size() > (std::numeric_limits<DWORD>::max)() / sizeof(::utility::string_t::value_type))
     {
         throw std::length_error("Encryption string too long");
     }
 
-    const auto dataSizeDword = static_cast<DWORD>(data.size() * sizeof(wchar_t));
+    const auto dataSizeDword = static_cast<DWORD>(data.size() * sizeof(::utility::string_t::value_type));
 
     // Round up dataSizeDword to be a multiple of CRYPTPROTECTMEMORY_BLOCK_SIZE
     static_assert(CRYPTPROTECTMEMORY_BLOCK_SIZE == 16, "Power of 2 assumptions in this bit masking violated");
@@ -125,8 +125,8 @@ win32_encryption::~win32_encryption() { SecureZeroMemory(m_buffer.data(), m_buff
 plaintext_string win32_encryption::decrypt() const
 {
     // Copy the buffer and decrypt to avoid having to re-encrypt.
-    auto result = plaintext_string(new std::wstring(reinterpret_cast<const std::wstring::value_type*>(m_buffer.data()),
-                                                    m_buffer.size() / sizeof(wchar_t)));
+    auto result = plaintext_string(new ::utility::string_t(reinterpret_cast<const ::utility::string_t::value_type*>(m_buffer.data()),
+                                                    m_buffer.size() / sizeof(::utility::string_t::value_type)));
     auto& data = *result;
     if (!m_buffer.empty())
     {

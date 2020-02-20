@@ -13,6 +13,8 @@
 
 #include "stdafx.h"
 
+#include <algorithm>
+
 using namespace utility;
 
 namespace tests

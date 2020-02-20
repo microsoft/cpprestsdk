@@ -36,6 +36,7 @@ set(SOURCES
   uri/uri_builder.cpp
   utilities/asyncrt_utils.cpp
   utilities/base64.cpp
+  utilities/string_utils.cpp
   utilities/web_utilities.cpp
 )
 

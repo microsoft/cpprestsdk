@@ -196,7 +196,7 @@ SUITE(json_numbers_tests)
          "Fails due to double conversion issues")
     {
         // JSON uses the C locale always and should therefore not be impacted by the process locale
-#ifdef _WIN32
+#if defined(_UTF16_STRINGS)
         std::string changedLocale("fr-FR");
 #else
         std::string changedLocale("fr_FR.UTF-8");

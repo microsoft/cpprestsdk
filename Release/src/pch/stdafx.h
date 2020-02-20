@@ -92,7 +92,10 @@
 
 // utilities
 #include "cpprest/asyncrt_utils.h"
+#include "cpprest/base64_utils.h"
 #include "cpprest/details/web_utilities.h"
+#include "cpprest/memory_utils.h"
+#include "cpprest/string_utils.h"
 
 // http
 #include "cpprest/details/http_helpers.h"

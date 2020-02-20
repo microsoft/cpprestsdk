@@ -17,6 +17,7 @@
 
 #include "cpprest/astreambuf.h"
 #include "cpprest/details/fileio.h"
+#include "cpprest/memory_utils.h"
 #include "cpprest/streams.h"
 #include <assert.h>
 
