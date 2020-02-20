@@ -21,17 +21,16 @@ jobs:
       name: 'Windows_VS2017_x64'
       targetPlatform: x64
       image: 'vs2017-win2016'
-  # VS2015 is disabled for now pending https://github.com/microsoft/vcpkg/pull/10126
-  # - template: azure-devops/build-windows.yml
-  #   parameters:
-  #     name: 'Windows_VS2015_x86'
-  #     targetPlatform: x86
-  #     image: 'vs2015-win2012r2'
-  # - template: azure-devops/build-windows.yml
-  #   parameters:
-  #     name: 'Windows_VS2015_x64'
-  #     targetPlatform: x64
-  #     image: 'vs2015-win2012r2'
+  - template: azure-devops/build-windows.yml
+    parameters:
+      name: 'Windows_VS2015_x86'
+      targetPlatform: x86
+      image: 'vs2015-win2012r2'
+  - template: azure-devops/build-windows.yml
+    parameters:
+      name: 'Windows_VS2015_x64'
+      targetPlatform: x64
+      image: 'vs2015-win2012r2'
   - job: Windows_VS2019_UWP
     pool:
       vmImage: 'windows-latest'
