@@ -124,7 +124,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
             delete clocale;
         };
 #else
-        *clocale = newlocale(LC_ALL, "C", nullptr);
+        *clocale = newlocale(LC_ALL_MASK, "C", nullptr);
         if (clocale == nullptr || *clocale == nullptr)
         {
             throw std::runtime_error("Unable to create 'C' locale.");
