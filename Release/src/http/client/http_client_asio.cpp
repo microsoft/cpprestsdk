@@ -330,6 +330,12 @@ public:
 
     void start_reuse() { m_is_reused = true; }
 
+    void enable_no_delay()
+    {
+        boost::asio::ip::tcp::no_delay option(true);
+        m_socket.set_option(option);
+    }
+
 private:
     // Guards concurrent access to socket/ssl::stream. This is necessary
     // because timeouts and cancellation can touch the socket at the same time
@@ -610,6 +616,7 @@ public:
             if (!ec)
             {
                 m_context->m_timer.reset();
+                m_context->m_connection->enable_no_delay();
                 m_context->m_connection->async_write(m_request,
                                                      boost::bind(&ssl_proxy_tunnel::handle_write_request,
                                                                  shared_from_this(),
@@ -1006,6 +1013,7 @@ private:
         m_timer.reset();
         if (!ec)
         {
+            m_connection->enable_no_delay();
             write_request();
         }
         else if (ec.value() == boost::system::errc::operation_canceled ||
