@@ -15,5 +15,3 @@ if(UNIX AND NOT APPLE)
   cpprest_find_boost()
   target_link_libraries(json_test PRIVATE cpprestsdk_boost_internal)
 endif()
-
-configure_pch(json_test stdafx.h stdafx.cpp)

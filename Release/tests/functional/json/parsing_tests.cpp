@@ -9,8 +9,8 @@
  * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  ****/
 
-#include "stdafx.h"
-
+#include "cpprest/json.h"
+#include "unittestpp.h"
 #include <array>
 #include <iomanip>
 
@@ -25,6 +25,144 @@
 using namespace web;
 using namespace utility;
 using namespace utility::conversions;
+
+static utility::string_t youtubeJson = _XPLATSTR(
+R"delimeter({
+ "kind": "youtube#playlistItemListResponse",
+ "etag": "\"Fznwjl6JEQdo1MGvHOGaz_YanRU/ranGcWzseanYs9xZ0NXAq24qK-w\"",
+ "pageInfo": {
+  "totalResults": 3,
+  "resultsPerPage": 5
+ },
+ "items": [
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "\"Fznwjl6JEQdo1MGvHOGaz_YanRU/phfRXORDKFrYjeJGWbI8MbIk08A\"",
+   "id": "VVVGMWhNVVZ3bHJ2bFZNalVHT1pFeGdnLm12RERIeEJyd1U4",
+   "snippet": {
+    "publishedAt": "2013-05-24T22:03:10.000Z",
+    "channelId": "UCF1hMUVwlrvlVMjUGOZExgg",
+    "title": "C++ REST SDK (\"Casablanca\")",
+    "description": "This library is a Microsoft effort to support cloud-based client-server communication in native code using a modern asynchronous C++ API design.",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/mvDDHxBrwU8/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/mvDDHxBrwU8/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/mvDDHxBrwU8/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/mvDDHxBrwU8/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/mvDDHxBrwU8/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     }
+    },
+    "channelTitle": "casablancacore",
+    "playlistId": "UUF1hMUVwlrvlVMjUGOZExgg",
+    "position": 0,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "mvDDHxBrwU8"
+    }
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "\"Fznwjl6JEQdo1MGvHOGaz_YanRU/J65jYO0AIlbIqd4JpVigajlhVnE\"",
+   "id": "VVVGMWhNVVZ3bHJ2bFZNalVHT1pFeGdnLmlFVU9fdDhFYW5r",
+   "snippet": {
+    "publishedAt": "2013-05-07T18:47:24.000Z",
+    "channelId": "UCF1hMUVwlrvlVMjUGOZExgg",
+    "title": "C++ REST SDK",
+    "description": "A brief introduction to the C++ REST SDK. This video goes over high level concepts and features of the library. \n\nFor more information visit: http://casablanca.codeplex.com\nFor more information on PPL tasks visit: http://msdn.microsoft.com/en-us/library/dd492418.aspx",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/iEUO_t8Eank/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/iEUO_t8Eank/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/iEUO_t8Eank/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/iEUO_t8Eank/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     }
+    },
+    "channelTitle": "casablancacore",
+    "playlistId": "UUF1hMUVwlrvlVMjUGOZExgg",
+    "position": 1,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "iEUO_t8Eank"
+    }
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "\"Fznwjl6JEQdo1MGvHOGaz_YanRU/XMpuK2N4-LOhDWtgCG8nBw7eNl8\"",
+   "id": "VVVGMWhNVVZ3bHJ2bFZNalVHT1pFeGdnLk41cnlJN3U5RVFB",
+   "snippet": {
+    "publishedAt": "2013-05-02T21:24:56.000Z",
+    "channelId": "UCF1hMUVwlrvlVMjUGOZExgg",
+    "title": "bunny",
+    "description": "",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/N5ryI7u9EQA/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/N5ryI7u9EQA/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/N5ryI7u9EQA/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/N5ryI7u9EQA/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     }
+    },
+    "channelTitle": "casablancacore",
+    "playlistId": "UUF1hMUVwlrvlVMjUGOZExgg",
+    "position": 2,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "N5ryI7u9EQA"
+    }
+   }
+  }
+ ]
+})delimeter"
+);
 
 namespace tests
 {
@@ -760,6 +898,36 @@ SUITE(parsing_tests)
         VERIFY_IS_TRUE(iStreamErr.value() > 0);
         VERIFY_IS_TRUE(parsedObject.is_null());
 #endif
+    }
+
+    TEST(youtube_api)
+    {
+        auto v = json::value::parse(youtubeJson);
+        int count = 0;
+        auto& obj = v.as_object();
+
+        VERIFY_ARE_NOT_EQUAL(obj.find(U("pageInfo")), obj.end());
+        VERIFY_ARE_NOT_EQUAL(obj.find(U("items")), obj.end());
+
+        auto& items = obj[U("items")];
+
+        for (auto iter = items.as_array().cbegin(); iter != items.as_array().cend(); ++iter)
+        {
+            const auto& item = *iter;
+            auto iSnippet = item.as_object().find(U("snippet"));
+            if (iSnippet == item.as_object().end())
+            {
+                throw std::runtime_error("snippet key not found");
+            }
+            auto iTitle = iSnippet->second.as_object().find(U("title"));
+            if (iTitle == iSnippet->second.as_object().end())
+            {
+                throw std::runtime_error("title key not found");
+            }
+            auto name = iTitle->second.serialize();
+            count++;
+        }
+        VERIFY_ARE_EQUAL(3, count); // Update this accordingly, if the number of items changes
     }
 
 } // SUITE(parsing_tests)

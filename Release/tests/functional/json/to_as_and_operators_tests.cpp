@@ -9,7 +9,8 @@
  * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  ****/
 
-#include "stdafx.h"
+#include "cpprest/json.h"
+#include "unittestpp.h"
 
 using namespace web;
 using namespace utility;
