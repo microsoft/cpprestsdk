@@ -1049,7 +1049,7 @@ private:
 
     void handle_resolve(const boost::system::error_code& ec, tcp::resolver::iterator endpoints)
     {
-        if (ec)
+        if (ec || endpoints == tcp::resolver::iterator())
         {
             report_error("Error resolving address", ec, httpclient_errorcode_context::connect);
         }
