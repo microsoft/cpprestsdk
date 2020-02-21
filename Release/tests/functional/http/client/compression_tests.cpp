@@ -376,19 +376,31 @@ SUITE(compression_tests)
         }
     }
 
-    TEST_FIXTURE(uri_address, compress_and_decompress)
+    TEST_FIXTURE(uri_address, compress_and_decompress_fake)
     {
         compress_test(nullptr, nullptr); // FAKE
+    }
+
+    TEST_FIXTURE(uri_address, compress_and_decompress_gzip)
+    {
         if (builtin::algorithm::supported(builtin::algorithm::GZIP))
         {
             compress_test(builtin::get_compress_factory(builtin::algorithm::GZIP),
                           builtin::get_decompress_factory(builtin::algorithm::GZIP));
         }
+    }
+
+    TEST_FIXTURE(uri_address, compress_and_decompress_deflate)
+    {
         if (builtin::algorithm::supported(builtin::algorithm::DEFLATE))
         {
             compress_test(builtin::get_compress_factory(builtin::algorithm::DEFLATE),
                           builtin::get_decompress_factory(builtin::algorithm::DEFLATE));
         }
+    }
+
+    TEST_FIXTURE(uri_address, compress_and_decompress_brotli)
+    {
         if (builtin::algorithm::supported(builtin::algorithm::BROTLI))
         {
             compress_test(builtin::get_compress_factory(builtin::algorithm::BROTLI),
