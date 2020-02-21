@@ -1,20 +1,46 @@
+cpprestsdk (2.10.15)
+* Extremely special thanks to @garethsb-sony for a large number of contributions in this release
+* PR#1209 Workarounds for two GCC 4.7.2 bugs with lambda functions
+* PR#1220 Fix SxS debug-release builds with Visual Studio
+* PR#1219 Fix "Data" to "Date" in the HTTP Server API mapping, and clarify that the indices of these values match the HTTP_HEADER_ID values for HTTP_REQUEST_HEADERS but *not* HTTP_RESPONSE_HEADERS
+* PR#1196 Fixing of connections_and_errors::cancel_with_error test which sometimes fires false positive error "There are no pending calls to next_request."
+* PR#1233 Trim whitespace and nulls the same way.
+* PR#1248 Avoid using permissive- with ZW which breaks VS2019
+* PR#1182 Support for WinHTTPAL curl-to-WinHTTP adapter
+* PR#1253 http_server_httpsys.cpp requires linking against httpapi.lib, http_client_winhttp.cpp does not.
+* PR#1263 Remove trailing slash on websocketpp submodule url, which causes checkout failure on CircleCI with git 2.22.0
+* PR#1293 Update vcpkg and remove tests that look for web servers that no longer exist
+* PR#1288 Fix test case broken by commit f4c863b
+* PR#1276 Added comparison overrides to utility::datetime
+* PR#1289 Fix various warnings reported by gcc 9.3, and possibly earlier versions
+* PR#1334 Update vcpkg and boost on Android
+* PR#1306 Change default installation directory for cmake files to cmake/cpprestsdk
+* PR#1330 Use LC_ALL_MASK rather than LC_ALL when calling newlocale
+* PR#1310 Add TCP_NODELAY to disable Nagle's algorithm in Boost.ASIO-based http_client
+* PR#1335 Turn VS2015 back on now that vcpkg is fixed.
+* PR#1322 Enable HTTP compression support on all platforms
+* PR#1340 Add Ubuntu 18.04 testing.
+* PR#1342 Use C++11 synchronization classes under macOS too
+* PR#1339 Fix tcp::resolver data race in the asio backend and be defensive against empty results
+-- cpprestsdk team <askcasablanca@microsoft.com>  THR, 22 Feb 2020 08:31:00 -0800
+
 cpprestsdk (2.10.14)
 * Potential breaking change warning: This release changes the "default" proxy for the WinHTTP backend to go back to WINHTTP_ACCESS_TYPE_DEFAULT_PROXY. See https://github.com/microsoft/cpprestsdk/commit/60e067e71aebebdda5d82955060f5f0821c9df1d for more details. To get automatic WPAD behavior, set the proxy to auto detect.
 * macOS with Brew and iOS builds have been disabled and are no longer being tested because our dependency boost for ios project appears to be broken with current releases of XCode as on the Azure Pipelines machines. We are interested in macOS / iOS folks who know what's going on here in contributing a repair to turn this back on.
-* PR##1133 Add switches to make apiscan happy.
-* PR##1130 json: {"meow"} is not a valid object
-* PR##1150 Undefine compress if it is defined by zconf.h
-* PR##1156 Fix broken CI Builds
-* PR##1155 Use EVP_MAX_MD_SIZE instead of HMAC_MAX_MD_CBLOCK
-* PR##1145 Remove the address_configured flag on tcp::resolver::query
-* PR##1143 add ping and pong to message handler
-* PR##539 Fix reusing ASIO http_client connecting to HTTPS server via proxy
-* PR##1175 Fix issue #1171: Order of object destruction
-* PR##1183 FIX: SSL proxy tunnel support with basic auth
-* PR##1184 Fix profile being set on the compiler instead of the linker.
-* PR##1185 Update boost-for-android for Android NDK r20 and disable macOS Homebrew.
-* PR##1187 Replace CPPREST_TARGET_XP with version checks, remove ""s, and other cleanup
-* PR##1188 Remove proxy settings detection behavior in "default proxy mode."
+* PR#1133 Add switches to make apiscan happy.
+* PR#1130 json: {"meow"} is not a valid object
+* PR#1150 Undefine compress if it is defined by zconf.h
+* PR#1156 Fix broken CI Builds
+* PR#1155 Use EVP_MAX_MD_SIZE instead of HMAC_MAX_MD_CBLOCK
+* PR#1145 Remove the address_configured flag on tcp::resolver::query
+* PR#1143 add ping and pong to message handler
+* PR#539 Fix reusing ASIO http_client connecting to HTTPS server via proxy
+* PR#1175 Fix issue #1171: Order of object destruction
+* PR#1183 FIX: SSL proxy tunnel support with basic auth
+* PR#1184 Fix profile being set on the compiler instead of the linker.
+* PR#1185 Update boost-for-android for Android NDK r20 and disable macOS Homebrew.
+* PR#1187 Replace CPPREST_TARGET_XP with version checks, remove ""s, and other cleanup
+* PR#1188 Remove proxy settings detection behavior in "default proxy mode."
 -- cpprestsdk team <askcasablanca@microsoft.com>  TUE, 16 Jul 2019 09:06:00 +0200
 
 cpprestsdk (2.10.13)
