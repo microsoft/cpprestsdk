@@ -52,71 +52,22 @@ jobs:
         solution: 'build.common/ALL_BUILD.vcxproj'
         maximumCpuCount: true
         platform: 'x64'
-  - job: Ubuntu_1604_Apt
-    pool:
-      vmImage: 'Ubuntu 16.04'
-    steps:
-    - script: |
-        sudo apt -y remove php*
-        sudo apt install -y ppa-purge
-        sudo ppa-purge -y ppa:ondrej/php
-        unset BOOST_ROOT
-        sudo apt install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev openssl libssl-dev ninja-build
-        mkdir build.debug
-        cd build.debug
-        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug ..
-        cd ..
-        mkdir build.release
-        cd build.release
-        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
-        cd ..
-        ninja -C build.debug
-        ninja -C build.release
-        cd build.debug/Release/Binaries
-        ./test_runner *test.so
-        cd ../../../build.release/Release/Binaries
-        ./test_runner *test.so
-      displayName: Run build
-  - job: Ubuntu_1604_Vcpkg
-    pool:
-      vmImage: 'Ubuntu 16.04'
-    steps:
-    - script: |
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-        sudo apt -y update
-        sudo apt install g++-9 ninja-build -y
-        git submodule update --init vcpkg
-        ./vcpkg/bootstrap-vcpkg.sh
-        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
-      displayName: Vcpkg install dependencies
-    - script: |
-        mkdir build.debug
-        mkdir build.release
-      displayName: Make Build Directories
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.debug'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.release'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
-    - script: |
-        cd build.debug
-        ninja
-      displayName: 'Run ninja debug'
-    - script: |
-        cd build.debug/Release/Binaries
-        ./test_runner *test.so
-      displayName: 'Run Tests debug'
-    - script: |
-        cd build.release
-        ninja
-      displayName: 'Run ninja, release'
-    - script: |
-        cd build.release/Release/Binaries
-        ./test_runner *test.so
-      displayName: 'Run tests, release'
+  - template: azure-devops/build-ubuntu-apt.yml
+    parameters:
+      name: 'Ubuntu_1604_Apt'
+      image: 'Ubuntu 16.04'
+  - template: azure-devops/build-ubuntu-apt.yml
+    parameters:
+      name: 'Ubuntu_1804_Apt'
+      image: 'Ubuntu 18.04'
+  - template: azure-devops/build-ubuntu-vcpkg.yml
+    parameters:
+      name: 'Ubuntu_1604_Vcpkg'
+      image: 'Ubuntu 16.04'
+  - template: azure-devops/build-ubuntu-vcpkg.yml
+    parameters:
+      name: 'Ubuntu_1804_Vcpkg'
+      image: 'Ubuntu 18.04'
   - job: Android
     pool:
       vmImage: 'Ubuntu 16.04'

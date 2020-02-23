@@ -23,25 +23,14 @@
 #include "pthread.h"
 #include <signal.h>
 
-#if defined(__APPLE__)
-#include <boost/thread/condition_variable.hpp>
-#include <boost/thread/mutex.hpp>
-#include <dispatch/dispatch.h>
-#else
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-#endif
 
 #include "pplx/pplxinterface.h"
 
 namespace pplx
 {
-#if defined(__APPLE__)
-namespace cpprest_synchronization = ::boost;
-#else
-namespace cpprest_synchronization = ::std;
-#endif
 namespace details
 {
 namespace platform
@@ -68,8 +57,8 @@ __declspec(noinline) inline static size_t CaptureCallstack(void**, size_t, size_
 class event_impl
 {
 private:
-    cpprest_synchronization::mutex _lock;
-    cpprest_synchronization::condition_variable _condition;
+    std::mutex _lock;
+    std::condition_variable _condition;
     bool _signaled;
 
 public:
@@ -79,20 +68,20 @@ public:
 
     void set()
     {
-        cpprest_synchronization::lock_guard<cpprest_synchronization::mutex> lock(_lock);
+        std::lock_guard<std::mutex> lock(_lock);
         _signaled = true;
         _condition.notify_all();
     }
 
     void reset()
     {
-        cpprest_synchronization::lock_guard<cpprest_synchronization::mutex> lock(_lock);
+        std::lock_guard<std::mutex> lock(_lock);
         _signaled = false;
     }
 
     unsigned int wait(unsigned int timeout)
     {
-        cpprest_synchronization::unique_lock<cpprest_synchronization::mutex> lock(_lock);
+        std::unique_lock<std::mutex> lock(_lock);
         if (timeout == event_impl::timeout_infinite)
         {
             _condition.wait(lock, [this]() -> bool { return _signaled; });
@@ -100,7 +89,7 @@ public:
         }
         else
         {
-            cpprest_synchronization::chrono::milliseconds period(timeout);
+            std::chrono::milliseconds period(timeout);
             auto status = _condition.wait_for(lock, period, [this]() -> bool { return _signaled; });
             _ASSERTE(status == _signaled);
             // Return 0 if the wait completed as a result of signaling the event. Otherwise, return timeout_infinite
@@ -195,7 +184,7 @@ public:
     }
 
 private:
-    cpprest_synchronization::mutex _M_cs;
+    std::mutex _M_cs;
     std::atomic<long> _M_owner;
     long _M_recursionCount;
 };
@@ -219,7 +208,7 @@ public:
 
 /// <summary>
 ///  A generic RAII wrapper for locks that implements the critical_section interface
-///  cpprest_synchronization::lock_guard
+///  std::lock_guard
 /// </summary>
 template<class _Lock>
 class scoped_lock
@@ -244,7 +233,7 @@ namespace extensibility
 {
 typedef ::pplx::details::event_impl event_t;
 
-typedef cpprest_synchronization::mutex critical_section_t;
+typedef std::mutex critical_section_t;
 typedef scoped_lock<critical_section_t> scoped_critical_section_t;
 
 typedef ::pplx::details::reader_writer_lock_impl reader_writer_lock_t;
