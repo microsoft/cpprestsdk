@@ -1050,6 +1050,10 @@ private:
         {
             report_error("Error resolving address", ec, httpclient_errorcode_context::connect);
         }
+        else if (endpoints == tcp::resolver::iterator())
+        {
+            report_error("Failed to resolve address", ec, httpclient_errorcode_context::connect);
+        }
         else
         {
             m_timer.reset();
