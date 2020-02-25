@@ -1976,6 +1976,160 @@ void asio_client::send_request(const std::shared_ptr<request_context>& request_c
     ctx->start_request();
 }
 
+static bool is_retrieval_redirection(status_code code)
+{
+    // See https://tools.ietf.org/html/rfc7231#section-6.4
+
+    switch (code)
+    {
+    case status_codes::MovedPermanently:
+        // "For historical reasons, a user agent MAY change the request method
+        // from POST to GET for the subsequent request."
+        return true;
+    case status_codes::Found:
+        // "For historical reasons, a user agent MAY change the request method
+        // from POST to GET for the subsequent request."
+        return true;
+    case status_codes::SeeOther:
+        // "A user agent can perform a [GET or HEAD] request. It is primarily
+        // used to allow the output of a POST action to redirect the user agent
+        // to a selected resource."
+        return true;
+    default:
+        return false;
+    }
+}
+
+static bool is_unchanged_redirection(status_code code)
+{
+    // See https://tools.ietf.org/html/rfc7231#section-6.4
+    // and https://tools.ietf.org/html/rfc7538#section-3
+
+    switch (code)
+    {
+    case status_codes::TemporaryRedirect:
+        // "The user agent MUST NOT change the request method if it performs an
+        // automatic redirection to that URI."
+        return true;
+    case status_codes::PermanentRedirect:
+        // This status code "does not allow changing the request method from POST
+        // to GET."
+        return true;
+    default:
+        return false;
+    }
+}
+
+static bool is_recognized_redirection(status_code code)
+{
+    // other 3xx status codes are not handled
+    return is_retrieval_redirection(code) || is_unchanged_redirection(code);
+}
+
+static bool is_retrieval_request(method method)
+{
+    return methods::GET == method || methods::HEAD == method;
+}
+
+static const std::vector<utility::string_t> request_body_header_names =
+{
+    header_names::content_encoding,
+    header_names::content_language,
+    header_names::content_length,
+    header_names::content_location,
+    header_names::content_type
+};
+
+// A request continuation that follows redirects according to the specified configuration.
+// This implementation only supports retrieval redirects, as it cannot redirect e.g. a POST request
+// using the same method since the request body may have been consumed.
+struct http_redirect_follower
+{
+    http_client_config config;
+    std::vector<uri> followed_urls;
+    http_request redirect;
+
+    http_redirect_follower(http_client_config config, const http_request& request);
+
+    uri url_to_follow(const http_response& response) const;
+
+    pplx::task<http_response> operator()(http_response response);
+};
+
+http_redirect_follower::http_redirect_follower(http_client_config config, const http_request& request)
+    : config(std::move(config))
+    , followed_urls(1, request.absolute_uri())
+    , redirect(request.method())
+{
+    // Stash the original request URL, etc. to be prepared for an automatic redirect
+
+    // Basically, it makes sense to send the redirects with the same headers as the original request
+    redirect.headers() = request.headers();
+    // However, this implementation only supports retrieval redirects, with no body, so Content-* headers
+    // should be removed
+    for (const auto& content_header : request_body_header_names)
+    {
+        redirect.headers().remove(content_header);
+    }
+
+    redirect._set_cancellation_token(request._cancellation_token());
+}
+
+uri http_redirect_follower::url_to_follow(const http_response& response) const
+{
+    // Return immediately if the response is not a supported redirection
+    if (!is_recognized_redirection(response.status_code()))
+        return{};
+
+    // Although not required by RFC 7231, config may limit the number of automatic redirects
+    // (followed_urls includes the initial request URL, hence '<' here)
+    if (config.max_redirects() < followed_urls.size())
+        return{};
+
+    // Can't very well automatically redirect if the server hasn't provided a Location
+    const auto location = response.headers().find(header_names::location);
+    if (response.headers().end() == location)
+        return{};
+
+    uri to_follow(followed_urls.back().resolve_uri(location->second));
+
+    // Config may prohibit automatic redirects from HTTPS to HTTP
+    if (!config.https_to_http_redirects() && followed_urls.back().scheme() == _XPLATSTR("https")
+        && to_follow.scheme() != _XPLATSTR("https"))
+        return{};
+
+    // "A client SHOULD detect and intervene in cyclical redirections."
+    if (followed_urls.end() != std::find(followed_urls.begin(), followed_urls.end(), to_follow))
+        return{};
+
+    return to_follow;
+}
+
+pplx::task<http_response> http_redirect_follower::operator()(http_response response)
+{
+    // Return immediately if the response doesn't indicate a valid automatic redirect
+    uri to_follow = url_to_follow(response);
+    if (to_follow.is_empty())
+        return pplx::task_from_result(response);
+
+    // This implementation only supports retrieval redirects, as it cannot redirect e.g. a POST request
+    // using the same method since the request body may have been consumed.
+    if (!is_retrieval_request(redirect.method()) && !is_retrieval_redirection(response.status_code()))
+        return pplx::task_from_result(response);
+
+    if (!is_retrieval_request(redirect.method()))
+        redirect.set_method(methods::GET);
+
+    // If the reply to this request is also a redirect, we want visibility of that
+    auto config_no_redirects = config;
+    config_no_redirects.set_max_redirects(0);
+    http_client client(to_follow, config_no_redirects);
+
+    // Stash the redirect request URL and make the request with the same continuation
+    followed_urls.push_back(std::move(to_follow));
+    return client.request(redirect, redirect._cancellation_token()).then(std::move(*this));
+}
+
 pplx::task<http_response> asio_client::propagate(http_request request)
 {
     auto self = std::static_pointer_cast<_http_client_communicator>(shared_from_this());
@@ -1995,7 +2149,9 @@ pplx::task<http_response> asio_client::propagate(http_request request)
     // Asynchronously send the response with the HTTP client implementation.
     this->async_send_request(context);
 
-    return result_task;
+    return client_config().max_redirects() > 0
+        ? result_task.then(http_redirect_follower(client_config(), request))
+        : result_task;
 }
 } // namespace details
 } // namespace client
