@@ -286,6 +286,7 @@ public:
     /// A value of 0 indicates that no automatic redirection is performed.
     /// </summary>
     /// <returns>The maximum number of redirects to follow automatically.</returns>
+    /// <remarks>This is a hint -- an implementation may enforce a lower value.</remarks>
     size_t max_redirects() const { return m_max_redirects; }
 
     /// <summary>
@@ -293,6 +294,7 @@ public:
     /// A value of 0 indicates that no automatic redirection is performed.
     /// </summary>
     /// <param name="max_redirects">The maximum number of redirects to follow automatically.</param>
+    /// <remarks>This is a hint -- an implementation may enforce a lower value.</remarks>
     void set_max_redirects(size_t max_redirects) { m_max_redirects = max_redirects; }
 
     /// <summary>
