@@ -937,7 +937,7 @@ protected:
                                      &winhttp_client::completion_callback,
                                      WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES |
                                          WINHTTP_CALLBACK_FLAG_SECURE_FAILURE | WINHTTP_CALLBACK_FLAG_SEND_REQUEST |
-                                         WINHTTP_CALLBACK_FLAG_REDIRECT,
+                                         WINHTTP_CALLBACK_STATUS_REDIRECT,
                                      0))
         {
             return GetLastError();
@@ -1133,6 +1133,9 @@ protected:
             return;
         }
 
+// WinHttpPAL does not currently provide these options
+// See https://github.com/microsoft/WinHttpPAL/issues/1
+#if !defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
         if (client_config().max_redirects() == 0)
         {
             // Disable auto redirects.
@@ -1185,6 +1188,7 @@ protected:
                 return;
             }
         }
+#endif
 
         size_t content_length;
         try
