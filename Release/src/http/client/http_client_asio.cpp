@@ -2022,7 +2022,8 @@ static bool is_unchanged_redirection(status_code code)
 
 static bool is_recognized_redirection(status_code code)
 {
-    // other 3xx status codes are not handled
+    // other 3xx status codes, e.g. 300 Multiple Choices, are not handled
+    // and should be handled externally
     return is_retrieval_redirection(code) || is_unchanged_redirection(code);
 }
 

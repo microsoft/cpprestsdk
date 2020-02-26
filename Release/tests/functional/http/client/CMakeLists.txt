@@ -16,6 +16,7 @@ set(SOURCES
   pipeline_stage_tests.cpp
   progress_handler_tests.cpp
   proxy_tests.cpp
+  redirect_tests.cpp
   request_helper_tests.cpp
   request_stream_tests.cpp
   request_uri_tests.cpp
