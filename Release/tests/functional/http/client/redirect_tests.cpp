@@ -11,13 +11,9 @@
 
 #include "stdafx.h"
 
-using namespace web;
-using namespace utility;
-using namespace utility::conversions;
 using namespace web::http;
 using namespace web::http::client;
 
-using namespace tests::common::utilities;
 using namespace tests::functional::http::utilities;
 
 namespace tests
@@ -184,7 +180,7 @@ SUITE(redirect_tests)
         auto p_server = scoped.server();
 
         std::vector<pplx::task<void>> replies;
-        replies.push_back(next_reply_assert(p_server, methods::GET, U("/"), status_codes::MovedPermanently));
+        replies.push_back(next_reply_assert(p_server, U("/"), status_codes::MovedPermanently));
 
         http_client_config config;
         http_client client(m_uri, config);
@@ -276,9 +272,9 @@ SUITE(redirect_tests)
         auto p_server = scoped.server();
 
         std::vector<pplx::task<void>> replies;
-        replies.push_back(next_reply_assert(p_server, methods::GET, U("/"), status_codes::MultipleChoices, U("/prefer-here")));
+        replies.push_back(next_reply_assert(p_server, U("/"), status_codes::MultipleChoices, U("/prefer-here")));
 #if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
-        replies.push_back(next_reply_assert(p_server, methods::GET, U("/prefer-here")));
+        replies.push_back(next_reply_assert(p_server, U("/prefer-here")));
 #endif
 
         http_client_config config;
