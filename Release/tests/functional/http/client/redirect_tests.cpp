@@ -151,6 +151,29 @@ SUITE(redirect_tests)
         }
     }
 
+    TEST(does_not_follow_https_to_http_by_default)
+    {
+        handle_timeout([] {
+            http_client_config config;
+            http_client client(U("https://http.badssl.com/"), config);
+            VERIFY_NO_THROWS(
+                http_asserts::assert_response_equals(client.request(methods::GET).get(), status_codes::MovedPermanently)
+            );
+        });
+    }
+
+    TEST(can_follow_https_to_http)
+    {
+        handle_timeout([] {
+            http_client_config config;
+            config.set_https_to_http_redirects(true);
+            http_client client(U("https://http.badssl.com/"), config);
+            VERIFY_NO_THROWS(
+                http_asserts::assert_response_equals(client.request(methods::GET).get(), status_codes::OK)
+            );
+        });
+    }
+
     TEST_FIXTURE(uri_address, follows_permanent_redirect)
     {
         test_http_server::scoped_server scoped(m_uri);
