@@ -2127,8 +2127,9 @@ pplx::task<http_response> http_redirect_follower::operator()(http_response respo
     http_client client(to_follow, config_no_redirects);
 
     // Stash the redirect request URL and make the request with the same continuation
+    auto request_task = client.request(redirect, redirect._cancellation_token());
     followed_urls.push_back(std::move(to_follow));
-    return client.request(redirect, redirect._cancellation_token()).then(std::move(*this));
+    return request_task.then(std::move(*this));
 }
 
 pplx::task<http_response> asio_client::propagate(http_request request)
