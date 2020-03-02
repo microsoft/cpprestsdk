@@ -1120,10 +1120,11 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(
 } // namespace json
 } // namespace web
 
-static web::json::value _parse_stream(utility::istream_t& stream)
+template<typename CharType>
+static web::json::value _parse_stream(std::basic_istream<CharType>& stream)
 {
-    web::json::details::JSON_StreamParser<utility::char_t> parser(stream);
-    web::json::details::JSON_Parser<utility::char_t>::Token tkn;
+    web::json::details::JSON_StreamParser<CharType> parser(stream);
+    typename web::json::details::JSON_Parser<CharType>::Token tkn;
 
     parser.GetNextToken(tkn);
     if (tkn.m_error)
@@ -1136,7 +1137,7 @@ static web::json::value _parse_stream(utility::istream_t& stream)
     {
         web::json::details::CreateException(tkn, utility::conversions::to_string_t(tkn.m_error.message()));
     }
-    else if (tkn.kind != web::json::details::JSON_Parser<utility::char_t>::Token::TKN_EOF)
+    else if (tkn.kind != web::json::details::JSON_Parser<CharType>::Token::TKN_EOF)
     {
         web::json::details::CreateException(tkn,
                                             _XPLATSTR("Left-over characters in stream after parsing a JSON value"));
@@ -1144,10 +1145,11 @@ static web::json::value _parse_stream(utility::istream_t& stream)
     return value;
 }
 
-static web::json::value _parse_stream(utility::istream_t& stream, std::error_code& error)
+template<typename CharType>
+static web::json::value _parse_stream(std::basic_istream<CharType>& stream, std::error_code& error)
 {
-    web::json::details::JSON_StreamParser<utility::char_t> parser(stream);
-    web::json::details::JSON_Parser<utility::char_t>::Token tkn;
+    web::json::details::JSON_StreamParser<CharType> parser(stream);
+    typename web::json::details::JSON_Parser<CharType>::Token tkn;
 
     parser.GetNextToken(tkn);
     if (tkn.m_error)
@@ -1157,7 +1159,7 @@ static web::json::value _parse_stream(utility::istream_t& stream, std::error_cod
     }
 
     auto returnObject = parser.ParseValue(tkn);
-    if (tkn.kind != web::json::details::JSON_Parser<utility::char_t>::Token::TKN_EOF)
+    if (tkn.kind != web::json::details::JSON_Parser<CharType>::Token::TKN_EOF)
     {
         web::json::details::SetErrorCode(tkn, web::json::details::json_error::left_over_character_in_stream);
     }
@@ -1166,11 +1168,11 @@ static web::json::value _parse_stream(utility::istream_t& stream, std::error_cod
     return returnObject;
 }
 
-#ifdef _WIN32
-static web::json::value _parse_narrow_stream(std::istream& stream)
+template<typename CharType>
+static web::json::value _parse_string(const std::basic_string<CharType>& str)
 {
-    web::json::details::JSON_StreamParser<char> parser(stream);
-    web::json::details::JSON_StreamParser<char>::Token tkn;
+    web::json::details::JSON_StringParser<CharType> parser(str);
+    typename web::json::details::JSON_Parser<CharType>::Token tkn;
 
     parser.GetNextToken(tkn);
     if (tkn.m_error)
@@ -1183,7 +1185,7 @@ static web::json::value _parse_narrow_stream(std::istream& stream)
     {
         web::json::details::CreateException(tkn, utility::conversions::to_string_t(tkn.m_error.message()));
     }
-    else if (tkn.kind != web::json::details::JSON_Parser<char>::Token::TKN_EOF)
+    else if (tkn.kind != web::json::details::JSON_Parser<CharType>::Token::TKN_EOF)
     {
         web::json::details::CreateException(tkn,
                                             _XPLATSTR("Left-over characters in stream after parsing a JSON value"));
@@ -1191,10 +1193,11 @@ static web::json::value _parse_narrow_stream(std::istream& stream)
     return value;
 }
 
-static web::json::value _parse_narrow_stream(std::istream& stream, std::error_code& error)
+template<typename CharType>
+static web::json::value _parse_string(const std::basic_string<CharType>& str, std::error_code& error)
 {
-    web::json::details::JSON_StreamParser<char> parser(stream);
-    web::json::details::JSON_StreamParser<char>::Token tkn;
+    web::json::details::JSON_StringParser<CharType> parser(str);
+    typename web::json::details::JSON_Parser<CharType>::Token tkn;
 
     parser.GetNextToken(tkn);
     if (tkn.m_error)
@@ -1204,7 +1207,7 @@ static web::json::value _parse_narrow_stream(std::istream& stream, std::error_co
     }
 
     auto returnObject = parser.ParseValue(tkn);
-    if (tkn.kind != web::json::details::JSON_Parser<utility::char_t>::Token::TKN_EOF)
+    if (tkn.kind != web::json::details::JSON_Parser<CharType>::Token::TKN_EOF)
     {
         returnObject = web::json::value();
         web::json::details::SetErrorCode(tkn, web::json::details::json_error::left_over_character_in_stream);
@@ -1213,53 +1216,12 @@ static web::json::value _parse_narrow_stream(std::istream& stream, std::error_co
     error = std::move(tkn.m_error);
     return returnObject;
 }
-#endif
 
-web::json::value web::json::value::parse(const utility::string_t& str)
-{
-    web::json::details::JSON_StringParser<utility::char_t> parser(str);
-    web::json::details::JSON_Parser<utility::char_t>::Token tkn;
-
-    parser.GetNextToken(tkn);
-    if (tkn.m_error)
-    {
-        web::json::details::CreateException(tkn, utility::conversions::to_string_t(tkn.m_error.message()));
-    }
-
-    auto value = parser.ParseValue(tkn);
-    if (tkn.m_error)
-    {
-        web::json::details::CreateException(tkn, utility::conversions::to_string_t(tkn.m_error.message()));
-    }
-    else if (tkn.kind != web::json::details::JSON_Parser<utility::char_t>::Token::TKN_EOF)
-    {
-        web::json::details::CreateException(tkn,
-                                            _XPLATSTR("Left-over characters in stream after parsing a JSON value"));
-    }
-    return value;
-}
+web::json::value web::json::value::parse(const utility::string_t& str) { return _parse_string(str); }
 
 web::json::value web::json::value::parse(const utility::string_t& str, std::error_code& error)
 {
-    web::json::details::JSON_StringParser<utility::char_t> parser(str);
-    web::json::details::JSON_Parser<utility::char_t>::Token tkn;
-
-    parser.GetNextToken(tkn);
-    if (tkn.m_error)
-    {
-        error = std::move(tkn.m_error);
-        return web::json::value();
-    }
-
-    auto returnObject = parser.ParseValue(tkn);
-    if (tkn.kind != web::json::details::JSON_Parser<utility::char_t>::Token::TKN_EOF)
-    {
-        returnObject = web::json::value();
-        web::json::details::SetErrorCode(tkn, web::json::details::json_error::left_over_character_in_stream);
-    }
-
-    error = std::move(tkn.m_error);
-    return returnObject;
+    return _parse_string(str, error);
 }
 
 web::json::value web::json::value::parse(utility::istream_t& stream) { return _parse_stream(stream); }
@@ -1270,10 +1232,17 @@ web::json::value web::json::value::parse(utility::istream_t& stream, std::error_
 }
 
 #ifdef _WIN32
-web::json::value web::json::value::parse(std::istream& stream) { return _parse_narrow_stream(stream); }
+web::json::value web::json::value::parse(const std::string& str) { return _parse_string(str); }
+
+web::json::value web::json::value::parse(const std::string& str, std::error_code& error)
+{
+    return _parse_string(str, error);
+}
+
+web::json::value web::json::value::parse(std::istream& stream) { return _parse_stream(stream); }
 
 web::json::value web::json::value::parse(std::istream& stream, std::error_code& error)
 {
-    return _parse_narrow_stream(stream, error);
+    return _parse_stream(stream, error);
 }
 #endif
