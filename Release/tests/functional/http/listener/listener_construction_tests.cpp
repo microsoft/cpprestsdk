@@ -553,7 +553,8 @@ XzJTD4slrGSJrcpLt/g/Jqqdjg==
         client_config.set_ssl_context_callback(
             [&](boost::asio::ssl::context& ctx) { ctx.add_certificate_authority(cert); });
 #else
-        client_config.set_validate_certificates(false);
+        // in this build configuration, with WinHTTP-based http_client, this test will fail unless the self-signed
+        // cert is added to the Windows certificate store (or certificate validation is disabled in client_config)
 #endif
         client::http_client client(m_secure_uri, client_config);
         http_request msg(methods::GET);
