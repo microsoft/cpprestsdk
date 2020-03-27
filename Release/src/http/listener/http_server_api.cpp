@@ -50,7 +50,7 @@ void http_server_api::unregister_server_api()
         throw http_exception(_XPLATSTR("Server API was cleared while listeners were still attached"));
     }
 
-    s_server_api.release();
+    s_server_api.reset();
 }
 
 void http_server_api::unsafe_register_server_api(std::unique_ptr<http_server> server_api)
