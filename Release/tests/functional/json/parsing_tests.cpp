@@ -347,7 +347,7 @@ SUITE(parsing_tests)
         VERIFY_ARE_EQUAL(U("K"), str.as_string());
 
         str = json::value::parse(U("\"\\u20AC\""));
-        // Euro sign as a hexidecmial UTF-8
+        // Euro sign as a hexadecimal UTF-8
         const auto euro = to_string_t("\xE2\x82\xAC");
         VERIFY_ARE_EQUAL(euro, str.as_string());
 
@@ -631,30 +631,34 @@ SUITE(parsing_tests)
     TEST(byte_ptr_parsing_array)
     {
         char s[] = "[ \"test1\",true]";
+        json::value v = json::value::parse(s);
         std::stringstream ss;
         ss << s;
-        json::value v = json::value::parse(ss);
-        auto s2 = v.serialize();
+        json::value vv = json::value::parse(ss);
+        VERIFY_ARE_EQUAL(v, vv);
 
+        auto s2 = v.serialize();
         VERIFY_ARE_EQUAL(s2, U("[\"test1\",true]"));
 
         std::stringstream os;
-        v.serialize(os);
+        vv.serialize(os);
         VERIFY_ARE_EQUAL(s2, to_string_t(os.str()));
     }
 
     TEST(byte_ptr_parsing_object)
     {
         char s[] = "{\"test1\":true }";
+        json::value v = json::value::parse(s);
         std::stringstream ss;
         ss << s;
-        json::value v = json::value::parse(ss);
-        auto s2 = v.serialize();
+        json::value vv = json::value::parse(ss);
+        VERIFY_ARE_EQUAL(v, vv);
 
+        auto s2 = v.serialize();
         VERIFY_ARE_EQUAL(s2, U("{\"test1\":true}"));
 
         std::stringstream os;
-        v.serialize(os);
+        vv.serialize(os);
         VERIFY_ARE_EQUAL(s2, to_string_t(os.str()));
     }
 
@@ -662,16 +666,18 @@ SUITE(parsing_tests)
     {
         utility::string_t ws = U("\"こんにちは\"");
         std::string s = to_utf8string(ws);
+        json::value v = json::value::parse(s);
 
         std::stringstream ss;
         ss << s;
-        json::value v = json::value::parse(ss);
-        auto s2 = v.serialize();
+        json::value vv = json::value::parse(ss);
+        VERIFY_ARE_EQUAL(v, vv);
 
+        auto s2 = v.serialize();
         VERIFY_ARE_EQUAL(s2, ws);
 
         std::stringstream os;
-        v.serialize(os);
+        vv.serialize(os);
         VERIFY_ARE_EQUAL(s2, to_string_t(os.str()));
     }
 
