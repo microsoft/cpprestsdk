@@ -898,7 +898,7 @@ protected:
         {
             // Set timeouts.
             const int milliseconds =
-                std::max(static_cast<int>(config.timeout<std::chrono::milliseconds>().count()), 1);
+                (std::max)(static_cast<int>(config.timeout<std::chrono::milliseconds>().count()), 1);
             if (!WinHttpSetTimeouts(m_hSession, milliseconds, milliseconds, milliseconds, milliseconds))
             {
                 return GetLastError();
@@ -1146,7 +1146,7 @@ protected:
                                   sizeof(redirectPolicy)))
             {
                 auto errorCode = GetLastError();
-                request->report_error(errorCode, build_error_msg(errorCode, "Setting redirect policcy"));
+                request->report_error(errorCode, build_error_msg(errorCode, "Setting redirect policy"));
                 return;
             }
             // Note, using WINHTTP_OPTION_DISABLE_FEATURE with WINHTTP_DISABLE_REDIRECTS here doesn't seem to work.
