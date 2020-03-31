@@ -10,11 +10,20 @@
  ****/
 
 #include "stdafx.h"
+#ifdef _WIN32
+#include <VersionHelpers.h>
+#endif // _WIN32
 
 using namespace web::http;
 using namespace web::http::client;
 
 using namespace tests::functional::http::utilities;
+
+#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
+#define USING_WINHTTP 1
+#else
+#define USING_WINHTTP 0
+#endif
 
 namespace tests
 {
@@ -72,7 +81,6 @@ SUITE(redirect_tests)
 
         http_client_config config;
         http_client client(m_uri, config);
-
         VERIFY_NO_THROWS(
             http_asserts::assert_response_equals(client.request(methods::GET).get(), status_codes::OK)
         );
@@ -186,9 +194,15 @@ SUITE(redirect_tests)
         http_client_config config;
         http_client client(m_uri, config);
 
-        // note that 308 Permanent Redirect is only supported by WinHTTP from Windows 10
+        auto expectedStatus = status_codes::OK;
+#if USING_WINHTTP
+        if (!IsWindows10OrGreater()) {
+            // note that 308 Permanent Redirect is only supported by WinHTTP from Windows 10
+            expectedStatus = status_codes::PermanentRedirect;
+        }
+#endif // USING_WINHTTP
         VERIFY_NO_THROWS(
-            http_asserts::assert_response_equals(client.request(methods::GET).get(), status_codes::OK)
+            http_asserts::assert_response_equals(client.request(methods::GET).get(), expectedStatus)
         );
         p_server->close();
         for (auto& reply : replies)
@@ -209,7 +223,7 @@ SUITE(redirect_tests)
         http_client client(m_uri, config);
 
         // implementation-specific behaviour
-#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
+#if USING_WINHTTP
         VERIFY_THROWS(
             client.request(methods::GET).get(),
             http_exception
@@ -234,7 +248,7 @@ SUITE(redirect_tests)
         std::vector<pplx::task<void>> replies;
         replies.push_back(next_reply_assert(p_server, U("/"), status_codes::TemporaryRedirect, U("/briefly-here")));
         replies.push_back(next_reply_assert(p_server, U("/briefly-here"), status_codes::MovedPermanently, U("/")));
-#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
+#if USING_WINHTTP
         replies.push_back(next_reply_assert(p_server, U("/"), status_codes::NotFound));
 #endif
 
@@ -242,15 +256,15 @@ SUITE(redirect_tests)
         http_client client(m_uri, config);
 
         // implementation-specific behaviour
-#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
+#if USING_WINHTTP
         VERIFY_NO_THROWS(
             http_asserts::assert_response_equals(client.request(methods::GET).get(), status_codes::NotFound)
         );
-#else
+#else // ^^^ USING_WINHTTP / !USING_WINHTTP vvv
         VERIFY_NO_THROWS(
             http_asserts::assert_response_equals(client.request(methods::GET).get(), status_codes::MovedPermanently)
         );
-#endif
+#endif // USING_WINHTTP
         p_server->close();
         for (auto& reply : replies)
         {
@@ -265,7 +279,7 @@ SUITE(redirect_tests)
 
         std::vector<pplx::task<void>> replies;
         replies.push_back(next_reply_assert(p_server, methods::POST, U("/"), status_codes::TemporaryRedirect, U("/retry-here")));
-#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
+#if USING_WINHTTP
         replies.push_back(next_reply_assert(p_server, methods::POST, U("/retry-here")));
 #endif
 
@@ -273,15 +287,15 @@ SUITE(redirect_tests)
         http_client client(m_uri, config);
 
         // implementation-specific behaviour
-#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
+#if USING_WINHTTP
         VERIFY_NO_THROWS(
             http_asserts::assert_response_equals(client.request(methods::POST, U(""), U("body")).get(), status_codes::OK)
         );
-#else
+#else // ^^^ USING_WINHTTP / !USING_WINHTTP vvv
         VERIFY_NO_THROWS(
             http_asserts::assert_response_equals(client.request(methods::POST, U(""), U("body")).get(), status_codes::TemporaryRedirect)
         );
-#endif
+#endif // USING_WINHTTP
         p_server->close();
         for (auto& reply : replies)
         {
@@ -296,7 +310,7 @@ SUITE(redirect_tests)
 
         std::vector<pplx::task<void>> replies;
         replies.push_back(next_reply_assert(p_server, U("/"), status_codes::MultipleChoices, U("/prefer-here")));
-#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
+#if USING_WINHTTP
         replies.push_back(next_reply_assert(p_server, U("/prefer-here")));
 #endif
 
@@ -304,15 +318,15 @@ SUITE(redirect_tests)
         http_client client(m_uri, config);
 
         // implementation-specific behaviour
-#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
+#if USING_WINHTTP
         VERIFY_NO_THROWS(
             http_asserts::assert_response_equals(client.request(methods::GET).get(), status_codes::OK)
         );
-#else
+#else // ^^^ USING_WINHTTP / !USING_WINHTTP vvv
         VERIFY_NO_THROWS(
             http_asserts::assert_response_equals(client.request(methods::GET).get(), status_codes::MultipleChoices)
         );
-#endif
+#endif // USING_WINHTTP
         p_server->close();
         for (auto& reply : replies)
         {
