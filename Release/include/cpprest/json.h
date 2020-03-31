@@ -390,16 +390,36 @@ public:
     /// <summary>
     /// Parses a string and construct a JSON value.
     /// </summary>
-    /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
+    /// <param name="value">The C++ value to create a JSON value from, a C++ STL string of the
+    /// platform-native character width</param>
     _ASYNCRTIMP static value __cdecl parse(const utility::string_t& value);
 
     /// <summary>
     /// Attempts to parse a string and construct a JSON value.
     /// </summary>
-    /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
+    /// <param name="value">The C++ value to create a JSON value from, a C++ STL string of the
+    /// platform-native character width</param>
     /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
     /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
     _ASYNCRTIMP static value __cdecl parse(const utility::string_t& value, std::error_code& errorCode);
+
+#ifdef _WIN32
+    /// <summary>
+    /// Parses a string and construct a JSON value.
+    /// </summary>
+    /// <param name="value">The C++ value to create a JSON value from, a C++ STL string in
+    /// UTF8 format</param>
+    _ASYNCRTIMP static value __cdecl parse(const std::string& value);
+
+    /// <summary>
+    /// Attempts to parse a string and construct a JSON value.
+    /// </summary>
+    /// <param name="value">The C++ value to create a JSON value from, a C++ STL string in
+    /// UTF8 format</param>
+    /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
+    /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
+    _ASYNCRTIMP static value __cdecl parse(const std::string& value, std::error_code& errorCode);
+#endif
 
     /// <summary>
     /// Serializes the current JSON value to a C++ string.

@@ -330,6 +330,12 @@ public:
 
     void start_reuse() { m_is_reused = true; }
 
+    void enable_no_delay()
+    {
+        boost::asio::ip::tcp::no_delay option(true);
+        m_socket.set_option(option);
+    }
+
 private:
     // Guards concurrent access to socket/ssl::stream. This is necessary
     // because timeouts and cancellation can touch the socket at the same time
@@ -468,7 +474,6 @@ class asio_client final : public _http_client_communicator
 public:
     asio_client(http::uri&& address, http_client_config&& client_config)
         : _http_client_communicator(std::move(address), std::move(client_config))
-        , m_resolver(crossplat::threadpool::shared_instance().service())
         , m_pool(std::make_shared<asio_connection_pool>())
     {
     }
@@ -496,8 +501,6 @@ public:
 
     virtual pplx::task<http_response> propagate(http_request request) override;
 
-    tcp::resolver m_resolver;
-
 private:
     const std::shared_ptr<asio_connection_pool> m_pool;
 };
@@ -514,6 +517,7 @@ public:
         , m_content_length(0)
         , m_needChunked(false)
         , m_timer(client->client_config().timeout<std::chrono::microseconds>())
+        , m_resolver(crossplat::threadpool::shared_instance().service())
         , m_connection(connection)
 #ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
         , m_openssl_failed(false)
@@ -579,11 +583,11 @@ public:
             tcp::resolver::query query(utility::conversions::to_utf8string(proxy_host), to_string(proxy_port));
 
             auto client = std::static_pointer_cast<asio_client>(m_context->m_http_client);
-            client->m_resolver.async_resolve(query,
-                                             boost::bind(&ssl_proxy_tunnel::handle_resolve,
-                                                         shared_from_this(),
-                                                         boost::asio::placeholders::error,
-                                                         boost::asio::placeholders::iterator));
+            m_context->m_resolver.async_resolve(query,
+                                                boost::bind(&ssl_proxy_tunnel::handle_resolve,
+                                                            shared_from_this(),
+                                                            boost::asio::placeholders::error,
+                                                            boost::asio::placeholders::iterator));
         }
 
     private:
@@ -610,6 +614,7 @@ public:
             if (!ec)
             {
                 m_context->m_timer.reset();
+                m_context->m_connection->enable_no_delay();
                 m_context->m_connection->async_write(m_request,
                                                      boost::bind(&ssl_proxy_tunnel::handle_write_request,
                                                                  shared_from_this(),
@@ -880,12 +885,11 @@ public:
                 auto tcp_port = proxy_type == http_proxy_type::http ? proxy_port : port;
 
                 tcp::resolver::query query(tcp_host, to_string(tcp_port));
-                auto client = std::static_pointer_cast<asio_client>(ctx->m_http_client);
-                client->m_resolver.async_resolve(query,
-                                                 boost::bind(&asio_context::handle_resolve,
-                                                             ctx,
-                                                             boost::asio::placeholders::error,
-                                                             boost::asio::placeholders::iterator));
+                ctx->m_resolver.async_resolve(query,
+                                              boost::bind(&asio_context::handle_resolve,
+                                                          ctx,
+                                                          boost::asio::placeholders::error,
+                                                          boost::asio::placeholders::iterator));
             }
 
             // Register for notification on cancellation to abort this request.
@@ -1006,6 +1010,7 @@ private:
         m_timer.reset();
         if (!ec)
         {
+            m_connection->enable_no_delay();
             write_request();
         }
         else if (ec.value() == boost::system::errc::operation_canceled ||
@@ -1044,6 +1049,10 @@ private:
         if (ec)
         {
             report_error("Error resolving address", ec, httpclient_errorcode_context::connect);
+        }
+        else if (endpoints == tcp::resolver::iterator())
+        {
+            report_error("Failed to resolve address", ec, httpclient_errorcode_context::connect);
         }
         else
         {
@@ -1444,8 +1453,8 @@ private:
             }
         }
 
-        m_content_length = (std::numeric_limits<size_t>::max)(); // Without Content-Length header, size should be same as
-                                                                 // TCP stream - set it size_t max.
+        m_content_length = (std::numeric_limits<size_t>::max)(); // Without Content-Length header, size should be same
+                                                                 // as TCP stream - set it size_t max.
         m_response.headers().match(header_names::content_length, m_content_length);
 
         if (!this->handle_compression())
@@ -1928,6 +1937,7 @@ private:
     uint64_t m_content_length;
     bool m_needChunked;
     timeout_timer m_timer;
+    tcp::resolver m_resolver;
     boost::asio::streambuf m_body_buf;
     std::shared_ptr<asio_connection> m_connection;
 
