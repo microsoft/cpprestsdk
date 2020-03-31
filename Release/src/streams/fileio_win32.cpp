@@ -111,7 +111,7 @@ void CALLBACK IoCompletionCallback(PTP_CALLBACK_INSTANCE instance,
 
     EXTENDED_OVERLAPPED* pExtOverlapped = static_cast<EXTENDED_OVERLAPPED*>(pOverlapped);
     pExtOverlapped->func(result, static_cast<DWORD>(numberOfBytesTransferred), static_cast<LPOVERLAPPED>(pOverlapped));
-    delete pOverlapped;
+    delete pExtOverlapped;
 }
 #endif
 
@@ -399,10 +399,10 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl* fInfo,
 
     size_t result = static_cast<size_t>(-1);
 
-    if (wrResult == TRUE)
+    if (wrResult)
     {
         // If WriteFile returned true, it must be because the operation completed immediately.
-        // However, we didn't pass in an  address for the number of bytes written, so
+        // However, we didn't pass in an address for the number of bytes written, so
         // we have to retrieve it using 'GetOverlappedResult,' which may, in turn, fail.
         DWORD written = 0;
         result = GetOverlappedResult(fInfo->m_handle, pOverlapped.get(), &written, FALSE) ? static_cast<size_t>(written)
@@ -496,7 +496,7 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl* fInfo,
 
     size_t result = static_cast<size_t>(-1);
 
-    if (wrResult == TRUE)
+    if (wrResult)
     {
         // If ReadFile returned true, it must be because the operation completed immediately.
         // However, we didn't pass in an address for the number of bytes written, so
@@ -941,7 +941,7 @@ utility::size64_t __cdecl _get_size(_In_ concurrency::streams::details::_file_in
 
     LARGE_INTEGER size;
 
-    if (GetFileSizeEx(fInfo->m_handle, &size) == TRUE)
+    if (GetFileSizeEx(fInfo->m_handle, &size))
         return utility::size64_t(size.QuadPart / char_size);
     else
         return 0;
