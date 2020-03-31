@@ -47,6 +47,7 @@ public:
     /// </summary>
     basic_producer_consumer_buffer(size_t alloc_size)
         : streambuf_state_manager<_CharType>(std::ios_base::out | std::ios_base::in)
+        , m_mode(std::ios_base::in)
         , m_alloc_size(alloc_size)
         , m_allocBlock(nullptr)
         , m_total(0)

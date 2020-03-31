@@ -1040,7 +1040,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseArray(
                 case JSON_Parser<CharType>::Token::TKN_CloseBracket:
                     GetNextToken(tkn);
                     if (tkn.m_error) return utility::details::make_unique<web::json::details::_Null>();
-                    return std::move(result);
+                    return result;
                 default:
                     SetErrorCode(tkn, json_error::malformed_array_literal);
                     return utility::details::make_unique<web::json::details::_Null>();
@@ -1074,7 +1074,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(
                                                                                     tkn.has_unescape_symbol);
             GetNextToken(tkn);
             if (tkn.m_error) return utility::details::make_unique<web::json::details::_Null>();
-            return std::move(value);
+            return value;
         }
         case JSON_Parser<CharType>::Token::TKN_IntegerLiteral:
         {
@@ -1086,21 +1086,21 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(
 
             GetNextToken(tkn);
             if (tkn.m_error) return utility::details::make_unique<web::json::details::_Null>();
-            return std::move(value);
+            return value;
         }
         case JSON_Parser<CharType>::Token::TKN_NumberLiteral:
         {
             auto value = utility::details::make_unique<web::json::details::_Number>(tkn.double_val);
             GetNextToken(tkn);
             if (tkn.m_error) return utility::details::make_unique<web::json::details::_Null>();
-            return std::move(value);
+            return value;
         }
         case JSON_Parser<CharType>::Token::TKN_BooleanLiteral:
         {
             auto value = utility::details::make_unique<web::json::details::_Boolean>(tkn.boolean_val);
             GetNextToken(tkn);
             if (tkn.m_error) return utility::details::make_unique<web::json::details::_Null>();
-            return std::move(value);
+            return value;
         }
         case JSON_Parser<CharType>::Token::TKN_NullLiteral:
         {

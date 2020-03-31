@@ -304,7 +304,8 @@ SUITE(datetime)
             _XPLATSTR("01 Jan 1971 00:00:61 GMT"),
             _XPLATSTR("01 Jan 1899 00:00:00 GMT"), // underflow
             _XPLATSTR("01 Jan 1969 00:00:00 CEST"), // bad tz
-            _XPLATSTR("01 Jan 1970 00:00:00 +2400"), // bad tzoffsets
+            _XPLATSTR("14 Jan 2019 23:16:21 G0100"), // bad tzoffsets
+            _XPLATSTR("01 Jan 1970 00:00:00 +2400"),
             _XPLATSTR("01 Jan 1970 00:00:00 -3000"),
             _XPLATSTR("01 Jan 1970 00:00:00 +2160"),
             _XPLATSTR("01 Jan 1970 00:00:00 -2400"),

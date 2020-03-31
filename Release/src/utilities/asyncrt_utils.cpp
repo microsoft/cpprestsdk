@@ -1148,7 +1148,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             {
                 tzHours = 8;
             }
-            else if ((tzCh == _XPLATSTR('+') || tzCh == _XPLATSTR('-')) && ascii_isdigit2(str[1]) &&
+            else if ((str[0] == _XPLATSTR('+') || str[0] == _XPLATSTR('-')) && ascii_isdigit2(str[1]) &&
                      ascii_isdigit(str[2]) && ascii_isdigit5(str[3]) && ascii_isdigit(str[4]))
             {
                 tzCh = str[0];

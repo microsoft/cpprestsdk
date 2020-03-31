@@ -32,7 +32,7 @@ using namespace http::details;
 using namespace http::experimental::listener;
 using namespace http::experimental::details;
 
-#define CHUNK_SIZE 64 * 1024
+#define CHUNK_SIZE (64 * 1024)
 
 namespace web
 {

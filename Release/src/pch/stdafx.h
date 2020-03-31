@@ -40,7 +40,7 @@
 // Windows Header Files:
 #ifndef __cplusplus_winrt
 #include <winhttp.h>
-#endif !__cplusplus_winrt
+#endif // !__cplusplus_winrt
 
 #else // LINUX or APPLE
 #define __STDC_LIMIT_MACROS
