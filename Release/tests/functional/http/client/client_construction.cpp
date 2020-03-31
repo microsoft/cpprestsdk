@@ -173,7 +173,7 @@ SUITE(client_construction)
         VERIFY_ARE_EQUAL(baseclient2.base_uri(), m_uri);
     }
 
-#if defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
+#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
 
     // Verify that the callback of sslcontext is called for HTTPS
     TEST_FIXTURE(uri_address, ssl_context_callback_https)
