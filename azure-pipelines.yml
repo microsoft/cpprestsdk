@@ -5,32 +5,38 @@ jobs:
     parameters:
       name: 'Windows_VS2019_x86'
       targetPlatform: x86
-      image: 'windows-latest'
+      pool:
+        vmImage: 'windows-latest'
   - template: azure-devops/build-windows.yml
     parameters:
       name: 'Windows_VS2019_x64'
       targetPlatform: x64
-      image: 'windows-latest'
+      pool:
+        vmImage: 'windows-latest'
   - template: azure-devops/build-windows.yml
     parameters:
       name: 'Windows_VS2017_x86'
       targetPlatform: x86
-      image: 'vs2017-win2016'
+      pool:
+        vmImage: 'vs2017-win2016'
   - template: azure-devops/build-windows.yml
     parameters:
       name: 'Windows_VS2017_x64'
       targetPlatform: x64
-      image: 'vs2017-win2016'
+      pool:
+        vmImage: 'vs2017-win2016'
   - template: azure-devops/build-windows.yml
     parameters:
       name: 'Windows_VS2015_x86'
       targetPlatform: x86
-      image: 'vs2015-win2012r2'
+      pool:
+        name: 'CppRestSdk-VS2015-2020-03-31'
   - template: azure-devops/build-windows.yml
     parameters:
       name: 'Windows_VS2015_x64'
       targetPlatform: x64
-      image: 'vs2015-win2012r2'
+      pool:
+        name: 'CppRestSdk-VS2015-2020-03-31'
   - job: Windows_VS2019_UWP
     pool:
       vmImage: 'windows-latest'

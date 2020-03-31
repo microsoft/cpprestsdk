@@ -1,12 +1,12 @@
 parameters:
   name: 'Windows_VS2019_x86'
   targetPlatform: 'x86'
-  image: 'windows-latest'
+  pool:
+    vmImage: 'windows-latest'
 
 jobs:
 - job: ${{ parameters.name }}
-  pool:
-    vmImage: ${{ parameters.image }}
+  pool: ${{ parameters.pool }}
   variables:
     vcpkgLocation: '$(Build.SourcesDirectory)/vcpkg'
     vcpkgResponseFile: $(Build.SourcesDirectory)/azure-devops/vcpkg-windows.txt
