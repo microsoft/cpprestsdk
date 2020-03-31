@@ -11,6 +11,7 @@
 
 #include "stdafx.h"
 #ifdef _WIN32
+#include <Windows.h>
 #include <VersionHelpers.h>
 #endif // _WIN32
 
