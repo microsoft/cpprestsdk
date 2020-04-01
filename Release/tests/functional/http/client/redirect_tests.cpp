@@ -185,6 +185,12 @@ SUITE(redirect_tests)
 
     TEST_FIXTURE(uri_address, follows_permanent_redirect)
     {
+#if USING_WINHTTP
+        // note that 308 Permanent Redirect is only supported by WinHTTP from Windows 10
+        if (!IsWindows10OrGreater()) {
+            return;
+        }
+#endif // USING_WINHTTP
         test_http_server::scoped_server scoped(m_uri);
         auto p_server = scoped.server();
 
@@ -195,15 +201,8 @@ SUITE(redirect_tests)
         http_client_config config;
         http_client client(m_uri, config);
 
-        auto expectedStatus = status_codes::OK;
-#if USING_WINHTTP
-        if (!IsWindows10OrGreater()) {
-            // note that 308 Permanent Redirect is only supported by WinHTTP from Windows 10
-            expectedStatus = status_codes::PermanentRedirect;
-        }
-#endif // USING_WINHTTP
         VERIFY_NO_THROWS(
-            http_asserts::assert_response_equals(client.request(methods::GET).get(), expectedStatus)
+            http_asserts::assert_response_equals(client.request(methods::GET).get(), status_codes::OK)
         );
         p_server->close();
         for (auto& reply : replies)
