@@ -50,14 +50,12 @@ SUITE(outside_tests)
 
             // CNN's main page doesn't use chunked transfer encoding.
             http_response response = client.request(methods::GET).get();
-            auto code = response.status_code();
-            VERIFY_IS_TRUE(code == status_codes::OK || code == status_codes::MovedPermanently);
+            VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
             response.content_ready().wait();
 
             // CNN's other pages do use chunked transfer encoding.
             response = client.request(methods::GET, U("us")).get();
-            code = response.status_code();
-            VERIFY_IS_TRUE(code == status_codes::OK || code == status_codes::MovedPermanently);
+            VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
             response.content_ready().wait();
         });
     }
@@ -248,10 +246,7 @@ SUITE(outside_tests)
         http_request req(methods::GET);
         req.headers().add(U("Host"), U("en.wikipedia.org"));
         auto response = client.request(req).get();
-        // WinHTTP will transparently follow the HTTP 301 upgrade request redirect,
-        // ASIO does not and will return the 301 directly.
-        const auto statusCode = response.status_code();
-        CHECK(statusCode == status_codes::OK || statusCode == status_codes::MovedPermanently);
+        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     }
 #endif // !defined(__cplusplus_winrt) && !defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
 

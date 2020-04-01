@@ -263,6 +263,8 @@ public:
     bool m_proxy_authentication_tried;
     bool m_server_authentication_tried;
 
+    size_t m_remaining_redirects;
+
     msg_body_type m_bodyType;
 
     utility::size64_t m_remaining_to_write;
@@ -679,6 +681,7 @@ private:
         , m_request_handle(nullptr)
         , m_proxy_authentication_tried(false)
         , m_server_authentication_tried(false)
+        , m_remaining_redirects(0)
         , m_bodyType(no_body)
         , m_remaining_to_write(0)
         , m_startingPosition(std::char_traits<uint8_t>::eof())
@@ -892,12 +895,14 @@ protected:
             return GetLastError();
         }
 
-        // Set timeouts.
-        int milliseconds = static_cast<int>(config.timeout<std::chrono::milliseconds>().count());
-        milliseconds = std::max<decltype(milliseconds)>(milliseconds, 1);
-        if (!WinHttpSetTimeouts(m_hSession, milliseconds, milliseconds, milliseconds, milliseconds))
         {
-            return GetLastError();
+            // Set timeouts.
+            const int milliseconds =
+                (std::max)(static_cast<int>(config.timeout<std::chrono::milliseconds>().count()), 1);
+            if (!WinHttpSetTimeouts(m_hSession, milliseconds, milliseconds, milliseconds, milliseconds))
+            {
+                return GetLastError();
+            }
         }
 
         if (config.guarantee_order())
@@ -911,19 +916,18 @@ protected:
             }
         }
 
-        // Enable TLS 1.1 and 1.2
-#if (_WIN32_WINNT >= _WIN32_WINNT_VISTA) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
-        BOOL win32_result(FALSE);
-
-        DWORD secure_protocols(WINHTTP_FLAG_SECURE_PROTOCOL_SSL3 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 |
-                               WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2);
-        win32_result = ::WinHttpSetOption(
-            m_hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols));
-        if (FALSE == win32_result)
         {
-            return GetLastError();
-        }
+            // Enable TLS 1.1 and 1.2
+#if (_WIN32_WINNT >= _WIN32_WINNT_VISTA) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
+            DWORD secure_protocols(WINHTTP_FLAG_SECURE_PROTOCOL_SSL3 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 |
+                                   WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2);
+            if (!WinHttpSetOption(
+                m_hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols)))
+            {
+                return GetLastError();
+            }
 #endif
+        }
 
         config._invoke_nativesessionhandle_options(m_hSession);
 
@@ -932,7 +936,8 @@ protected:
             WinHttpSetStatusCallback(m_hSession,
                                      &winhttp_client::completion_callback,
                                      WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES |
-                                         WINHTTP_CALLBACK_FLAG_SECURE_FAILURE | WINHTTP_CALLBACK_FLAG_SEND_REQUEST,
+                                         WINHTTP_CALLBACK_FLAG_SECURE_FAILURE | WINHTTP_CALLBACK_FLAG_SEND_REQUEST |
+                                         WINHTTP_CALLBACK_STATUS_REDIRECT,
                                      0))
         {
             return GetLastError();
@@ -1127,6 +1132,63 @@ protected:
                                   build_error_msg(errorCode, "Setting ignore server certificate verification"));
             return;
         }
+
+// WinHttpPAL does not currently provide these options
+// See https://github.com/microsoft/WinHttpPAL/issues/1
+#if !defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
+        if (client_config().max_redirects() == 0)
+        {
+            // Disable auto redirects.
+            DWORD redirectPolicy = WINHTTP_OPTION_REDIRECT_POLICY_NEVER;
+            if (!WinHttpSetOption(winhttp_context->m_request_handle,
+                                  WINHTTP_OPTION_REDIRECT_POLICY,
+                                  &redirectPolicy,
+                                  sizeof(redirectPolicy)))
+            {
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "Setting redirect policy"));
+                return;
+            }
+            // Note, using WINHTTP_OPTION_DISABLE_FEATURE with WINHTTP_DISABLE_REDIRECTS here doesn't seem to work.
+        }
+        else
+        {
+            // Set max auto redirects.
+
+            // Add 1 to config value because WinHttp option counts the original request.
+            // And another 1 to enable the response (headers) of the rejected automatic redirect to be returned
+            // rather than reporting an error "WinHttpReceiveResponse: 12156: The HTTP redirect request failed".
+            DWORD maxRedirects = client_config().max_redirects() < MAXDWORD - 2
+                ? static_cast<DWORD>(client_config().max_redirects() + 2)
+                : MAXDWORD;
+            // Therefore, effective max redirects
+            winhttp_context->m_remaining_redirects = maxRedirects - 2;
+
+            if (!WinHttpSetOption(winhttp_context->m_request_handle,
+                                  WINHTTP_OPTION_MAX_HTTP_AUTOMATIC_REDIRECTS,
+                                  &maxRedirects,
+                                  sizeof(maxRedirects)))
+            {
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "Setting max automatic redirects"));
+                return;
+            }
+
+            // (Dis)allow HTTPS to HTTP redirects.
+            DWORD redirectPolicy = client_config().https_to_http_redirects()
+                ? WINHTTP_OPTION_REDIRECT_POLICY_ALWAYS
+                : WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP;
+            if (!WinHttpSetOption(winhttp_context->m_request_handle,
+                                  WINHTTP_OPTION_REDIRECT_POLICY,
+                                  &redirectPolicy,
+                                  sizeof(redirectPolicy)))
+            {
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "Setting redirect policy"));
+                return;
+            }
+        }
+#endif
 
         size_t content_length;
         try
@@ -1974,11 +2036,17 @@ private:
                 }
                 return;
             }
-            case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST: p_request_context->on_send_request_validate_cn(); return;
+            case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST:
+            {
+                p_request_context->on_send_request_validate_cn();
+                return;
+            }
             case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
+            {
                 p_request_context->report_exception(web::http::http_exception(
                     generate_security_failure_message(*reinterpret_cast<std::uint32_t*>(statusInfo))));
                 return;
+            }
             case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE:
             {
                 DWORD bytesWritten = *((DWORD*)statusInfo);
@@ -2026,6 +2094,49 @@ private:
                 }
                 return;
             }
+            case WINHTTP_CALLBACK_STATUS_REDIRECT:
+            {
+                // Return and continue unless that's too many automatic redirects.
+                if (p_request_context->m_remaining_redirects > 0)
+                {
+                    --p_request_context->m_remaining_redirects;
+                    return;
+                }
+
+                // First need to query to see what the headers size is.
+                DWORD headerBufferLength = 0;
+                query_header_length(hRequestHandle, WINHTTP_QUERY_RAW_HEADERS_CRLF, headerBufferLength);
+
+                // Now allocate buffer for headers and query for them.
+                std::vector<unsigned char> header_raw_buffer;
+                header_raw_buffer.resize(headerBufferLength);
+                utility::char_t* header_buffer = reinterpret_cast<utility::char_t*>(&header_raw_buffer[0]);
+                if (!WinHttpQueryHeaders(hRequestHandle,
+                                         WINHTTP_QUERY_RAW_HEADERS_CRLF,
+                                         WINHTTP_HEADER_NAME_BY_INDEX,
+                                         header_buffer,
+                                         &headerBufferLength,
+                                         WINHTTP_NO_HEADER_INDEX))
+                {
+                    auto errorCode = GetLastError();
+                    p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpQueryHeaders"));
+                    return;
+                }
+
+                http_response& response = p_request_context->m_response;
+                parse_winhttp_headers(hRequestHandle, header_buffer, response);
+
+                // Signal that the headers are available.
+                p_request_context->complete_headers();
+
+                // The body of the message is unavailable in WINHTTP_CALLBACK_STATUS_REDIRECT.
+                p_request_context->allocate_request_space(nullptr, 0);
+                p_request_context->complete_request(0);
+
+                // Cancel the WinHTTP operation by closing the handle.
+                p_request_context->cleanup();
+                return;
+            }
             case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE:
             {
                 // First need to query to see what the headers size is.
@@ -2045,7 +2156,6 @@ private:
                 {
                     auto errorCode = GetLastError();
                     p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpQueryHeaders"));
-                    ;
                     return;
                 }
 

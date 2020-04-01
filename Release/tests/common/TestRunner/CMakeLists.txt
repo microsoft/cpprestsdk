@@ -8,6 +8,9 @@ endif()
 
 add_executable(test_runner test_runner.cpp test_module_loader.cpp)
 target_link_libraries(test_runner PRIVATE unittestpp ${CMAKE_DL_LIBS})
+if (WIN32)
+  target_sources(test_runner PRIVATE test_runner.manifest)
+endif()
 
 if(BUILD_SHARED_LIBS AND NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
 elseif(APPLE)
