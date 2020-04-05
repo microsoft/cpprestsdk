@@ -40,6 +40,7 @@ function(cpprest_find_openssl)
         list(GET OPENSSL_ROOT_DIR 0 OPENSSL_ROOT_DIR)
       endif()
       # This should prevent linking against the system provided 0.9.8y
+      message(STATUS "OPENSSL_ROOT_DIR = ${OPENSSL_ROOT_DIR}")
       set(_OPENSSL_VERSION "")
     endif()
     if(UNIX)
