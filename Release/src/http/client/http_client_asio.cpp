@@ -333,7 +333,8 @@ public:
     void enable_no_delay()
     {
         boost::asio::ip::tcp::no_delay option(true);
-        m_socket.set_option(option);
+        boost::system::error_code error_ignored;
+        m_socket.set_option(option, error_ignored);
     }
 
 private:
