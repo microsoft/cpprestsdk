@@ -594,7 +594,8 @@ void hostport_listener::on_accept(std::unique_ptr<ip::tcp::socket> socket, const
     if (!ec)
     {
         boost::asio::ip::tcp::no_delay option(true);
-        socket->set_option(option);
+        boost::system::error_code error_ignored;
+        socket->set_option(option, error_ignored);
 
         auto conn = asio_server_connection::create(std::move(socket), m_p_server, this);
 
