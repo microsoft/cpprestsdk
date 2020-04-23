@@ -1040,7 +1040,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseArray(
                 case JSON_Parser<CharType>::Token::TKN_CloseBracket:
                     GetNextToken(tkn);
                     if (tkn.m_error) return utility::details::make_unique<web::json::details::_Null>();
-                    return result;
+                    return std::unique_ptr<web::json::details::_Value>(result.release());
                 default:
                     SetErrorCode(tkn, json_error::malformed_array_literal);
                     return utility::details::make_unique<web::json::details::_Null>();
@@ -1058,6 +1058,7 @@ template<typename CharType>
 std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(
     typename JSON_Parser<CharType>::Token& tkn)
 {
+    typedef std::unique_ptr<web::json::details::_Value> Vptr;
     switch (tkn.kind)
     {
         case JSON_Parser<CharType>::Token::TKN_OpenBrace:
@@ -1070,7 +1071,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(
         }
         case JSON_Parser<CharType>::Token::TKN_StringLiteral:
         {
-            auto value = utility::details::make_unique<web::json::details::_String>(std::move(tkn.string_val),
+            Vptr value = utility::details::make_unique<web::json::details::_String>(std::move(tkn.string_val),
                                                                                     tkn.has_unescape_symbol);
             GetNextToken(tkn);
             if (tkn.m_error) return utility::details::make_unique<web::json::details::_Null>();
@@ -1078,7 +1079,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(
         }
         case JSON_Parser<CharType>::Token::TKN_IntegerLiteral:
         {
-            std::unique_ptr<web::json::details::_Number> value;
+            Vptr value;
             if (tkn.signed_number)
                 value = utility::details::make_unique<web::json::details::_Number>(tkn.int64_val);
             else
@@ -1090,14 +1091,14 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(
         }
         case JSON_Parser<CharType>::Token::TKN_NumberLiteral:
         {
-            auto value = utility::details::make_unique<web::json::details::_Number>(tkn.double_val);
+            Vptr value = utility::details::make_unique<web::json::details::_Number>(tkn.double_val);
             GetNextToken(tkn);
             if (tkn.m_error) return utility::details::make_unique<web::json::details::_Null>();
             return value;
         }
         case JSON_Parser<CharType>::Token::TKN_BooleanLiteral:
         {
-            auto value = utility::details::make_unique<web::json::details::_Boolean>(tkn.boolean_val);
+            Vptr value = utility::details::make_unique<web::json::details::_Boolean>(tkn.boolean_val);
             GetNextToken(tkn);
             if (tkn.m_error) return utility::details::make_unique<web::json::details::_Null>();
             return value;
