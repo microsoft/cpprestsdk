@@ -74,7 +74,7 @@ jobs:
     steps:
     - script: brew install boost openssl ninja
       displayName: Brew install dependencies
-    - script: git submodule update --init websocketpp
+    - script: git submodule update --init Release/libs/websocketpp
       displayName: Checkout websocketpp submodule
     - script: |
         mkdir build.debug
