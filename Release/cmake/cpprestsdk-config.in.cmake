@@ -15,7 +15,7 @@ if(@CPPREST_USES_WINHTTPPAL@)
   find_dependency(WINHTTPPAL)
 endif()
 
-if(@CPPREST_USES_BOOST@ AND OFF)
+if(@CPPREST_USES_BOOST@)
   if(UNIX)
     find_dependency(Boost COMPONENTS random system thread filesystem chrono atomic date_time regex)
   else()

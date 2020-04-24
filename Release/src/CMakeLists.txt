@@ -236,9 +236,9 @@ else()
 endif()
 
 if(CPPREST_INSTALL_HEADERS)
-  install(FILES ${HEADERS_CPPREST} DESTINATION include/cpprest)
-  install(FILES ${HEADERS_PPLX} DESTINATION include/pplx)
-  install(FILES ${HEADERS_DETAILS} DESTINATION include/cpprest/details)
+  install(FILES ${HEADERS_CPPREST} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cpprest)
+  install(FILES ${HEADERS_PPLX} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/pplx)
+  install(FILES ${HEADERS_DETAILS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cpprest/details)
 endif()
 
 if(CPPREST_INSTALL)
@@ -281,9 +281,10 @@ if(CPPREST_INSTALL)
   )
 
   configure_file(../cmake/cpprestsdk-config.in.cmake "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config.cmake" @ONLY)
+  configure_file(../cmake/cpprestsdk-config-version.in.cmake "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config-version.cmake" @ONLY)
 
   install(
-    FILES "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config.cmake"
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config.cmake" "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config-version.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/${CPPREST_EXPORT_DIR}
   )
   install(
