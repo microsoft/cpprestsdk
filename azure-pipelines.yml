@@ -130,14 +130,14 @@ jobs:
     - task: CMake@1
       inputs:
         workingDirectory: 'build.debug'
-        cmakeArgs: '-G Ninja -DCMAKE_MAKE_PROGRAM=../vcpkg/downloads/tools/ninja-1.10.0-osx/ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+        cmakeArgs: '-G Ninja -DCMAKE_MAKE_PROGRAM=$(Build.SourcesDirectory)/vcpkg/downloads/tools/ninja-1.10.0-osx/ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
     - task: CMake@1
       inputs:
         workingDirectory: 'build.release'
-        cmakeArgs: '-G Ninja -DCMAKE_MAKE_PROGRAM=../vcpkg/downloads/tools/ninja-1.10.0-osx/ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+        cmakeArgs: '-G Ninja -DCMAKE_MAKE_PROGRAM=$(Build.SourcesDirectory)/vcpkg/downloads/tools/ninja-1.10.0-osx/ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
     - script: |
         cd build.debug
-        ../vcpkg/downloads/tools/ninja-1.10.0-osx/ninja
+        $(Build.SourcesDirectory)/vcpkg/downloads/tools/ninja-1.10.0-osx/ninja
       displayName: 'Run ninja debug'
     - script: |
         cd build.debug/Release/Binaries
@@ -145,20 +145,20 @@ jobs:
       displayName: 'Run Tests debug'
     - script: |
         cd build.release
-        ../vcpkg/downloads/tools/ninja-1.10.0-osx/ninja
+        $(Build.SourcesDirectory)/vcpkg/downloads/tools/ninja-1.10.0-osx/ninja
       displayName: 'Run ninja, release'
     - script: |
         cd build.release/Release/Binaries
         ./test_runner *test.dylib
       displayName: 'Run tests, release'
-  - job: MacOS_iOS
-    pool:
-      vmImage: 'macOS-latest'
-    steps:
-    - script: |
-        cd Build_iOS
-        ./configure.sh
-      displayName: 'Build for iOS'
+  # - job: MacOS_iOS
+  #   pool:
+  #     vmImage: 'macOS-latest'
+  #   steps:
+  #   - script: |
+  #       cd Build_iOS
+  #       ./configure.sh
+  #     displayName: 'Build for iOS'
   - job: Ubuntu_1604_Apt_winhttppal
     pool:
       vmImage: 'Ubuntu 16.04'
