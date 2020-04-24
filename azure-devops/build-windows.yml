@@ -13,7 +13,7 @@ jobs:
   steps:
     - script: git submodule update --init vcpkg
       displayName: Checkout vcpkg submodule
-    - task: CacheBeta@0
+    - task: Cache@2
       displayName: Cache vcpkg
       inputs:
         key: $(vcpkgResponseFile) | $(Build.SourcesDirectory)/.git/modules/vcpkg/HEAD | ${{ parameters.targetPlatform }} | ${{ parameters.image }}

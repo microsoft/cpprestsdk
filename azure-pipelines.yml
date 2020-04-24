@@ -74,6 +74,8 @@ jobs:
     steps:
     - script: brew install boost openssl ninja
       displayName: Brew install dependencies
+    - script: git submodule update --init websocketpp
+      displayName: Checkout websocketpp submodule
     - script: |
         mkdir build.debug
         mkdir build.release
@@ -115,6 +117,8 @@ jobs:
     pool:
       vmImage: 'macOS-latest'
     steps:
+    - script: git submodule update --init vcpkg
+      displayName: Checkout vcpkg submodule
     - script: |
         ./vcpkg/bootstrap-vcpkg.sh
         ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
