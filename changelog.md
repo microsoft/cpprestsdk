@@ -1,3 +1,16 @@
+cpprestsdk (2.10.16)
+* PR#1383 CMake fixes + CMake search for OpenSSL (macOS)
+* PR#1392 Update submodule websocketpp to 0.8.2
+* PR#1393 Do not report errors (such as EBADF and EINVAL) from setsockopt here, since this is a performance optimization only, and hard errors will be picked up by the following operation
+* PR#1379 Fix compilation with GCC 4.8/4.9, which was broken by commit 53fab3a.
+* PR#1328 Add support for HTTP redirection in ASIO and WinHTTP-based http_clients
+* PR#1332 Fix more http test build fails in certain configurations
+* PR#1370 Remove redundant std::move noted by gcc 9.2 (-Wredundant-move)
+* PR#1372 Static analyzer (PVS Studio) fixes
+* PR#1350 Expose json::value::parse for UTF8 string on Windows
+* PR#1344 libcpprestsdk: fix building as a static library
+-- cpprestsdk team <askcasablanca@microsoft.com>  FRI, 24 Apr 2020 16:56:00 -0700
+
 cpprestsdk (2.10.15)
 * Extremely special thanks to @garethsb-sony for a large number of contributions in this release
 * PR#1209 Workarounds for two GCC 4.7.2 bugs with lambda functions
