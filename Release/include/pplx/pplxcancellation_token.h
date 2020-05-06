@@ -363,6 +363,13 @@ public:
             pRegistration->_M_state = _CancellationTokenRegistration::_STATE_SYNCHRONIZE;
             pRegistration->_Release();
         });
+
+        _M_linkedRegistrations.for_each([](_CancellationTokenRegistration* pRegistration) {
+            auto token = pRegistration->_GetToken();
+            token->_DeregisterCallback(pRegistration);
+            pRegistration->_Release();
+            token->_Release();
+        });
     }
 
     bool _IsCanceled() const { return (_M_stateFlag != 0); }
@@ -415,6 +422,13 @@ public:
         {
             _PRegistration->_Invoke();
         }
+    }
+
+    void _RegisterLinkedCallback(_In_ _CancellationTokenRegistration* _PRegistration)
+    {
+        _PRegistration->_Reference();
+        _PRegistration->_GetToken()->_Reference();
+        _M_linkedRegistrations.push_back(_PRegistration);
     }
 
     void _DeregisterCallback(_In_ _CancellationTokenRegistration* _PRegistration)
@@ -504,6 +518,9 @@ private:
 
     // The protected list of registrations
     TokenRegistrationContainer _M_registrations;
+
+    // The list of registrations to linked tokens
+    TokenRegistrationContainer _M_linkedRegistrations;
 };
 
 } // namespace details
@@ -558,6 +575,7 @@ public:
 
 private:
     friend class cancellation_token;
+    friend class cancellation_token_source;
 
     cancellation_token_registration(_In_ details::_CancellationTokenRegistration* _PRegistration)
         : _M_pRegistration(_PRegistration)
@@ -831,7 +849,11 @@ public:
     static cancellation_token_source create_linked_source(cancellation_token& _Src)
     {
         cancellation_token_source newSource;
-        _Src.register_callback([newSource]() { newSource.cancel(); });
+        if (_Src.is_cancelable())
+        {
+            newSource._RegisterLinkedCallback(
+                _Src.register_callback([impl = newSource._GetImpl()]() { impl->_Cancel(); }));
+        }
         return newSource;
     }
 
@@ -856,7 +878,11 @@ public:
         cancellation_token_source newSource;
         for (_Iter _It = _Begin; _It != _End; ++_It)
         {
-            _It->register_callback([newSource]() { newSource.cancel(); });
+            if (_It->is_cancelable())
+            {
+                newSource._RegisterLinkedCallback(
+                    _It->register_callback([impl = newSource._GetImpl()]() { impl->_Cancel(); }));
+            }
         }
         return newSource;
     }
@@ -896,6 +922,11 @@ private:
     {
         _M_Impl = _Impl;
         _Impl = NULL;
+    }
+
+    void _RegisterLinkedCallback(const cancellation_token_registration& _Registration)
+    {
+        _M_Impl->_RegisterLinkedCallback(_Registration._M_pRegistration);
     }
 
     cancellation_token_source(_ImplType _Impl) : _M_Impl(_Impl)
