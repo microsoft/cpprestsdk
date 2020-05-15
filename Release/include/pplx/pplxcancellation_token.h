@@ -851,8 +851,9 @@ public:
         cancellation_token_source newSource;
         if (_Src.is_cancelable())
         {
+            auto impl = newSource._GetImpl();
             newSource._RegisterLinkedCallback(
-                _Src.register_callback([impl = newSource._GetImpl()]() { impl->_Cancel(); }));
+                _Src.register_callback([impl]() { impl->_Cancel(); }));
         }
         return newSource;
     }
@@ -876,12 +877,13 @@ public:
     static cancellation_token_source create_linked_source(_Iter _Begin, _Iter _End)
     {
         cancellation_token_source newSource;
+        auto impl = newSource._GetImpl();
         for (_Iter _It = _Begin; _It != _End; ++_It)
         {
             if (_It->is_cancelable())
             {
                 newSource._RegisterLinkedCallback(
-                    _It->register_callback([impl = newSource._GetImpl()]() { impl->_Cancel(); }));
+                    _It->register_callback([impl]() { impl->_Cancel(); }));
             }
         }
         return newSource;

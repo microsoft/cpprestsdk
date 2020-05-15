@@ -7067,18 +7067,18 @@ void _WhenAnyContinuationWrapper(_RunAnyParam<_CompletionType>* _PParam, const _
                 {
                     if (_PParam->_M_exceptionRelatedToken)
                     {
+                        auto token = cancellation_token::_FromImpl(_PParam->_M_exceptionRelatedToken);
                         _PParam->_M_cancellationSource =
-                            cancellation_token_source::create_linked_source(
-                                cancellation_token::_FromImpl(_PParam->_M_exceptionRelatedToken));
+                            cancellation_token_source::create_linked_source(token);
                     }
                     else
                     {
                         // If haven't captured any exception token yet, there was no exception for
                         // all those tasks, so just pick a random token (current one) for normal
                         // cancellation.
+                        auto token = cancellation_token::_FromImpl(_Task._GetImpl()->_M_pTokenState);
                         _PParam->_M_cancellationSource =
-                            cancellation_token_source::create_linked_source(
-                                cancellation_token::_FromImpl(_Task._GetImpl()->_M_pTokenState));
+                            cancellation_token_source::create_linked_source(token);
                     }
                 }
                 // Do exception cancellation or normal cancellation based on whether it has stored
@@ -7153,8 +7153,8 @@ struct _WhenAnyImpl
                 _ASSERTE(_Result.second);
                 if (!_TaskOptions.has_cancellation_token())
                 {
-                    _CancellationSource = cancellation_token_source::create_linked_source(
-                        cancellation_token::_FromImpl(_Result.second));
+                    auto token = cancellation_token::_FromImpl(_Result.second);
+                    _CancellationSource = cancellation_token_source::create_linked_source(token);
                 }
                 return _Result.first;
             },
@@ -7405,8 +7405,8 @@ task<std::vector<_ReturnType>> operator||(const task<std::vector<_ReturnType>>& 
     auto _ReturnTask = _Any_tasks_completed._Then(
         [=](std::pair<std::vector<_ReturnType>, details::_CancellationTokenState*> _Ret) -> std::vector<_ReturnType> {
             _ASSERTE(_Ret.second);
-            _PParam->_M_cancellationSource =
-                cancellation_token_source::create_linked_source(cancellation_token::_FromImpl(_Ret.second));
+            auto token = cancellation_token::_FromImpl(_Ret.second);
+            _PParam->_M_cancellationSource = cancellation_token_source::create_linked_source(token);
             return _Ret.first;
         },
         nullptr);
@@ -7522,8 +7522,8 @@ _Ty operator||(const task<void>& _Lhs_arg, const task<void>& _Rhs_arg)
     auto _ReturnTask = _Any_task_completed._Then(
         [=](_Pair _Ret) {
             _ASSERTE(_Ret.second);
-            _PParam->_M_cancellationSource =
-                cancellation_token_source::create_linked_source(cancellation_token::_FromImpl(_Ret.second));
+            auto token = cancellation_token::_FromImpl(_Ret.second);
+            _PParam->_M_cancellationSource = cancellation_token_source::create_linked_source(token);
         },
         nullptr);
 
