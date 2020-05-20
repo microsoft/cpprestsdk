@@ -22,6 +22,12 @@ using namespace concurrency;
 using namespace utility::conversions;
 using namespace http::details;
 
+#if defined(__ANDROID__)
+using utility::conversions::details::to_string;
+#else
+using std::to_string;
+#endif
+
 namespace web
 {
 namespace http
@@ -276,9 +282,9 @@ std::string http_version::to_utf8string() const
     std::string ret;
     ret.reserve(8);
     ret.append("HTTP/");
-    ret.append(std::to_string(static_cast<unsigned int>(major)));
+    ret.append(to_string(static_cast<unsigned int>(major)));
     ret.append(".");
-    ret.append(std::to_string(static_cast<unsigned int>(minor)));
+    ret.append(to_string(static_cast<unsigned int>(minor)));
     return ret;
 }
 
