@@ -2,13 +2,13 @@
  Copyright (C) Microsoft. All rights reserved.
  Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 
- =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
  MainPage.xaml - Primary application page.  Contains two buttons for
     logging into and fetching albums from Facebook, and a GridView
-    control for displaying the downloaded album data.    
- =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
--->    
-    
+    control for displaying the downloaded album data.
+ =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+-->
+
 <Page
     x:Class="FacebookDemo.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"

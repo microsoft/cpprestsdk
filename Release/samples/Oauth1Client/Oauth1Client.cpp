@@ -1,13 +1,13 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Oauth1Client.cpp : Defines the entry point for the console application
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Oauth1Client.cpp : Defines the entry point for the console application
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 /*
 
@@ -26,16 +26,18 @@ Set following entry in the hosts file:
 127.0.0.1    testhost.local
 
 */
-#include "stdafx.h"
+#include "cpprest/http_client.h"
+#include <mutex>
 
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
 // Extra includes for Windows desktop.
 #include <windows.h>
+
 #include <Shellapi.h>
 #endif
 
-#include "cpprest/http_listener.h"
 #include "cpprest/http_client.h"
+#include "cpprest/http_listener.h"
 
 using namespace utility;
 using namespace web;
@@ -47,11 +49,11 @@ using namespace web::http::experimental::listener;
 //
 // Set key & secret pair to enable session for that service.
 //
-static const utility::string_t s_linkedin_key(U(""));
-static const utility::string_t s_linkedin_secret(U(""));
+static const utility::string_t s_linkedin_key;
+static const utility::string_t s_linkedin_secret;
 
-static const utility::string_t s_twitter_key(U(""));
-static const utility::string_t s_twitter_secret(U(""));
+static const utility::string_t s_twitter_key;
+static const utility::string_t s_twitter_secret;
 
 //
 // Utility method to open browser on Windows, OS X and Linux systems.
@@ -64,11 +66,11 @@ static void open_browser(utility::string_t auth_uri)
 #elif defined(__APPLE__)
     // NOTE: OS X only.
     string_t browser_cmd(U("open \"") + auth_uri + U("\""));
-    system(browser_cmd.c_str());
+    (void)system(browser_cmd.c_str());
 #else
     // NOTE: Linux/X11 only.
     string_t browser_cmd(U("xdg-open \"") + auth_uri + U("\""));
-    system(browser_cmd.c_str());
+    (void)system(browser_cmd.c_str());
 #endif
 }
 
@@ -80,31 +82,27 @@ static void open_browser(utility::string_t auth_uri)
 class oauth1_code_listener
 {
 public:
-    oauth1_code_listener(
-        uri listen_uri,
-        oauth1_config& config) :
-            m_listener(new http_listener(listen_uri)),
-            m_config(config)
+    oauth1_code_listener(uri listen_uri, oauth1_config& config)
+        : m_listener(new http_listener(listen_uri)), m_config(config)
     {
-        m_listener->support([this](http::http_request request) -> void
-        {
+        m_listener->support([this](http::http_request request) -> void {
             if (request.request_uri().path() == U("/") && request.request_uri().query() != U(""))
             {
                 m_resplock.lock();
 
-                m_config.token_from_redirected_uri(request.request_uri()).then([this,request](pplx::task<void> token_task) -> void
-                {
-                    try
-                    {
-                        token_task.wait();
-                        m_tce.set(true);
-                    }
-                    catch (const oauth1_exception& e)
-                    {
-                        ucout << "Error: " << e.what() << std::endl;
-                        m_tce.set(false);
-                    }
-                });
+                m_config.token_from_redirected_uri(request.request_uri())
+                    .then([this, request](pplx::task<void> token_task) -> void {
+                        try
+                        {
+                            token_task.wait();
+                            m_tce.set(true);
+                        }
+                        catch (const oauth1_exception& e)
+                        {
+                            ucout << "Error: " << e.what() << std::endl;
+                            m_tce.set(false);
+                        }
+                    });
 
                 request.reply(status_codes::OK, U("Ok."));
 
@@ -119,15 +117,9 @@ public:
         m_listener->open().wait();
     }
 
-    ~oauth1_code_listener()
-    {
-        m_listener->close().wait();
-    }
+    ~oauth1_code_listener() { m_listener->close().wait(); }
 
-    pplx::task<bool> listen_for_code()
-    {
-        return pplx::create_task(m_tce);
-    }
+    pplx::task<bool> listen_for_code() { return pplx::create_task(m_tce); }
 
 private:
     std::unique_ptr<http_listener> m_listener;
@@ -143,22 +135,23 @@ class oauth1_session_sample
 {
 public:
     oauth1_session_sample(utility::string_t name,
-        utility::string_t consumer_key,
-        utility::string_t consumer_secret,
-        utility::string_t temp_endpoint,
-        utility::string_t auth_endpoint,
-        utility::string_t token_endpoint,
-        utility::string_t callback_uri) :
-            m_oauth1_config(consumer_key,
-                consumer_secret,
-                temp_endpoint,
-                auth_endpoint,
-                token_endpoint,
-                callback_uri,
-                oauth1_methods::hmac_sha1),
-            m_name(name),
-            m_listener(new oauth1_code_listener(callback_uri, m_oauth1_config))
-    {}
+                          utility::string_t consumer_key,
+                          utility::string_t consumer_secret,
+                          utility::string_t temp_endpoint,
+                          utility::string_t auth_endpoint,
+                          utility::string_t token_endpoint,
+                          utility::string_t callback_uri)
+        : m_oauth1_config(consumer_key,
+                          consumer_secret,
+                          temp_endpoint,
+                          auth_endpoint,
+                          token_endpoint,
+                          callback_uri,
+                          oauth1_methods::hmac_sha1)
+        , m_name(name)
+        , m_listener(new oauth1_code_listener(callback_uri, m_oauth1_config))
+    {
+    }
 
     void run()
     {
@@ -182,7 +175,8 @@ public:
         }
         else
         {
-            ucout << "Skipped " << m_name.c_str() << " session sample because app key or secret is empty. Please see instructions." << std::endl;
+            ucout << "Skipped " << m_name.c_str()
+                  << " session sample because app key or secret is empty. Please see instructions." << std::endl;
         }
     }
 
@@ -197,7 +191,7 @@ protected:
         }
         else
         {
-            return pplx::create_task([](){return false;});
+            return pplx::create_task([]() { return false; });
         }
     }
 
@@ -221,7 +215,7 @@ private:
             open_browser(auth_uri);
             return true;
         }
-        catch (const oauth1_exception &e)
+        catch (const oauth1_exception& e)
         {
             ucout << "Error: " << e.what() << std::endl;
             return false;
@@ -238,24 +232,25 @@ private:
 class linkedin_session_sample : public oauth1_session_sample
 {
 public:
-    linkedin_session_sample() :
-        oauth1_session_sample(U("LinkedIn"),
-            s_linkedin_key,
-            s_linkedin_secret,
-            U("https://api.linkedin.com/uas/oauth/requestToken"),
-            U("https://www.linkedin.com/uas/oauth/authenticate"),
-            U("https://api.linkedin.com/uas/oauth/accessToken"),
-            U("http://localhost:8888/"))
-    {}
+    linkedin_session_sample()
+        : oauth1_session_sample(U("LinkedIn"),
+                                s_linkedin_key,
+                                s_linkedin_secret,
+                                U("https://api.linkedin.com/uas/oauth/requestToken"),
+                                U("https://www.linkedin.com/uas/oauth/authenticate"),
+                                U("https://api.linkedin.com/uas/oauth/accessToken"),
+                                U("http://localhost:8888/"))
+    {
+    }
 
 protected:
     void run_internal() override
     {
         http_client api(U("https://api.linkedin.com/v1/people/"), m_http_config);
         ucout << "Requesting user information:" << std::endl;
-        ucout << "Information: " << api.request(methods::GET, U("~?format=json")).get().extract_json().get() << std::endl;
+        ucout << "Information: " << api.request(methods::GET, U("~?format=json")).get().extract_json().get()
+              << std::endl;
     }
-
 };
 
 //
@@ -264,15 +259,16 @@ protected:
 class twitter_session_sample : public oauth1_session_sample
 {
 public:
-    twitter_session_sample() :
-        oauth1_session_sample(U("Twitter"),
-            s_twitter_key,
-            s_twitter_secret,
-            U("https://api.twitter.com/oauth/request_token"),
-            U("https://api.twitter.com/oauth/authorize"),
-            U("https://api.twitter.com/oauth/access_token"),
-            U("http://testhost.local:8890/"))
-    {}
+    twitter_session_sample()
+        : oauth1_session_sample(U("Twitter"),
+                                s_twitter_key,
+                                s_twitter_secret,
+                                U("https://api.twitter.com/oauth/request_token"),
+                                U("https://api.twitter.com/oauth/authorize"),
+                                U("https://api.twitter.com/oauth/access_token"),
+                                U("http://testhost.local:8890/"))
+    {
+    }
 
 protected:
     void run_internal() override
@@ -283,11 +279,10 @@ protected:
     }
 };
 
-
 #ifdef _WIN32
-int wmain(int argc, wchar_t *argv[])
+int wmain(int argc, wchar_t* argv[])
 #else
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 #endif
 {
     ucout << "Running OAuth 1.0 client sample..." << std::endl;

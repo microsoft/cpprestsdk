@@ -1,24 +1,26 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 #pragma once
 
+#include "cpprest/asyncrt_utils.h"
 #include <map>
 #include <memory>
 #include <string>
-#include <vector>
 #include <system_error>
-#include "cpprest/asyncrt_utils.h"
+#include <vector>
 
-namespace web { namespace http {
-
+namespace web
+{
+namespace http
+{
 /// <summary>
 /// Binds an individual reference to a string value.
 /// </summary>
@@ -29,7 +31,7 @@ namespace web { namespace http {
 /// <returns><c>true</c> if the binding succeeds, <c>false</c> otherwise.</returns>
 template<typename key_type, typename _t>
 CASABLANCA_DEPRECATED("This API is deprecated and will be removed in a future release, std::istringstream instead.")
-bool bind(const key_type &text, _t &ref) // const
+bool bind(const key_type& text, _t& ref) // const
 {
     utility::istringstream_t iss(text);
     iss >> ref;
@@ -49,13 +51,44 @@ bool bind(const key_type &text, _t &ref) // const
 /// <param name="text">The string value.</param>
 /// <param name="ref">The value to bind to.</param>
 /// <returns><c>true</c> if the binding succeeds, <c>false</c> otherwise.</returns>
-template <typename key_type>
+template<typename key_type>
 CASABLANCA_DEPRECATED("This API is deprecated and will be removed in a future release.")
-bool bind(const key_type &text, utility::string_t &ref) //const
+bool bind(const key_type& text, utility::string_t& ref) // const
 {
     ref = text;
     return true;
 }
+
+namespace details
+{
+template<typename key_type, typename _t>
+bool bind_impl(const key_type& text, _t& ref)
+{
+    utility::istringstream_t iss(text);
+    iss.imbue(std::locale::classic());
+    iss >> ref;
+    if (iss.fail() || !iss.eof())
+    {
+        return false;
+    }
+
+    return true;
+}
+
+template<typename key_type>
+bool bind_impl(const key_type& text, utf16string& ref)
+{
+    ref = utility::conversions::to_utf16string(text);
+    return true;
+}
+
+template<typename key_type>
+bool bind_impl(const key_type& text, std::string& ref)
+{
+    ref = utility::conversions::to_utf8string(text);
+    return true;
+}
+} // namespace details
 
 /// <summary>
 /// Represents HTTP headers, acts like a map.
@@ -66,32 +99,32 @@ public:
     /// Function object to perform case insensitive comparison of wstrings.
     struct _case_insensitive_cmp
     {
-        bool operator()(const utility::string_t &str1, const utility::string_t &str2) const
+        bool operator()(const utility::string_t& str1, const utility::string_t& str2) const
         {
-#ifdef _WIN32
-            return _wcsicmp(str1.c_str(), str2.c_str()) < 0;
-#else
-            return utility::cmp::icmp(str1, str2) < 0;
-#endif
+            return utility::details::str_iless(str1, str2);
         }
     };
 
+private:
+    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp> inner_container;
+
+public:
     /// <summary>
     /// STL-style typedefs
     /// </summary>
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::key_type key_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::key_compare key_compare;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::allocator_type allocator_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::size_type size_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::difference_type difference_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::pointer pointer;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_pointer const_pointer;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::reference reference;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_reference const_reference;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::iterator iterator;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_iterator const_iterator;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::reverse_iterator reverse_iterator;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_reverse_iterator const_reverse_iterator;
+    typedef inner_container::key_type key_type;
+    typedef inner_container::key_compare key_compare;
+    typedef inner_container::allocator_type allocator_type;
+    typedef inner_container::size_type size_type;
+    typedef inner_container::difference_type difference_type;
+    typedef inner_container::pointer pointer;
+    typedef inner_container::const_pointer const_pointer;
+    typedef inner_container::reference reference;
+    typedef inner_container::const_reference const_reference;
+    typedef inner_container::iterator iterator;
+    typedef inner_container::const_iterator const_iterator;
+    typedef inner_container::reverse_iterator reverse_iterator;
+    typedef inner_container::const_reverse_iterator const_reverse_iterator;
 
     /// <summary>
     /// Constructs an empty set of HTTP headers.
@@ -102,15 +135,15 @@ public:
     /// Copy constructor.
     /// </summary>
     /// <param name="other">An <c>http_headers</c> object to copy from.</param>
-    http_headers(const http_headers &other) : m_headers(other.m_headers) {}
+    http_headers(const http_headers& other) : m_headers(other.m_headers) {}
 
     /// <summary>
     /// Assignment operator.
     /// </summary>
     /// <param name="other">An <c>http_headers</c> object to copy from.</param>
-    http_headers &operator=(const http_headers &other)
+    http_headers& operator=(const http_headers& other)
     {
-        if(this != &other)
+        if (this != &other)
         {
             m_headers = other.m_headers;
         }
@@ -121,15 +154,15 @@ public:
     /// Move constructor.
     /// </summary>
     /// <param name="other">An <c>http_headers</c> object to move.</param>
-    http_headers(http_headers &&other) : m_headers(std::move(other.m_headers)) {}
+    http_headers(http_headers&& other) : m_headers(std::move(other.m_headers)) {}
 
     /// <summary>
     /// Move assignment operator.
     /// </summary>
     /// <param name="other">An <c>http_headers</c> object to move.</param>
-    http_headers &operator=(http_headers &&other)
+    http_headers& operator=(http_headers&& other)
     {
-        if(this != &other)
+        if (this != &other)
         {
             m_headers = std::move(other.m_headers);
         }
@@ -145,13 +178,15 @@ public:
     template<typename _t1>
     void add(const key_type& name, const _t1& value)
     {
-        if (has(name))
+        auto printedValue = utility::conversions::details::print_string(value);
+        auto& mapVal = m_headers[name];
+        if (mapVal.empty())
         {
-            m_headers[name].append(_XPLATSTR(", ")).append(utility::conversions::details::print_string(value));
+            mapVal = std::move(printedValue);
         }
         else
         {
-            m_headers[name] = utility::conversions::details::print_string(value);
+            mapVal.append(_XPLATSTR(", ")).append(std::move(printedValue));
         }
     }
 
@@ -159,10 +194,7 @@ public:
     /// Removes a header field.
     /// </summary>
     /// <param name="name">The name of the header field.</param>
-    void remove(const key_type& name)
-    {
-        m_headers.erase(name);
-    }
+    void remove(const key_type& name) { m_headers.erase(name); }
 
     /// <summary>
     /// Removes all elements from the headers.
@@ -191,7 +223,7 @@ public:
     /// <summary>
     /// Returns a reference to header field with given name, if there is no header field one is inserted.
     /// </summary>
-    utility::string_t & operator[](const key_type &name) { return m_headers[name]; }
+    utility::string_t& operator[](const key_type& name) { return m_headers[name]; }
 
     /// <summary>
     /// Checks if a header field exists with given name and returns an iterator if found. Otherwise
@@ -199,8 +231,8 @@ public:
     /// </summary>
     /// <param name="name">The name of the header field.</param>
     /// <returns>An iterator to where the HTTP header is found.</returns>
-    iterator find(const key_type &name) { return m_headers.find(name); }
-    const_iterator find(const key_type &name) const { return m_headers.find(name); }
+    iterator find(const key_type& name) { return m_headers.find(name); }
+    const_iterator find(const key_type& name) const { return m_headers.find(name); }
 
     /// <summary>
     /// Attempts to match a header field with the given name using the '>>' operator.
@@ -209,23 +241,15 @@ public:
     /// <param name="value">The value of the header field.</param>
     /// <returns><c>true</c> if header field was found and successfully stored in value parameter.</returns>
     template<typename _t1>
-    bool match(const key_type &name, _t1 &value) const
+    bool match(const key_type& name, _t1& value) const
     {
         auto iter = m_headers.find(name);
-        if (iter != m_headers.end())
-        {
-            // Check to see if doesn't have a value.
-            if(iter->second.empty())
-            {
-                bind_impl(iter->second, value);
-                return true;
-            }
-            return bind_impl(iter->second, value);
-        }
-        else
+        if (iter == m_headers.end())
         {
             return false;
         }
+
+        return web::http::details::bind_impl(iter->second, value) || iter->second.empty();
     }
 
     /// <summary>
@@ -291,34 +315,8 @@ public:
     _ASYNCRTIMP void set_date(const utility::datetime& date);
 
 private:
-
-    template<typename _t>
-    bool bind_impl(const key_type &text, _t &ref) const
-    {
-        utility::istringstream_t iss(text);
-        iss.imbue(std::locale::classic());
-        iss >> ref;
-        if (iss.fail() || !iss.eof())
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    bool bind_impl(const key_type &text, utf16string &ref) const
-    {
-        ref = utility::conversions::to_utf16string(text);
-        return true;
-    }
-    bool bind_impl(const key_type &text, std::string &ref) const
-    {
-        ref = utility::conversions::to_utf8string(text);
-        return true;
-    }
-
     // Headers are stored in a map with case insensitive key.
-    std::map<utility::string_t, utility::string_t, _case_insensitive_cmp> m_headers;
+    inner_container m_headers;
 };
-
-}}
+} // namespace http
+} // namespace web

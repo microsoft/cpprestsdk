@@ -1,66 +1,59 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* utility classes used by the different web:: clients
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * utility classes used by the different web:: clients
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 #pragma once
 
 #include "cpprest/asyncrt_utils.h"
+#include "cpprest/uri.h"
 
 namespace web
 {
-
-namespace http { namespace client { namespace details {
-class winhttp_client;
-class winrt_client;
-class asio_context;
-}}}
-namespace websockets { namespace client { namespace details {
-class winrt_callback_client;
-class wspp_callback_client;
-}}}
-
 namespace details
 {
-
 class zero_memory_deleter
 {
 public:
-    _ASYNCRTIMP void operator()(::utility::string_t *data) const;
+    _ASYNCRTIMP void operator()(::utility::string_t* data) const;
 };
 typedef std::unique_ptr<::utility::string_t, zero_memory_deleter> plaintext_string;
 
-#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
-#if defined(__cplusplus_winrt)
+#ifdef _WIN32
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#ifdef __cplusplus_winrt
 class winrt_encryption
 {
 public:
-    winrt_encryption() {}
-    _ASYNCRTIMP winrt_encryption(const std::wstring &data);
+    winrt_encryption() = default;
+    _ASYNCRTIMP winrt_encryption(const std::wstring& data);
     _ASYNCRTIMP plaintext_string decrypt() const;
+
 private:
     ::pplx::task<Windows::Storage::Streams::IBuffer ^> m_buffer;
 };
-#else
+#else  // ^^^ __cplusplus_winrt ^^^ // vvv !__cplusplus_winrt vvv
 class win32_encryption
 {
 public:
-    win32_encryption() {}
-    _ASYNCRTIMP win32_encryption(const std::wstring &data);
+    win32_encryption() = default;
+    _ASYNCRTIMP win32_encryption(const std::wstring& data);
     _ASYNCRTIMP ~win32_encryption();
     _ASYNCRTIMP plaintext_string decrypt() const;
+
 private:
     std::vector<char> m_buffer;
     size_t m_numCharacters;
 };
-#endif
-#endif
-}
+#endif // __cplusplus_winrt
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#endif // _WIN32
+} // namespace details
 
 /// <summary>
 /// Represents a set of user credentials (user name and password) to be used
@@ -79,25 +72,26 @@ public:
     /// </summary>
     /// <param name="username">User name as a string.</param>
     /// <param name="password">Password as a string.</param>
-    credentials(utility::string_t username, const utility::string_t & password) :
-        m_username(std::move(username)),
-        m_password(password)
-    {}
+    credentials(utility::string_t username, const utility::string_t& password)
+        : m_username(std::move(username)), m_password(password)
+    {
+    }
 
     /// <summary>
     /// The user name associated with the credentials.
     /// </summary>
     /// <returns>A string containing the user name.</returns>
-    const utility::string_t &username() const { return m_username; }
+    const utility::string_t& username() const { return m_username; }
 
     /// <summary>
     /// The password for the user name associated with the credentials.
     /// </summary>
     /// <returns>A string containing the password.</returns>
-    CASABLANCA_DEPRECATED("This API is deprecated for security reasons to avoid unnecessary password copies stored in plaintext.")
-        utility::string_t password() const
+    CASABLANCA_DEPRECATED(
+        "This API is deprecated for security reasons to avoid unnecessary password copies stored in plaintext.")
+    utility::string_t password() const
     {
-#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
+#if defined(_WIN32) && _WIN32_WINNT >= _WIN32_WINNT_VISTA
         return utility::string_t(*m_password.decrypt());
 #else
         return m_password;
@@ -113,7 +107,7 @@ public:
     details::plaintext_string _internal_decrypt() const
     {
         // Encryption APIs not supported on XP
-#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
+#if defined(_WIN32) && _WIN32_WINNT >= _WIN32_WINNT_VISTA
         return m_password.decrypt();
 #else
         return details::plaintext_string(new ::utility::string_t(m_password));
@@ -123,7 +117,7 @@ public:
 private:
     ::utility::string_t m_username;
 
-#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
+#if defined(_WIN32) && _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #if defined(__cplusplus_winrt)
     details::winrt_encryption m_password;
 #else
@@ -140,26 +134,38 @@ private:
 /// </summary>
 class web_proxy
 {
-    enum web_proxy_mode_internal{ use_default_, use_auto_discovery_, disabled_, user_provided_ };
+    enum web_proxy_mode_internal
+    {
+        use_default_,
+        use_auto_discovery_,
+        disabled_,
+        user_provided_
+    };
+
 public:
-    enum web_proxy_mode{ use_default = use_default_, use_auto_discovery = use_auto_discovery_, disabled  = disabled_};
+    enum web_proxy_mode
+    {
+        use_default = use_default_,
+        use_auto_discovery = use_auto_discovery_,
+        disabled = disabled_
+    };
 
     /// <summary>
     /// Constructs a proxy with the default settings.
     /// </summary>
-    web_proxy() : m_address(_XPLATSTR("")), m_mode(use_default_) {}
+    web_proxy() : m_address(), m_mode(use_default_) {}
 
     /// <summary>
     /// Creates a proxy with specified mode.
     /// </summary>
     /// <param name="mode">Mode to use.</param>
-    web_proxy( web_proxy_mode mode ) : m_address(_XPLATSTR("")), m_mode(static_cast<web_proxy_mode_internal>(mode)) {}
+    web_proxy(web_proxy_mode mode) : m_address(), m_mode(static_cast<web_proxy_mode_internal>(mode)) {}
 
     /// <summary>
     /// Creates a proxy explicitly with provided address.
     /// </summary>
     /// <param name="address">Proxy URI to use.</param>
-    web_proxy( uri address ) : m_address(address), m_mode(user_provided_) {}
+    web_proxy(uri address) : m_address(address), m_mode(user_provided_) {}
 
     /// <summary>
     /// Gets this proxy's URI address. Returns an empty URI if not explicitly set by user.
@@ -177,8 +183,9 @@ public:
     /// Sets the credentials to use for authentication with this proxy.
     /// </summary>
     /// <param name="cred">Credentials to use for this proxy.</param>
-    void set_credentials(web::credentials cred) {
-        if( m_mode == disabled_ )
+    void set_credentials(web::credentials cred)
+    {
+        if (m_mode == disabled_)
         {
             throw std::invalid_argument("Cannot attach credentials to a disabled proxy");
         }
@@ -215,4 +222,4 @@ private:
     web::credentials m_credentials;
 };
 
-}
+} // namespace web

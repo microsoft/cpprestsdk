@@ -1,30 +1,31 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* casalens.h: Listener code: Given a location/postal code, the listener queries different services
-* for weather, things to do: events, movie and pictures and returns it to the client.
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * casalens.h: Listener code: Given a location/postal code, the listener queries different services
+ * for weather, things to do: events, movie and pictures and returns it to the client.
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 #pragma once
 
 #include "stdafx.h"
-#include "cpprest\http_listener.h"
-#include "cpprest/json.h"
-#include "cpprest/filestream.h"
+
 #include "cpprest/containerstream.h"
-#include "cpprest/producerconsumerstream.h"
-#include "cpprest/http_listener.h"
+#include "cpprest/filestream.h"
 #include "cpprest/http_client.h"
-#pragma warning ( push )
-#pragma warning ( disable : 4457 )
+#include "cpprest/http_listener.h"
+#include "cpprest/json.h"
+#include "cpprest/producerconsumerstream.h"
+#include "cpprest\http_listener.h"
+#pragma warning(push)
+#pragma warning(disable : 4457)
 #include <agents.h>
-#pragma warning ( pop )
-#include <locale>
+#pragma warning(pop)
 #include <ctime>
+#include <locale>
 
 //
 // Credentials class to manage the service URLs, key name and api-keys.
@@ -52,7 +53,7 @@ public:
 //
 // This class implements the CasaLens server functionality.
 // It maintains a http_listener, registers to listen for requests.
-// Also implements the handlers to respond to requests and methods to fetch 
+// Also implements the handlers to respond to requests and methods to fetch
 // and aggregate data from different services.
 //
 class CasaLens
@@ -68,7 +69,6 @@ public:
     void handle_post(web::http::http_request message);
 
 private:
-
     // Error handlers
     static void handle_error(pplx::task<void>& t);
     pplx::task<web::json::value> handle_exception(pplx::task<web::json::value>& t, const utility::string_t& field_name);
@@ -109,8 +109,8 @@ private:
     // value: Tuple where:
     // Element1: relative path on the disk of the file being requested
     // Element2: Mime type/content type of the file
-    std::map<utility::string_t, std::tuple<utility::string_t, utility::string_t>> m_htmlcontentmap; 
+    std::map<utility::string_t, std::tuple<utility::string_t, utility::string_t>> m_htmlcontentmap;
 
-    // HTTP listener 
-    web::http::experimental::listener::http_listener m_listener;   
+    // HTTP listener
+    web::http::experimental::listener::http_listener m_listener;
 };

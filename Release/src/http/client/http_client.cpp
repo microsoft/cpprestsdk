@@ -1,26 +1,30 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* HTTP Library: Client-side APIs.
-*
-* This file contains shared code across all http_client implementations.
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * HTTP Library: Client-side APIs.
+ *
+ * This file contains shared code across all http_client implementations.
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "stdafx.h"
 
 #include "http_client_impl.h"
 
-namespace web { namespace http { namespace client {
-
+namespace web
+{
+namespace http
+{
+namespace client
+{
 // Helper function to check to make sure the uri is valid.
-static void verify_uri(const uri &uri)
+static void verify_uri(const uri& uri)
 {
     // Some things like proper URI schema are verified by the URI class.
     // We only need to check certain things specific to HTTP.
@@ -37,9 +41,9 @@ static void verify_uri(const uri &uri)
 
 namespace details
 {
-
-#if defined(_WIN32)
-    extern const utility::char_t * get_with_body_err_msg = _XPLATSTR("A GET or HEAD request should not have an entity body.");
+#if defined(_WIN32) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
+const utility::char_t* get_with_body_err_msg =
+    _XPLATSTR("A GET or HEAD request should not have an entity body.");
 #endif
 
 void request_context::complete_headers()
@@ -58,13 +62,13 @@ void request_context::complete_request(utility::size64_t body_size)
     finish();
 }
 
-void request_context::report_error(unsigned long error_code, const std::string &errorMessage)
+void request_context::report_error(unsigned long error_code, const std::string& errorMessage)
 {
     report_exception(http_exception(static_cast<int>(error_code), errorMessage));
 }
 
 #if defined(_WIN32)
-void request_context::report_error(unsigned long error_code, const std::wstring &errorMessage)
+void request_context::report_error(unsigned long error_code, const std::wstring& errorMessage)
 {
     report_exception(http_exception(static_cast<int>(error_code), errorMessage));
 }
@@ -77,7 +81,8 @@ void request_context::report_exception(std::exception_ptr exceptionPtr)
     // If cancellation has been triggered then ignore any errors.
     if (m_request._cancellation_token().is_canceled())
     {
-        exceptionPtr = std::make_exception_ptr(http_exception((int)std::errc::operation_canceled, std::generic_category()));
+        exceptionPtr =
+            std::make_exception_ptr(http_exception((int)std::errc::operation_canceled, std::generic_category()));
     }
 
     // First try to complete the headers with an exception.
@@ -96,6 +101,70 @@ void request_context::report_exception(std::exception_ptr exceptionPtr)
     finish();
 }
 
+bool request_context::handle_compression()
+{
+    // If the response body is compressed we will read the encoding header and create a decompressor object which will
+    // later decompress the body
+    try
+    {
+        utility::string_t encoding;
+        http_headers& headers = m_response.headers();
+
+        // Note that some headers, for example "Transfer-Encoding: chunked", may legitimately not produce a decompressor
+        if (m_http_client->client_config().request_compressed_response() &&
+            headers.match(web::http::header_names::content_encoding, encoding))
+        {
+            // Note that, while Transfer-Encoding (chunked only) is valid with Content-Encoding,
+            // we don't need to look for it here because winhttp de-chunks for us in that case
+            m_decompressor = compression::details::get_decompressor_from_header(
+                encoding, compression::details::header_types::content_encoding, m_request.decompress_factories());
+        }
+        else if (!m_request.decompress_factories().empty() &&
+                 headers.match(web::http::header_names::transfer_encoding, encoding))
+        {
+            m_decompressor = compression::details::get_decompressor_from_header(
+                encoding, compression::details::header_types::transfer_encoding, m_request.decompress_factories());
+        }
+    }
+    catch (...)
+    {
+        report_exception(std::current_exception());
+        return false;
+    }
+
+    return true;
+}
+
+utility::string_t request_context::get_compression_header() const
+{
+    utility::string_t headers;
+
+    // Add the correct header needed to request a compressed response if supported
+    // on this platform and it has been specified in the config and/or request
+    if (m_http_client->client_config().request_compressed_response())
+    {
+        if (!m_request.decompress_factories().empty() || web::http::compression::builtin::supported())
+        {
+            // Accept-Encoding -- request Content-Encoding from the server
+            headers.append(header_names::accept_encoding + U(": "));
+            headers.append(compression::details::build_supported_header(
+                compression::details::header_types::accept_encoding, m_request.decompress_factories()));
+            headers.append(U("\r\n"));
+        }
+    }
+    else if (!m_request.decompress_factories().empty())
+    {
+        // TE -- request Transfer-Encoding from the server
+        headers.append(header_names::connection + U(": TE\r\n") + // Required by Section 4.3 of RFC-7230
+                       header_names::te + U(": "));
+        headers.append(compression::details::build_supported_header(compression::details::header_types::te,
+                                                                    m_request.decompress_factories()));
+        headers.append(U("\r\n"));
+    }
+
+    return headers;
+}
+
 concurrency::streams::streambuf<uint8_t> request_context::_get_readbuffer()
 {
     auto instream = m_request.body();
@@ -112,11 +181,8 @@ concurrency::streams::streambuf<uint8_t> request_context::_get_writebuffer()
     return outstream.streambuf();
 }
 
-request_context::request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
-    : m_http_client(client),
-    m_request(request),
-    m_uploaded(0),
-    m_downloaded(0)
+request_context::request_context(const std::shared_ptr<_http_client_communicator>& client, const http_request& request)
+    : m_http_client(client), m_request(request), m_uploaded(0), m_downloaded(0)
 {
     auto responseImpl = m_response._get_impl();
 
@@ -129,15 +195,14 @@ request_context::request_context(const std::shared_ptr<_http_client_communicator
     responseImpl->_prepare_to_receive_data();
 }
 
-void _http_client_communicator::open_and_send_request_async(const std::shared_ptr<request_context> &request)
+void _http_client_communicator::async_send_request_impl(const std::shared_ptr<request_context>& request)
 {
     auto self = std::static_pointer_cast<_http_client_communicator>(this->shared_from_this());
     // Schedule a task to start sending.
-    pplx::create_task([self, request]
-    {
+    pplx::create_task([self, request] {
         try
         {
-            self->open_and_send_request(request);
+            self->send_request(request);
         }
         catch (...)
         {
@@ -146,24 +211,25 @@ void _http_client_communicator::open_and_send_request_async(const std::shared_pt
     });
 }
 
-void _http_client_communicator::async_send_request(const std::shared_ptr<request_context> &request)
+void _http_client_communicator::async_send_request(const std::shared_ptr<request_context>& request)
 {
     if (m_client_config.guarantee_order())
     {
-        pplx::extensibility::scoped_critical_section_t l(m_open_lock);
+        pplx::extensibility::scoped_critical_section_t l(m_client_lock);
 
-        if (++m_scheduled == 1)
+        if (m_outstanding)
         {
-            open_and_send_request_async(request);
+            m_requests_queue.push(request);
         }
         else
         {
-            m_requests_queue.push(request);
+            async_send_request_impl(request);
+            m_outstanding = true;
         }
     }
     else
     {
-        open_and_send_request_async(request);
+        async_send_request_impl(request);
     }
 }
 
@@ -172,69 +238,29 @@ void _http_client_communicator::finish_request()
     // If guarantee order is specified we don't need to do anything.
     if (m_client_config.guarantee_order())
     {
-        pplx::extensibility::scoped_critical_section_t l(m_open_lock);
+        pplx::extensibility::scoped_critical_section_t l(m_client_lock);
 
-        --m_scheduled;
-
-        if (!m_requests_queue.empty())
+        if (m_requests_queue.empty())
+        {
+            m_outstanding = false;
+        }
+        else
         {
             auto request = m_requests_queue.front();
             m_requests_queue.pop();
 
-            open_and_send_request_async(request);
+            async_send_request_impl(request);
         }
     }
 }
 
-const http_client_config& _http_client_communicator::client_config() const
-{
-    return m_client_config;
-}
+const http_client_config& _http_client_communicator::client_config() const { return m_client_config; }
 
-const uri & _http_client_communicator::base_uri() const
-{
-    return m_uri;
-}
+const uri& _http_client_communicator::base_uri() const { return m_uri; }
 
 _http_client_communicator::_http_client_communicator(http::uri&& address, http_client_config&& client_config)
-    : m_uri(std::move(address)), m_client_config(std::move(client_config)), m_opened(false), m_scheduled(0)
+    : m_uri(std::move(address)), m_client_config(std::move(client_config)), m_outstanding(false)
 {
-}
-
-// Wraps opening the client around sending a request.
-void _http_client_communicator::open_and_send_request(const std::shared_ptr<request_context> &request)
-{
-    // First see if client needs to be opened.
-    unsigned long error = 0;
-
-    if (!m_opened)
-    {
-        pplx::extensibility::scoped_critical_section_t l(m_open_lock);
-
-        // Check again with the lock held
-        if (!m_opened)
-        {
-            error = open();
-
-            if (error == 0)
-            {
-                m_opened = true;
-            }
-        }
-    }
-
-    if (error != 0)
-    {
-        // Failed to open
-        request->report_error(error, _XPLATSTR("Open failed"));
-
-        // DO NOT TOUCH the this pointer after completing the request
-        // This object could be freed along with the request as it could
-        // be the last reference to this object
-        return;
-    }
-
-    send_request(request);
 }
 
 inline void request_context::finish()
@@ -257,14 +283,13 @@ inline void request_context::finish()
 class http_pipeline
 {
 public:
-    http_pipeline(std::shared_ptr<details::_http_client_communicator> last) : m_last_stage(std::move(last))
-    {}
+    http_pipeline(std::shared_ptr<details::_http_client_communicator> last) : m_last_stage(std::move(last)) {}
 
     // pplx::extensibility::recursive_lock_t does not support move/copy, but does not delete the functions either.
-    http_pipeline(const http_pipeline &) = delete;
-    http_pipeline(http_pipeline &&) = delete;
-    http_pipeline & operator=(const http_pipeline &) = delete;
-    http_pipeline & operator=(http_pipeline &&) = delete;
+    http_pipeline(const http_pipeline&) = delete;
+    http_pipeline(http_pipeline&&) = delete;
+    http_pipeline& operator=(const http_pipeline&) = delete;
+    http_pipeline& operator=(http_pipeline&&) = delete;
 
     /// <summary>
     /// Initiate an http request into the pipeline
@@ -284,7 +309,7 @@ public:
     /// Adds an HTTP pipeline stage to the pipeline.
     /// </summary>
     /// <param name="stage">A pipeline stage.</param>
-    void append(const std::shared_ptr<http_pipeline_stage> &stage)
+    void append(const std::shared_ptr<http_pipeline_stage>& stage)
     {
         pplx::extensibility::scoped_recursive_lock_t l(m_lock);
 
@@ -304,19 +329,22 @@ public:
     const std::shared_ptr<details::_http_client_communicator> m_last_stage;
 
 private:
-
     // The vector of pipeline stages.
     std::vector<std::shared_ptr<http_pipeline_stage>> m_stages;
 
     pplx::extensibility::recursive_lock_t m_lock;
 };
 
-void http_client::add_handler(const std::function<pplx::task<http_response> __cdecl(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler)
+void http_client::add_handler(
+    const std::function<pplx::task<http_response> __cdecl(http_request, std::shared_ptr<http::http_pipeline_stage>)>&
+        handler)
 {
     class function_pipeline_wrapper : public http::http_pipeline_stage
     {
     public:
-        function_pipeline_wrapper(const std::function<pplx::task<http_response> __cdecl(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler) : m_handler(handler)
+        function_pipeline_wrapper(const std::function<pplx::task<http_response> __cdecl(
+                                      http_request, std::shared_ptr<http::http_pipeline_stage>)>& handler)
+            : m_handler(handler)
         {
         }
 
@@ -324,23 +352,19 @@ void http_client::add_handler(const std::function<pplx::task<http_response> __cd
         {
             return m_handler(std::move(request), next_stage());
         }
-    private:
 
+    private:
         std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> m_handler;
     };
 
     m_pipeline->append(std::make_shared<function_pipeline_wrapper>(handler));
 }
 
-void http_client::add_handler(const std::shared_ptr<http::http_pipeline_stage> &stage)
-{
-    m_pipeline->append(stage);
-}
+void http_client::add_handler(const std::shared_ptr<http::http_pipeline_stage>& stage) { m_pipeline->append(stage); }
 
-http_client::http_client(const uri &base_uri) : http_client(base_uri, http_client_config())
-{}
+http_client::http_client(const uri& base_uri) : http_client(base_uri, http_client_config()) {}
 
-http_client::http_client(const uri &base_uri, const http_client_config &client_config)
+http_client::http_client(const uri& base_uri, const http_client_config& client_config)
 {
     std::shared_ptr<details::_http_client_communicator> final_pipeline_stage;
 
@@ -350,17 +374,19 @@ http_client::http_client(const uri &base_uri, const http_client_config &client_c
         uribuilder.set_scheme(_XPLATSTR("http"));
         uri uriWithScheme = uribuilder.to_uri();
         verify_uri(uriWithScheme);
-        final_pipeline_stage = details::create_platform_final_pipeline_stage(std::move(uriWithScheme), http_client_config(client_config));
+        final_pipeline_stage =
+            details::create_platform_final_pipeline_stage(std::move(uriWithScheme), http_client_config(client_config));
     }
     else
     {
         verify_uri(base_uri);
-        final_pipeline_stage = details::create_platform_final_pipeline_stage(uri(base_uri), http_client_config(client_config));
+        final_pipeline_stage =
+            details::create_platform_final_pipeline_stage(uri(base_uri), http_client_config(client_config));
     }
 
     m_pipeline = std::make_shared<http_pipeline>(std::move(final_pipeline_stage));
 
-#if !defined(CPPREST_TARGET_XP)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
         std::make_shared<oauth1::details::oauth1_handler>(client_config.oauth1())));
 #endif
@@ -371,22 +397,19 @@ http_client::http_client(const uri &base_uri, const http_client_config &client_c
 
 http_client::~http_client() CPPREST_NOEXCEPT {}
 
-const http_client_config & http_client::client_config() const
-{
-    return m_pipeline->m_last_stage->client_config();
-}
+const http_client_config& http_client::client_config() const { return m_pipeline->m_last_stage->client_config(); }
 
-const uri & http_client::base_uri() const
-{
-    return m_pipeline->m_last_stage->base_uri();
-}
+const uri& http_client::base_uri() const { return m_pipeline->m_last_stage->base_uri(); }
 
 // Macros to help build string at compile time and avoid overhead.
 #define STRINGIFY(x) _XPLATSTR(#x)
 #define TOSTRING(x) STRINGIFY(x)
-#define USERAGENT _XPLATSTR("cpprestsdk/") TOSTRING(CPPREST_VERSION_MAJOR) _XPLATSTR(".") TOSTRING(CPPREST_VERSION_MINOR) _XPLATSTR(".") TOSTRING(CPPREST_VERSION_REVISION)
+#define USERAGENT                                                                                                      \
+    _XPLATSTR("cpprestsdk/")                                                                                           \
+    TOSTRING(CPPREST_VERSION_MAJOR)                                                                                    \
+    _XPLATSTR(".") TOSTRING(CPPREST_VERSION_MINOR) _XPLATSTR(".") TOSTRING(CPPREST_VERSION_REVISION)
 
-pplx::task<http_response> http_client::request(http_request request, const pplx::cancellation_token &token)
+pplx::task<http_response> http_client::request(http_request request, const pplx::cancellation_token& token)
 {
     if (!request.headers().has(header_names::user_agent))
     {
@@ -398,5 +421,6 @@ pplx::task<http_response> http_client::request(http_request request, const pplx:
     return m_pipeline->propagate(request);
 }
 
-
-}}}
+} // namespace client
+} // namespace http
+} // namespace web

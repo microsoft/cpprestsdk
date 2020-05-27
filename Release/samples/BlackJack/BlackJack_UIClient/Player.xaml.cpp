@@ -1,16 +1,18 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Player.xaml.cpp: Implementation of the Player class.
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Player.xaml.cpp: Implementation of the Player class.
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "pch.h"
+
 #include "Player.xaml.h"
+
 #include "CardShape.xaml.h"
 #include "cpprest/uri.h"
 
@@ -52,7 +54,13 @@ void PlayerSpace::Update(Player player)
     playerName->Text = ref new Platform::String(web::uri::decode(player.Name).c_str());
     playerBalance->Text = "$" + player.Balance.ToString();
     playerBet->Text = "Bet: $" + player.Hand.bet.ToString();
-    playerInsurance->Text = (player.Hand.insurance > 0) ? "Ins: $" + player.Hand.insurance.ToString() : "";
+    if (player.Hand.insurance > 0) {
+        auto& text = playerInsurance->Text;
+        text.assign("Ins: $");
+        text.append(std::to_string(player.Hand.insurance));
+    } else {
+        text.clear();
+    }
 }
 
 void PlayerSpace::AddCard(Card card)
@@ -83,11 +91,23 @@ void PlayerSpace::ShowResult(BJHandResult result)
 {
     switch (result)
     {
-    case BJHandResult::HR_ComputerWin: playerInsurance->Text = L"Dealer Wins"; playerBet->Text = L""; break;
-    case BJHandResult::HR_PlayerWin: playerInsurance->Text = L"Player Wins"; playerBet->Text = L""; break;
-    case BJHandResult::HR_Push: playerInsurance->Text = L"Push"; playerBet->Text = L""; break;
-    case BJHandResult::HR_PlayerBlackJack: playerInsurance->Text = L"Blackjack!"; playerBet->Text = L""; break;
-    default: break;
+        case BJHandResult::HR_ComputerWin:
+            playerInsurance->Text = L"Dealer Wins";
+            playerBet->Text.clear();
+            break;
+        case BJHandResult::HR_PlayerWin:
+            playerInsurance->Text = L"Player Wins";
+            playerBet->Text.clear();
+            break;
+        case BJHandResult::HR_Push:
+            playerInsurance->Text = L"Push";
+            playerBet->Text.clear();
+            break;
+        case BJHandResult::HR_PlayerBlackJack:
+            playerInsurance->Text = L"Blackjack!";
+            playerBet->Text.clear();
+            break;
+        default: break;
     }
     UpdateLayout();
 }

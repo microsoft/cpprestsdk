@@ -5,8 +5,9 @@ endif()
 add_executable(blackjackserver
   BlackJack_Server.cpp
   Dealer.cpp
-  stdafx.cpp
   Table.cpp
   )
 
 target_link_libraries(blackjackserver cpprest)
+
+configure_pch(blackjackserver stdafx.h stdafx.cpp /Zm120)

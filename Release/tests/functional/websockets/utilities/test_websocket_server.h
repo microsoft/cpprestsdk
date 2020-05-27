@@ -1,21 +1,22 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* test_websocket_server.h -- Defines a test server to handle incoming and outgoing messages.
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * test_websocket_server.h -- Defines a test server to handle incoming and outgoing messages.
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #pragma once
 
-#include <map>
-#include <sstream>
-#include <iostream>
-#include <mutex>
 #include <condition_variable>
+#include <iostream>
+#include <map>
+#include <mutex>
+#include <sstream>
+#include <unittestpp.h>
 
 #ifndef WEBSOCKET_UTILITY_API
 #ifdef WEBSOCKETTESTUTILITY_EXPORTS
@@ -27,19 +28,26 @@
 
 #if !defined(_M_ARM) || defined(__cplusplus_winrt)
 
-namespace tests { namespace functional { namespace websocket { namespace utilities {
-
+namespace tests
+{
+namespace functional
+{
+namespace websocket
+{
+namespace utilities
+{
 class _test_websocket_server;
 
 // The different types of a websocket message.
 enum test_websocket_message_type
 {
-  WEB_SOCKET_BINARY_MESSAGE_TYPE,
-  WEB_SOCKET_BINARY_FRAGMENT_TYPE,
-  WEB_SOCKET_UTF8_MESSAGE_TYPE,
-  WEB_SOCKET_UTF8_FRAGMENT_TYPE,
-  WEB_SOCKET_CLOSE_TYPE,
-  WEB_SOCKET_PONG_TYPE
+    WEB_SOCKET_BINARY_MESSAGE_TYPE,
+    WEB_SOCKET_BINARY_FRAGMENT_TYPE,
+    WEB_SOCKET_UTF8_MESSAGE_TYPE,
+    WEB_SOCKET_UTF8_FRAGMENT_TYPE,
+    WEB_SOCKET_CLOSE_TYPE,
+    WEB_SOCKET_PING_TYPE,
+    WEB_SOCKET_PONG_TYPE
 };
 
 // Interface containing details about the HTTP handshake request received by the test server.
@@ -61,13 +69,14 @@ public:
     void set_status_code(unsigned short code) { m_status_code = code; }
     const std::string& realm() const { return m_realm; }
     unsigned short status_code() const { return m_status_code; }
+
 private:
     std::string m_realm;
     unsigned short m_status_code;
 };
 
 // Represents a websocket message at the test server.
-// Contains a vector that can contain text/binary data 
+// Contains a vector that can contain text/binary data
 // and a type variable to denote the message type.
 class test_websocket_msg
 {
@@ -86,13 +95,17 @@ private:
 class websocket_asserts
 {
 public:
-    static void assert_message_equals(test_websocket_msg& msg, const std::string& expected_data, test_websocket_message_type expected_flag)
+    static void assert_message_equals(test_websocket_msg& msg,
+                                      const std::string& expected_data,
+                                      test_websocket_message_type expected_flag)
     {
         std::vector<unsigned char> temp_vec(expected_data.begin(), expected_data.end());
         assert_message_equals(msg, temp_vec, expected_flag);
     }
 
-    static void assert_message_equals(test_websocket_msg& msg, const std::vector<unsigned char>& expected_data, test_websocket_message_type expected_flag)
+    static void assert_message_equals(test_websocket_msg& msg,
+                                      const std::vector<unsigned char>& expected_data,
+                                      test_websocket_message_type expected_flag)
     {
         VERIFY_ARE_EQUAL(msg.msg_type(), expected_flag);
         auto& data = msg.data();
@@ -105,8 +118,8 @@ private:
     ~websocket_asserts() CPPREST_NOEXCEPT {}
 };
 
-// Test websocket server. 
-class test_websocket_server 
+// Test websocket server.
+class test_websocket_server
 {
 public:
     WEBSOCKET_UTILITY_API test_websocket_server();
@@ -114,11 +127,11 @@ public:
     // Tests can add a handler to handle (verify) the next message received by the server.
     // If the test plans to send n messages, n handlers must be registered.
     // The server will call the handler in order, for each incoming message.
-    WEBSOCKET_UTILITY_API void next_message(std::function<void __cdecl (test_websocket_msg)> msg_handler);
+    WEBSOCKET_UTILITY_API void next_message(std::function<void __cdecl(test_websocket_msg)> msg_handler);
     WEBSOCKET_UTILITY_API std::function<void(test_websocket_msg)> get_next_message_handler();
 
     // Handler for initial HTTP request.
-    typedef std::function<test_http_response __cdecl (test_http_request)> http_handler;
+    typedef std::function<test_http_response __cdecl(test_http_request)> http_handler;
     WEBSOCKET_UTILITY_API void set_http_handler(http_handler handler) { m_http_handler = handler; }
     WEBSOCKET_UTILITY_API http_handler get_http_handler() { return m_http_handler; }
 
@@ -127,7 +140,6 @@ public:
     WEBSOCKET_UTILITY_API std::shared_ptr<_test_websocket_server> get_impl();
 
 private:
-
 #if !defined(_MSC_VER) || _MSC_VER >= 1800
     test_websocket_server(const test_websocket_server&) = delete;
     test_websocket_server& operator=(const test_websocket_server&) = delete;
@@ -139,11 +151,14 @@ private:
     // Note: This queue is not thread-safe. Use m_handler_queue_lock to synchronize.
     std::mutex m_handler_queue_lock;
     std::queue<std::function<void(test_websocket_msg)>> m_handler_queue;
-    // Handler to address the HTTP handshake request. To be used in scenarios where tests may wish to fail the HTTP request
-    // and not proceed with the websocket connection.
+    // Handler to address the HTTP handshake request. To be used in scenarios where tests may wish to fail the HTTP
+    // request and not proceed with the websocket connection.
     http_handler m_http_handler;
     std::shared_ptr<_test_websocket_server> m_p_impl;
 };
-}}}}
+} // namespace utilities
+} // namespace websocket
+} // namespace functional
+} // namespace tests
 
 #endif

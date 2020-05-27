@@ -1,28 +1,77 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* messagetypes.h 
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * messagetypes.h
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #pragma once
 #include "stdafx.h"
 
-enum BJHandResult { HR_None, HR_PlayerBlackJack, HR_PlayerWin, HR_ComputerWin, HR_Push };
+enum BJHandResult
+{
+    HR_None,
+    HR_PlayerBlackJack,
+    HR_PlayerWin,
+    HR_ComputerWin,
+    HR_Push
+};
 
-enum BJHandState { HR_Empty, HR_BlackJack, HR_Active, HR_Held, HR_Busted };
+enum BJHandState
+{
+    HR_Empty,
+    HR_BlackJack,
+    HR_Active,
+    HR_Held,
+    HR_Busted
+};
 
-enum BJPossibleMoves { PM_None = 0x0, PM_Hit = 0x1, PM_DoubleDown = 0x2, PM_Split = 0x4, PM_All = 0x7 };
+enum BJPossibleMoves
+{
+    PM_None = 0x0,
+    PM_Hit = 0x1,
+    PM_DoubleDown = 0x2,
+    PM_Split = 0x4,
+    PM_All = 0x7
+};
 
-enum CardSuit { CS_Heart, CS_Diamond, CS_Club, CS_Spade };
+enum CardSuit
+{
+    CS_Heart,
+    CS_Diamond,
+    CS_Club,
+    CS_Spade
+};
 
-enum CardValue { CV_None, CV_Ace, CV_Two, CV_Three, CV_Four, CV_Five, CV_Six, CV_Seven, CV_Eight, CV_Nine, CV_Ten, CV_Jack, CV_Queen, CV_King };
+enum CardValue
+{
+    CV_None,
+    CV_Ace,
+    CV_Two,
+    CV_Three,
+    CV_Four,
+    CV_Five,
+    CV_Six,
+    CV_Seven,
+    CV_Eight,
+    CV_Nine,
+    CV_Ten,
+    CV_Jack,
+    CV_Queen,
+    CV_King
+};
 
-enum BJStatus { ST_PlaceBet, ST_Refresh, ST_YourTurn, ST_None };
+enum BJStatus
+{
+    ST_PlaceBet,
+    ST_Refresh,
+    ST_YourTurn,
+    ST_None
+};
 
 #define STATE U("state")
 #define BET U("bet")
@@ -54,7 +103,7 @@ struct Card
     CardSuit suit;
     CardValue value;
 
-    static Card FromJSON(const web::json::object & object)
+    static Card FromJSON(const web::json::object& object)
     {
         Card result;
         result.suit = (CardSuit)object.at(SUIT).as_integer();
@@ -62,7 +111,7 @@ struct Card
         return result;
     }
 
-    web::json::value AsJSON() const 
+    web::json::value AsJSON() const
     {
         web::json::value result = web::json::value::object();
         result[SUIT] = web::json::value::number(suit);
@@ -91,18 +140,24 @@ struct BJHand
 
     BJHand() : state(HR_Empty), result(HR_None), bet(0.0), insurance(0), revealBoth(true) {}
 
-    void Clear() { cards.clear(); state = HR_Empty; result = HR_None; insurance = 0.0; }
+    void Clear()
+    {
+        cards.clear();
+        state = HR_Empty;
+        result = HR_None;
+        insurance = 0.0;
+    }
 
     void AddCard(Card card)
-    { 
-        cards.push_back(card); 
+    {
+        cards.push_back(card);
         NumericHandValues value = GetNumericValues();
 
-        if ( cards.size() == 2 && value.high == 21 )
+        if (cards.size() == 2 && value.high == 21)
         {
             state = HR_BlackJack;
         }
-        else if ( value.low > 21 )
+        else if (value.low > 21)
         {
             state = HR_Busted;
         }
@@ -122,15 +177,15 @@ struct BJHand
 
         for (auto iter = cards.begin(); iter != cards.end(); ++iter)
         {
-            if ( iter->value == CV_Ace ) hasAces = true;
+            if (iter->value == CV_Ace) hasAces = true;
 
-            res.low += std::min((int)iter->value, 10);
+            res.low += (std::min)((int)iter->value, 10);
         }
         res.high = hasAces ? res.low + 10 : res.low;
         return res;
     }
 
-    static BJHand FromJSON(const web::json::object &object)
+    static BJHand FromJSON(const web::json::object& object)
     {
         BJHand res;
 
@@ -138,7 +193,7 @@ struct BJHand
 
         for (auto iter = cs.as_array().begin(); iter != cs.as_array().end(); ++iter)
         {
-            if ( !iter->is_null() )
+            if (!iter->is_null())
             {
                 Card card;
                 card = Card::FromJSON(iter->as_object());
@@ -146,13 +201,12 @@ struct BJHand
             }
         }
 
-        
         auto iState = object.find(STATE);
         if (iState == object.end())
         {
             throw web::json::json_exception(U("STATE key not found"));
         }
-        res.state     = (BJHandState)iState->second.as_integer();
+        res.state = (BJHandState)iState->second.as_integer();
         auto iBet = object.find(BET);
         if (iBet == object.end())
         {
@@ -174,7 +228,7 @@ struct BJHand
         return res;
     }
 
-    web::json::value AsJSON() const 
+    web::json::value AsJSON() const
     {
         web::json::value res = web::json::value::object();
         res[STATE] = web::json::value::number(state);
@@ -184,7 +238,7 @@ struct BJHand
 
         web::json::value jCards = web::json::value::array(cards.size());
 
-        if ( revealBoth )
+        if (revealBoth)
         {
             int idx = 0;
             for (auto iter = cards.begin(); iter != cards.end(); ++iter)
@@ -213,30 +267,30 @@ struct Player
     double Balance;
 
     Player() {}
-    Player(const utility::string_t &name) : Name(name), Balance(1000.0) {}
+    Player(const utility::string_t& name) : Name(name), Balance(1000.0) {}
 
-    static Player FromJSON(const web::json::object &object)
+    static Player FromJSON(const web::json::object& object)
     {
-        Player result(U(""));
+        Player result(utility::string_t{});
 
         auto iName = object.find(NAME);
         if (iName == object.end())
         {
             throw web::json::json_exception(U("NAME key not found"));
         }
-        const web::json::value &name = iName->second;
+        const web::json::value& name = iName->second;
         auto iBalance = object.find(BALANCE);
         if (iBalance == object.end())
         {
             throw web::json::json_exception(U("BALANCE key not found"));
         }
-        const web::json::value &balance = iBalance->second;
+        const web::json::value& balance = iBalance->second;
         auto iHand = object.find(HAND);
         if (iHand == object.end())
         {
             throw web::json::json_exception(U("HAND key not found"));
         }
-        const web::json::value &hand = iHand->second;
+        const web::json::value& hand = iHand->second;
 
         result.Name = name.as_string();
         result.Balance = balance.as_double();
@@ -244,7 +298,7 @@ struct Player
         return result;
     }
 
-    web::json::value AsJSON() const 
+    web::json::value AsJSON() const
     {
         web::json::value result = web::json::value::object();
         result[NAME] = web::json::value::string(Name);
@@ -263,7 +317,7 @@ struct BJTable
     BJTable() : Capacity(0) {}
     BJTable(int id, size_t capacity) : Id(id), Capacity(capacity) { Players.push_back(Player(DEALER)); }
 
-    static BJTable FromJSON(const web::json::object &object)
+    static BJTable FromJSON(const web::json::object& object)
     {
         BJTable result;
         auto iID = object.find(ID);
@@ -279,7 +333,6 @@ struct BJTable
         }
         result.Capacity = (size_t)iCapacity->second.as_double();
 
-        
         auto iPlayers = object.find(PLAYERS);
         if (iPlayers == object.end())
         {
@@ -296,7 +349,7 @@ struct BJTable
         return result;
     }
 
-    web::json::value AsJSON() const 
+    web::json::value AsJSON() const
     {
         web::json::value result = web::json::value::object();
         result[ID] = web::json::value::number((double)Id);
@@ -316,18 +369,18 @@ struct BJTable
 
 struct BJPutResponse
 {
-    BJStatus    Status;
+    BJStatus Status;
     web::json::value Data;
 
     BJPutResponse() {}
-    BJPutResponse(BJStatus status, web::json::value data) : Status(status), Data(data) { }
+    BJPutResponse(BJStatus status, web::json::value data) : Status(status), Data(data) {}
 
     static BJPutResponse FromJSON(web::json::value object)
     {
         return BJPutResponse((BJStatus)(int)object[STATUS].as_double(), object[DATA]);
     }
 
-    web::json::value AsJSON() const 
+    web::json::value AsJSON() const
     {
         web::json::value result = web::json::value::object();
         result[STATUS] = web::json::value::number((double)Status);
@@ -336,7 +389,8 @@ struct BJPutResponse
     }
 };
 
-inline web::json::value TablesAsJSON(const utility::string_t &name, const std::map<utility::string_t, std::shared_ptr<BJTable>> &tables)
+inline web::json::value TablesAsJSON(const utility::string_t& name,
+                                     const std::map<utility::string_t, std::shared_ptr<BJTable>>& tables)
 {
     web::json::value result = web::json::value::array();
 
@@ -347,4 +401,3 @@ inline web::json::value TablesAsJSON(const utility::string_t &name, const std::m
     }
     return result;
 }
-

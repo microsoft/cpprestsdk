@@ -1,21 +1,22 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-**/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ **/
 // TestRunner.cpp : Defines the entry point for the console application.
 //
 
-#include <map>
-#include <vector>
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <regex>
+#include <vector>
 
 #ifdef _WIN32
-#include <Windows.h>
 #include <conio.h>
+
+#include <Windows.h>
 #else
 #include <unistd.h>
 #ifdef __APPLE__
@@ -25,15 +26,16 @@
 #endif
 #endif
 
+#include "../UnitTestpp/src/GlobalSettings.h"
 #include "../UnitTestpp/src/TestReporterStdout.h"
 #include "../UnitTestpp/src/TimeHelpers.h"
-#include "../UnitTestpp/src/GlobalSettings.h"
-
 #include "test_module_loader.h"
 
 static void print_help()
 {
-    std::cout << "Usage: testrunner.exe <test_binaries> [/list] [/listproperties] [/noignore] [/breakonerror] [/detectleaks]" <<std::endl;
+    std::cout
+        << "Usage: testrunner.exe <test_binaries> [/list] [/listproperties] [/noignore] [/breakonerror] [/detectleaks]"
+        << std::endl;
     std::cout << "    [/name:<test_name>] [/select:@key=value] [/loop:<num_times>]" << std::endl;
     std::cout << std::endl;
     std::cout << "    /list              List all the names of the test_binaries and their" << std::endl;
@@ -56,13 +58,13 @@ static void print_help()
 
     std::cout << std::endl;
     std::cout << "Can also specify general global settings with the following:" << std::endl;
-    std::cout << "    /global_key:global_value OR /global_key"  << std::endl << std::endl;
+    std::cout << "    /global_key:global_value OR /global_key" << std::endl << std::endl;
 }
 
-static std::string to_lower(const std::string &str)
+static std::string to_lower(const std::string& str)
 {
     std::string lower;
-    for(auto iter = str.begin(); iter != str.end(); ++iter)
+    for (auto iter = str.begin(); iter != str.end(); ++iter)
     {
         lower.push_back((char)tolower(*iter));
     }
@@ -85,20 +87,20 @@ static std::vector<std::string> get_files_in_directory()
     }
     else
     {
-      std::cout << "Could not determine execution directory" << std::endl;
-      exit(-1);
+        std::cout << "Could not determine execution directory" << std::endl;
+        exit(-1);
     }
 
     exe_directory.append("*");
     WIN32_FIND_DATAA findFileData;
     HANDLE hFind = FindFirstFileA(exe_directory.c_str(), &findFileData);
-    if(hFind != INVALID_HANDLE_VALUE && !(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+    if (hFind != INVALID_HANDLE_VALUE && !(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
     {
         files.push_back(findFileData.cFileName);
     }
-    while(FindNextFileA(hFind, &findFileData) != 0)
+    while (FindNextFileA(hFind, &findFileData) != 0)
     {
-        if(!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
         {
             files.push_back(findFileData.cFileName);
         }
@@ -108,12 +110,12 @@ static std::vector<std::string> get_files_in_directory()
 #elif defined(__APPLE__)
     auto exe_directory = getcwd(nullptr, 0);
 
-    DIR *dir = opendir(exe_directory);
+    DIR* dir = opendir(exe_directory);
     free(exe_directory);
 
     if (dir != nullptr)
     {
-        struct dirent *ent = readdir(dir);
+        struct dirent* ent = readdir(dir);
         while (ent != nullptr)
         {
             if (ent->d_type == DT_REG)
@@ -121,7 +123,7 @@ static std::vector<std::string> get_files_in_directory()
                 files.push_back(ent->d_name);
             }
             ent = readdir(dir);
-    }
+        }
         closedir(dir);
     }
 #else
@@ -140,12 +142,12 @@ static std::vector<std::string> get_files_in_directory()
     return files;
 }
 
-static std::string replace_wildcard_for_regex(const std::string &str)
+static std::string replace_wildcard_for_regex(const std::string& str)
 {
     std::string result;
-    for(auto iter = str.begin(); iter != str.end(); ++iter)
+    for (auto iter = str.begin(); iter != str.end(); ++iter)
     {
-        if(*iter == '*')
+        if (*iter == '*')
         {
             result.push_back('.');
         }
@@ -154,13 +156,13 @@ static std::string replace_wildcard_for_regex(const std::string &str)
     return result;
 }
 
-static std::vector<std::string> get_matching_binaries(const std::string &dllName)
+static std::vector<std::string> get_matching_binaries(const std::string& dllName)
 {
     std::vector<std::string> matchingFiles;
 
     // If starts with .\ remove it.
     std::string expandedDllName(dllName);
-    if(expandedDllName.size() > 2 && expandedDllName[0] == '.' && expandedDllName[1] == '\\')
+    if (expandedDllName.size() > 2 && expandedDllName[0] == '.' && expandedDllName[1] == '\\')
     {
         expandedDllName = expandedDllName.substr(2);
     }
@@ -168,7 +170,7 @@ static std::vector<std::string> get_matching_binaries(const std::string &dllName
     // Escape any '.'
     size_t oldLocation = 0;
     size_t location = expandedDllName.find(".", oldLocation);
-    while(location != std::string::npos)
+    while (location != std::string::npos)
     {
         expandedDllName.insert(expandedDllName.find(".", oldLocation), "\\");
         oldLocation = location + 2;
@@ -183,9 +185,9 @@ static std::vector<std::string> get_matching_binaries(const std::string &dllName
     // Filter out any files that don't match.
     std::regex dllRegex(expandedDllName, std::regex_constants::icase);
 
-    for(auto iter = allFiles.begin(); iter != allFiles.end(); ++iter)
+    for (auto iter = allFiles.begin(); iter != allFiles.end(); ++iter)
     {
-        if(std::regex_match(*iter, dllRegex))
+        if (std::regex_match(*iter, dllRegex))
         {
             matchingFiles.push_back(*iter);
         }
@@ -198,29 +200,28 @@ static std::multimap<std::string, std::string> g_properties;
 static std::vector<std::string> g_test_binaries;
 static int g_individual_test_timeout = 60000 * 3;
 
-static int parse_command_line(int argc, char **argv)
+static int parse_command_line(int argc, char** argv)
 {
-
-    for(int i = 1; i < argc; ++i)
+    for (int i = 1; i < argc; ++i)
     {
         std::string arg(argv[i]);
         arg = to_lower(arg);
 
-        if(arg.compare("/?") == 0)
+        if (arg.compare("/?") == 0)
         {
             print_help();
             return -1;
         }
-        else if(arg.find("/") == 0)
+        else if (arg.find("/") == 0)
         {
-            if(arg.find("/select:@") == 0)
+            if (arg.find("/select:@") == 0)
             {
                 std::string prop_asgn = std::string(argv[i]).substr(std::string("/select:@").size());
                 auto eqsgn = prop_asgn.find('=');
                 if (eqsgn < prop_asgn.size())
                 {
-                    auto key = prop_asgn.substr(0,eqsgn);
-                    auto value = prop_asgn.substr(eqsgn+1);
+                    auto key = prop_asgn.substr(0, eqsgn);
+                    auto value = prop_asgn.substr(eqsgn + 1);
                     g_properties.insert(std::make_pair(key, value));
                 }
                 else
@@ -228,7 +229,7 @@ static int parse_command_line(int argc, char **argv)
                     g_properties.insert(std::make_pair(prop_asgn, "*"));
                 }
             }
-            else if(arg.find(":") != std::string::npos)
+            else if (arg.find(":") != std::string::npos)
             {
                 const size_t index = arg.find(":");
                 const std::string key = std::string(argv[i]).substr(1, index - 1);
@@ -237,10 +238,10 @@ static int parse_command_line(int argc, char **argv)
             }
             else
             {
-                UnitTest::GlobalSettings::Add(arg.substr(1), "");
+                UnitTest::GlobalSettings::Add(arg.substr(1), std::string{});
             }
         }
-        else if(arg.find("/debug") == 0)
+        else if (arg.find("/debug") == 0)
         {
             printf("Attach debugger now...\n");
             int temp;
@@ -259,17 +260,17 @@ static bool matched_properties(const UnitTest::TestProperties& test_props)
 {
     // TestRunner can only execute either desktop or winrt tests, but not both.
     // This starts with visual studio versions after VS 2012.
-#if defined (_MSC_VER) && (_MSC_VER >= 1800)
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #ifdef WINRT_TEST_RUNNER
-    UnitTest::GlobalSettings::Add("winrt", "");
+    UnitTest::GlobalSettings::Add("winrt", std::string{});
 #elif defined DESKTOP_TEST_RUNNER
-    UnitTest::GlobalSettings::Add("desktop", "");
+    UnitTest::GlobalSettings::Add("desktop", std::string{});
 #endif
 #endif
 
     // The 'Require' property on a test case is special.
     // It requires a certain global setting to be fulfilled to execute.
-    if(test_props.Has("Requires"))
+    if (test_props.Has("Requires"))
     {
         const std::string requires = test_props.Get("Requires");
         std::vector<std::string> requirements;
@@ -277,31 +278,30 @@ static bool matched_properties(const UnitTest::TestProperties& test_props)
         // Can be multiple requirements, a semi colon seperated list
         std::string::size_type pos = requires.find_first_of(';');
         std::string::size_type last_pos = 0;
-        while(pos != std::string::npos)
+        while (pos != std::string::npos)
         {
             requirements.push_back(requires.substr(last_pos, pos - last_pos));
             last_pos = pos + 1;
             pos = requires.find_first_of(';', last_pos);
         }
         requirements.push_back(requires.substr(last_pos));
-        for(auto iter = requirements.begin(); iter != requirements.end(); ++iter)
+        for (auto iter = requirements.begin(); iter != requirements.end(); ++iter)
         {
-            if(!UnitTest::GlobalSettings::Has(to_lower(*iter)))
+            if (!UnitTest::GlobalSettings::Has(to_lower(*iter)))
             {
                 return false;
             }
         }
     }
 
-    if (g_properties.size() == 0)
-        return true;
+    if (g_properties.size() == 0) return true;
 
     // All the properties specified at the cmd line act as a 'filter'.
     for (auto iter = g_properties.begin(); iter != g_properties.end(); ++iter)
     {
         auto name = iter->first;
         auto value = iter->second;
-        if (test_props.Has(name) && (value == "*" || test_props[name] == value) )
+        if (test_props.Has(name) && (value == "*" || test_props[name] == value))
         {
             return true;
         }
@@ -310,24 +310,25 @@ static bool matched_properties(const UnitTest::TestProperties& test_props)
 }
 
 // Functions to list all the test cases and their properties.
-static void handle_list_option(bool listProperties, const UnitTest::TestList &tests, const std::regex &nameRegex)
+static void handle_list_option(bool listProperties, const UnitTest::TestList& tests, const std::regex& nameRegex)
 {
-    UnitTest::Test *pTest = tests.GetFirst();
-    while(pTest != nullptr)
+    UnitTest::Test* pTest = tests.GetFirst();
+    while (pTest != nullptr)
     {
         std::string fullTestName = pTest->m_details.suiteName;
         fullTestName.append(":");
         fullTestName.append(pTest->m_details.testName);
 
-        if(matched_properties(pTest->m_properties) && std::regex_match(fullTestName, nameRegex))
+        if (matched_properties(pTest->m_properties) && std::regex_match(fullTestName, nameRegex))
         {
             std::cout << "    " << fullTestName << std::endl;
-            if(listProperties)
+            if (listProperties)
             {
-                std::for_each(pTest->m_properties.begin(), pTest->m_properties.end(), [&](const std::pair<std::string, std::string> key_value)
-                {
-                    std::cout << "        " << key_value.first << ": " << key_value.second << std::endl;
-                });
+                std::for_each(pTest->m_properties.begin(),
+                              pTest->m_properties.end(),
+                              [&](const std::pair<std::string, std::string> key_value) {
+                                  std::cout << "        " << key_value.first << ": " << key_value.second << std::endl;
+                              });
             }
         }
         pTest = pTest->m_nextTest;
@@ -336,7 +337,8 @@ static void handle_list_option(bool listProperties, const UnitTest::TestList &te
 
 static void ChangeConsoleTextColorToRed()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0004 | 0x0008);
 #else
     std::cout << "\033[1;31m";
@@ -345,7 +347,8 @@ static void ChangeConsoleTextColorToRed()
 
 static void ChangeConsoleTextColorToGreen()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0002 | 0x0008);
 #else
     std::cout << "\033[1;32m";
@@ -354,24 +357,25 @@ static void ChangeConsoleTextColorToGreen()
 
 static void ChangeConsoleTextColorToGrey()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 #else
     std::cout << "\033[0m";
 #endif
 }
 
-bool IsTestIgnored(UnitTest::Test *pTest)
+bool IsTestIgnored(UnitTest::Test* pTest)
 {
-    if(pTest->m_properties.Has("Ignore")) return true;
+    if (pTest->m_properties.Has("Ignore")) return true;
 #ifdef _WIN32
-    if(pTest->m_properties.Has("Ignore:Windows")) return true;
+    if (pTest->m_properties.Has("Ignore:Windows")) return true;
 #elif defined(__APPLE__)
-    if(pTest->m_properties.Has("Ignore:Apple")) return true;
+    if (pTest->m_properties.Has("Ignore:Apple")) return true;
 #elif (defined(ANDROID) || defined(__ANDROID__))
-    if(pTest->m_properties.Has("Ignore:Android")) return true;
+    if (pTest->m_properties.Has("Ignore:Android")) return true;
 #else
-    if(pTest->m_properties.Has("Ignore:Linux")) return true;
+    if (pTest->m_properties.Has("Ignore:Linux")) return true;
 #endif
     return false;
 }
@@ -406,7 +410,7 @@ testlist_t load_all_tests(test_module_loader& module_loader)
     testlist_t testlists;
 
     // Retrieve the static tests and clear for dll loading.
-    testlists.emplace("<static>", UnitTest::GetTestList());
+    testlists.insert({"<static>", UnitTest::GetTestList()});
     UnitTest::GetTestList().Clear();
 
     // Cycle through all the test binaries and load them
@@ -422,14 +426,13 @@ testlist_t load_all_tests(test_module_loader& module_loader)
         for (auto& binary : matchingBinaries)
         {
             unsigned long error_code = module_loader.load(binary);
-            if(error_code != 0)
+            if (error_code != 0)
             {
                 // Only omit an error if a wildcard wasn't used.
-                if(binary_names.find('*') == std::string::npos)
+                if (binary_names.find('*') == std::string::npos)
                 {
                     ChangeConsoleTextColorToRed();
-                    std::cout << "Error loading " << binary << ": "
-                              << error_code << std::endl;
+                    std::cout << "Error loading " << binary << ": " << error_code << std::endl;
                     ChangeConsoleTextColorToGrey();
 
                     std::exit(error_code);
@@ -442,7 +445,7 @@ testlist_t load_all_tests(test_module_loader& module_loader)
             std::cout << "Loaded " << binary << "..." << std::endl;
 
             // Store the loaded binary into the test list map
-            testlists.emplace(binary, UnitTest::GetTestList());
+            testlists.insert({binary, UnitTest::GetTestList()});
             UnitTest::GetTestList().Clear();
         }
     }
@@ -453,7 +456,7 @@ testlist_t load_all_tests(test_module_loader& module_loader)
 void run_all_tests(UnitTest::TestRunner& testRunner, testlist_t& testlists)
 {
     int numTimesToRun = 1;
-    if(UnitTest::GlobalSettings::Has("loop"))
+    if (UnitTest::GlobalSettings::Has("loop"))
     {
         std::istringstream strstream(UnitTest::GlobalSettings::Get("loop"));
         strstream >> numTimesToRun;
@@ -461,7 +464,7 @@ void run_all_tests(UnitTest::TestRunner& testRunner, testlist_t& testlists)
 
     const bool include_ignored_tests = UnitTest::GlobalSettings::Has("noignore");
 
-    for(int i = 0; i < numTimesToRun; ++i)
+    for (int i = 0; i < numTimesToRun; ++i)
     {
         for (auto& test_p : testlists)
         {
@@ -470,33 +473,37 @@ void run_all_tests(UnitTest::TestRunner& testRunner, testlist_t& testlists)
 
             std::regex nameRegex(".*");
 
-            if(UnitTest::GlobalSettings::Has("name"))
+            if (UnitTest::GlobalSettings::Has("name"))
             {
                 nameRegex = replace_wildcard_for_regex(UnitTest::GlobalSettings::Get("name"));
             }
-            testRunner.RunTestsIf(
-                tests,
-                [&](UnitTest::Test *pTest) -> bool
-                {
-                    // Combine suite and test name
-                    std::string fullTestName = pTest->m_details.suiteName;
-                    fullTestName.append(":");
-                    fullTestName.append(pTest->m_details.testName);
+            testRunner.RunTestsIf(tests,
+                                  [&](UnitTest::Test* pTest) -> bool {
+                                      // Combine suite and test name
+                                      std::string fullTestName = pTest->m_details.suiteName;
+                                      fullTestName.append(":");
+                                      fullTestName.append(pTest->m_details.testName);
 
-                    if(IsTestIgnored(pTest) && !include_ignored_tests)
-                        return false;
-                    else
-                        return matched_properties(pTest->m_properties) &&
-                            std::regex_match(fullTestName, nameRegex);
-                },
-                g_individual_test_timeout);
+                                      if (IsTestIgnored(pTest) && !include_ignored_tests)
+                                          return false;
+                                      else
+                                          return matched_properties(pTest->m_properties) &&
+                                                 std::regex_match(fullTestName, nameRegex);
+                                  },
+                                  g_individual_test_timeout);
         }
     }
 }
 
+#if defined(__cplusplus_winrt)
+#include "ROApi.h"
+#endif
+
 int main(int argc, char* argv[])
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+    Windows::Foundation::Initialize(RO_INIT_MULTITHREADED);
+#elif defined(_WIN32)
     // Add standard error as output as well.
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW | _CRTDBG_MODE_DEBUG);
     _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
@@ -509,35 +516,33 @@ int main(int argc, char* argv[])
     // Obviously in that case WinRT test cases can't run, but non WinRT ones should be
     // fine. So dynamically try to call RoInitialize/RoUninitialize.
     HMODULE hComBase = LoadLibrary(L"combase.dll");
-    if(hComBase != nullptr)
+    if (hComBase != nullptr)
     {
-        typedef HRESULT (WINAPI *RoInit)(int);
+        typedef HRESULT(WINAPI * RoInit)(int);
         RoInit roInitFunc = (RoInit)GetProcAddress(hComBase, "RoInitialize");
-        if(roInitFunc != nullptr)
+        if (roInitFunc != nullptr)
         {
             roInitFunc(1); // RO_INIT_MULTITHREADED
         }
     }
 
-    struct console_restorer {
+    struct console_restorer
+    {
         CONSOLE_SCREEN_BUFFER_INFO m_originalConsoleInfo;
-        console_restorer()
-        {
-            GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &m_originalConsoleInfo);
-        }
+        console_restorer() { GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &m_originalConsoleInfo); }
         ~console_restorer()
         {
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), m_originalConsoleInfo.wAttributes);
         }
-    }local;
+    } local;
 #endif
 
-    if(parse_command_line(argc, argv) != 0)
+    if (parse_command_line(argc, argv) != 0)
     {
         return -1;
     }
 
-    if(g_test_binaries.empty())
+    if (g_test_binaries.empty())
     {
         std::cout << "Warning: no test binaries were specified" << std::endl;
     }
@@ -547,21 +552,20 @@ int main(int argc, char* argv[])
     UnitTest::TestReporterStdout testReporter;
 
     bool breakOnError = false;
-    if(UnitTest::GlobalSettings::Has("breakonerror"))
+    if (UnitTest::GlobalSettings::Has("breakonerror"))
     {
         breakOnError = true;
     }
 
-    // Determine if list or listProperties.
-    bool listOption = false, listPropertiesOption = false;
-    if(UnitTest::GlobalSettings::Has("list"))
+    // The list_test_options() function determines if list or listProperties.
+    bool listOption = false;
+    if (UnitTest::GlobalSettings::Has("list"))
     {
         listOption = true;
     }
-    if(UnitTest::GlobalSettings::Has("listproperties"))
+    if (UnitTest::GlobalSettings::Has("listproperties"))
     {
         listOption = true;
-        listPropertiesOption = true;
     }
 #ifdef _WIN32
     if (UnitTest::GlobalSettings::Has("detectleaks"))
@@ -584,7 +588,6 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-
     // Run test cases
     UnitTest::TestRunner testRunner(testReporter, breakOnError);
 
@@ -592,21 +595,20 @@ int main(int argc, char* argv[])
 
     totalTestCount += testRunner.GetTestResults()->GetTotalTestCount();
     failedTestCount += testRunner.GetTestResults()->GetFailedTestCount();
-    if( totalTestCount == 0 )
+    if (totalTestCount == 0)
     {
         std::cout << "No tests were run. Check the command line syntax (try 'TestRunner.exe /help')" << std::endl;
     }
     else
     {
-        if(testRunner.GetTestResults()->GetFailedTestCount() > 0)
+        if (testRunner.GetTestResults()->GetFailedTestCount() > 0)
         {
             ChangeConsoleTextColorToRed();
-            const std::vector<std::string> & failed = testRunner.GetTestResults()->GetFailedTests();
-            std::for_each(failed.begin(), failed.end(), [](const std::string &failedTest)
-                          {
-                              std::cout << "**** " << failedTest << " FAILED ****" << std::endl << std::endl;
-                              std::fflush(stdout);
-                          });
+            const std::vector<std::string>& failed = testRunner.GetTestResults()->GetFailedTests();
+            std::for_each(failed.begin(), failed.end(), [](const std::string& failedTest) {
+                std::cout << "**** " << failedTest << " FAILED ****" << std::endl << std::endl;
+                std::fflush(stdout);
+            });
             ChangeConsoleTextColorToGrey();
         }
         else
@@ -615,7 +617,7 @@ int main(int argc, char* argv[])
             std::cout << "All test cases PASSED" << std::endl << std::endl;
             ChangeConsoleTextColorToGrey();
         }
-        const std::vector<std::string> &newFailedTests = testRunner.GetTestResults()->GetFailedTests();
+        const std::vector<std::string>& newFailedTests = testRunner.GetTestResults()->GetFailedTests();
         failedTests.insert(failedTests.end(), newFailedTests.begin(), newFailedTests.end());
 
         const double elapsedTime = timer.GetTimeInMs();
@@ -623,12 +625,13 @@ int main(int argc, char* argv[])
                   << "Took " << elapsedTime << "ms" << std::endl;
     }
 
-#ifdef _WIN32
-    if(hComBase != nullptr)
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
+    if (hComBase != nullptr)
     {
-        typedef void (WINAPI *RoUnInit)();
+        typedef void(WINAPI * RoUnInit)();
         RoUnInit roUnInitFunc = (RoUnInit)GetProcAddress(hComBase, "RoUninitialize");
-        if(roUnInitFunc != nullptr)
+        if (roUnInitFunc != nullptr)
         {
             roUnInitFunc();
         }

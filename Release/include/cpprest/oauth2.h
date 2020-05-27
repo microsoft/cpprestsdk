@@ -1,22 +1,22 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* HTTP Library: Oauth 2.0
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * HTTP Library: Oauth 2.0
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 #pragma once
 
-#ifndef _CASA_OAUTH2_H
-#define _CASA_OAUTH2_H
+#ifndef CASA_OAUTH2_H
+#define CASA_OAUTH2_H
 
-#include "cpprest/http_msg.h"
 #include "cpprest/details/web_utilities.h"
+#include "cpprest/http_msg.h"
 
 namespace web
 {
@@ -24,16 +24,15 @@ namespace http
 {
 namespace client
 {
-    // Forward declaration to avoid circular include dependency.
-    class http_client_config;
-}
+// Forward declaration to avoid circular include dependency.
+class http_client_config;
+} // namespace client
 
 /// oAuth 2.0 library.
 namespace oauth2
 {
 namespace details
 {
-
 class oauth2_handler;
 
 // Constant strings for OAuth 2.0.
@@ -48,12 +47,11 @@ public:
 #undef DAT
 };
 
-} // namespace web::http::oauth2::details
+} // namespace details
 
 /// oAuth functionality is currently in beta.
 namespace experimental
 {
-
 /// <summary>
 /// Exception type for OAuth 2.0 errors.
 /// </summary>
@@ -74,16 +72,18 @@ private:
 class oauth2_token
 {
 public:
-
     /// <summary>
     /// Value for undefined expiration time in expires_in().
     /// </summary>
-    enum { undefined_expiration = -1 };
+    enum
+    {
+        undefined_expiration = -1
+    };
 
-    oauth2_token(utility::string_t access_token=utility::string_t()) :
-        m_access_token(std::move(access_token)),
-        m_expires_in(undefined_expiration)
-    {}
+    oauth2_token(utility::string_t access_token = utility::string_t())
+        : m_access_token(std::move(access_token)), m_expires_in(undefined_expiration)
+    {
+    }
 
     /// <summary>
     /// Get access token validity state.
@@ -201,23 +201,26 @@ private:
 class oauth2_config
 {
 public:
-
-    oauth2_config(utility::string_t client_key, utility::string_t client_secret,
-            utility::string_t auth_endpoint, utility::string_t token_endpoint,
-            utility::string_t redirect_uri, utility::string_t scope=utility::string_t(),
-            utility::string_t user_agent=utility::string_t()) :
-                m_client_key(std::move(client_key)),
-                m_client_secret(std::move(client_secret)),
-                m_auth_endpoint(std::move(auth_endpoint)),
-                m_token_endpoint(std::move(token_endpoint)),
-                m_redirect_uri(std::move(redirect_uri)),
-                m_scope(std::move(scope)),
-                m_user_agent(std::move(user_agent)),
-                m_implicit_grant(false),
-                m_bearer_auth(true),
-                m_http_basic_auth(true),
-                m_access_token_key(details::oauth2_strings::access_token)
-    {}
+    oauth2_config(utility::string_t client_key,
+                  utility::string_t client_secret,
+                  utility::string_t auth_endpoint,
+                  utility::string_t token_endpoint,
+                  utility::string_t redirect_uri,
+                  utility::string_t scope = utility::string_t(),
+                  utility::string_t user_agent = utility::string_t())
+        : m_client_key(std::move(client_key))
+        , m_client_secret(std::move(client_secret))
+        , m_auth_endpoint(std::move(auth_endpoint))
+        , m_token_endpoint(std::move(token_endpoint))
+        , m_redirect_uri(std::move(redirect_uri))
+        , m_scope(std::move(scope))
+        , m_user_agent(std::move(user_agent))
+        , m_implicit_grant(false)
+        , m_bearer_auth(true)
+        , m_http_basic_auth(true)
+        , m_access_token_key(details::oauth2_strings::access_token)
+    {
+    }
 
     /// <summary>
     /// Builds an authorization URI to be loaded in the web browser/view.
@@ -242,8 +245,8 @@ public:
     /// See: http://tools.ietf.org/html/rfc6749#section-4.2
     /// In both cases, the 'state' parameter is parsed and is verified to match state().
     /// </summary>
-    /// <param name="redirected_uri">The URI where web browser/view was redirected after resource owner's authorization.</param>
-    /// <returns>Task that fetches the token(s) based on redirected URI.</returns>
+    /// <param name="redirected_uri">The URI where web browser/view was redirected after resource owner's
+    /// authorization.</param> <returns>Task that fetches the token(s) based on redirected URI.</returns>
     _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(const web::http::uri& redirected_uri);
 
     /// <summary>
@@ -276,7 +279,8 @@ public:
     {
         uri_builder ub;
         ub.append_query(details::oauth2_strings::grant_type, details::oauth2_strings::refresh_token, false);
-        ub.append_query(details::oauth2_strings::refresh_token, uri::encode_data_string(token().refresh_token()), false);
+        ub.append_query(
+            details::oauth2_strings::refresh_token, uri::encode_data_string(token().refresh_token()), false);
         return _request_token(ub);
     }
 
@@ -430,37 +434,31 @@ public:
     /// Get access token key.
     /// </summary>
     /// <returns>Access token key string.</returns>
-    const utility::string_t&  access_token_key() const { return m_access_token_key; }
+    const utility::string_t& access_token_key() const { return m_access_token_key; }
     /// <summary>
     /// Set access token key.
     /// If the service requires a "non-standard" key you must set it here.
     /// Default: "access_token".
     /// </summary>
     void set_access_token_key(utility::string_t access_token_key) { m_access_token_key = std::move(access_token_key); }
-	
+
     /// <summary>
     /// Get the web proxy object
     /// </summary>
     /// <returns>A reference to the web proxy object.</returns>
-    const web_proxy& proxy() const
-    {
-        return m_proxy;
-    }
+    const web_proxy& proxy() const { return m_proxy; }
 
     /// <summary>
     /// Set the web proxy object that will be used by token_from_code and token_from_refresh
     /// </summary>
     /// <param name="proxy">A reference to the web proxy object.</param>
-    void set_proxy(const web_proxy& proxy)
-    {
-        m_proxy = proxy;
-    }
-    
+    void set_proxy(const web_proxy& proxy) { m_proxy = proxy; }
+
     /// <summary>
     /// Get user agent to be used in oauth2 flows.
     /// </summary>
     /// <returns>User agent string.</returns>
-    const utility::string_t&  user_agent() const { return m_user_agent; }
+    const utility::string_t& user_agent() const { return m_user_agent; }
     /// <summary>
     /// Set user agent to be used in oauth2 flows.
     /// If none is provided a default user agent is provided.
@@ -471,17 +469,13 @@ private:
     friend class web::http::client::http_client_config;
     friend class web::http::oauth2::details::oauth2_handler;
 
-    oauth2_config() :
-        m_implicit_grant(false),
-        m_bearer_auth(true),
-        m_http_basic_auth(true)
-    {}
+    oauth2_config() : m_implicit_grant(false), m_bearer_auth(true), m_http_basic_auth(true) {}
 
     _ASYNCRTIMP pplx::task<void> _request_token(uri_builder& request_body);
 
     oauth2_token _parse_token_from_json(const json::value& token_json);
 
-    void _authenticate_request(http_request &req) const
+    void _authenticate_request(http_request& req) const
     {
         if (bearer_auth())
         {
@@ -516,17 +510,14 @@ private:
     utility::nonce_generator m_state_generator;
 };
 
-} // namespace web::http::oauth2::experimental
+} // namespace experimental
 
 namespace details
 {
-
 class oauth2_handler : public http_pipeline_stage
 {
 public:
-    oauth2_handler(std::shared_ptr<experimental::oauth2_config> cfg) :
-        m_config(std::move(cfg))
-    {}
+    oauth2_handler(std::shared_ptr<experimental::oauth2_config> cfg) : m_config(std::move(cfg)) {}
 
     virtual pplx::task<http_response> propagate(http_request request) override
     {
@@ -541,6 +532,9 @@ private:
     std::shared_ptr<experimental::oauth2_config> m_config;
 };
 
-}}}}
+} // namespace details
+} // namespace oauth2
+} // namespace http
+} // namespace web
 
 #endif

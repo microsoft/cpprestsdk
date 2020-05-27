@@ -1,33 +1,33 @@
 /***
-* This file is based on or incorporates material from the UnitTest++ r30 open source project.
-* Microsoft is not the original author of this code but has modified it and is licensing the code under 
-* the MIT License. Microsoft reserves all other rights not expressly granted under the MIT License, 
-* whether by implication, estoppel or otherwise. 
-*
-* UnitTest++ r30 
-*
-* Copyright (c) 2006 Noel Llopis and Charles Nicholson
-* Portions Copyright (c) Microsoft Corporation
-*
-* All Rights Reserved.
-*
-* MIT License
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
-* and associated documentation files (the "Software"), to deal in the Software without restriction, 
-* including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-* and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, 
-* subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in all copies or 
-* substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE 
-* AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
-* DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-***/
+ * This file is based on or incorporates material from the UnitTest++ r30 open source project.
+ * Microsoft is not the original author of this code but has modified it and is licensing the code under
+ * the MIT License. Microsoft reserves all other rights not expressly granted under the MIT License,
+ * whether by implication, estoppel or otherwise.
+ *
+ * UnitTest++ r30
+ *
+ * Copyright (c) 2006 Noel Llopis and Charles Nicholson
+ * Portions Copyright (c) Microsoft Corporation
+ *
+ * All Rights Reserved.
+ *
+ * MIT License
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+ * and associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+ * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ ***/
 
 #include "stdafx.h"
 
@@ -38,8 +38,8 @@
 using namespace UnitTest;
 using namespace std;
 
-namespace {
-
+namespace
+{
 TEST(DefaultIsEmptyString)
 {
     MemoryOutStream const stream;
@@ -57,7 +57,9 @@ TEST(StreamingTextCopiesCharacters)
 TEST(StreamingMultipleTimesConcatenatesResult)
 {
     MemoryOutStream stream;
-    stream << "Bork" << "To" << "Fred";
+    stream << "Bork"
+           << "To"
+           << "Fred";
     CHECK_EQUAL("BorkToFred", stream.GetText());
 }
 
@@ -91,30 +93,30 @@ TEST(StreamingUnsignedLongWritesCorrectCharacters)
 
 TEST(StreamingLongLongWritesCorrectCharacters)
 {
-	MemoryOutStream stream;
-	stream << (long long)(ULONG_MAX) * 2;
-	CHECK_EQUAL("8589934590", stream.GetText());
+    MemoryOutStream stream;
+    stream << (long long)(ULONG_MAX)*2;
+    CHECK_EQUAL("8589934590", stream.GetText());
 }
 
 TEST(StreamingUnsignedLongLongWritesCorrectCharacters)
 {
-	MemoryOutStream stream;
-	stream << (unsigned long long)(ULONG_MAX) * 2;
-	CHECK_EQUAL("8589934590", stream.GetText());
+    MemoryOutStream stream;
+    stream << (unsigned long long)(ULONG_MAX)*2;
+    CHECK_EQUAL("8589934590", stream.GetText());
 }
 
 TEST(StreamingFloatWritesCorrectCharacters)
 {
     MemoryOutStream stream;
     stream << 3.1415f;
-	CHECK(strstr(stream.GetText(), "3.1415"));
+    CHECK(strstr(stream.GetText(), "3.1415"));
 }
 
 TEST(StreamingDoubleWritesCorrectCharacters)
 {
-	MemoryOutStream stream;
-	stream << 3.1415;
-	CHECK(strstr(stream.GetText(), "3.1415"));
+    MemoryOutStream stream;
+    stream << 3.1415;
+    CHECK(strstr(stream.GetText(), "3.1415"));
 }
 
 TEST(StreamingPointerWritesCorrectCharacters)
@@ -135,10 +137,10 @@ TEST(StreamingSizeTWritesCorrectCharacters)
 
 TEST(ClearEmptiesMemoryOutStreamContents)
 {
-	MemoryOutStream stream;
-	stream << "Hello world";
-	stream.Clear();
-	CHECK_EQUAL("", stream.GetText());
+    MemoryOutStream stream;
+    stream << "Hello world";
+    stream.Clear();
+    CHECK_EQUAL("", stream.GetText());
 }
 
 #ifndef UNITTEST_MEMORYOUTSTREAM_IS_STD_OSTRINGSTREAM
@@ -154,7 +156,6 @@ TEST(StreamInitialCapacityIsMultipleOfGrowChunkSize)
     MemoryOutStream stream(MemoryOutStream::GROW_CHUNK_SIZE + 1);
     CHECK_EQUAL((int)MemoryOutStream::GROW_CHUNK_SIZE * 2, stream.GetCapacity());
 }
-
 
 TEST(ExceedingCapacityGrowsBuffer)
 {
@@ -182,14 +183,16 @@ TEST(WritingStringLongerThanCapacityFitsInNewBuffer)
 TEST(WritingIntLongerThanCapacityFitsInNewBuffer)
 {
     MemoryOutStream stream(8);
-    stream << "aaaa" << 123456;;
+    stream << "aaaa" << 123456;
+    ;
     CHECK_EQUAL("aaaa123456", stream.GetText());
 }
 
 TEST(WritingFloatLongerThanCapacityFitsInNewBuffer)
 {
     MemoryOutStream stream(8);
-    stream << "aaaa" << 123456.0f;;
+    stream << "aaaa" << 123456.0f;
+    ;
     CHECK_EQUAL("aaaa123456.000000f", stream.GetText());
 }
 
@@ -202,4 +205,4 @@ TEST(WritingSizeTLongerThanCapacityFitsInNewBuffer)
 
 #endif
 
-}
+} // namespace

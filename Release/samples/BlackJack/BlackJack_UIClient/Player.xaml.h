@@ -1,48 +1,50 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Player.xaml.h:  Declaration of the Player class.
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Player.xaml.h:  Declaration of the Player class.
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #pragma once
 
 #include "pch.h"
+
 #include "Player.g.h"
 
 namespace BlackjackClient
 {
-    public ref class PlayerSpace sealed
+public
+ref class PlayerSpace sealed
+{
+public:
+    PlayerSpace() { _init(); }
+
+    void Clear()
     {
-    public:
-        PlayerSpace() { _init(); }
+        playerBalance->Text.clear();
+        playerBet->Text.clear();
+        playerName->Text.clear();
+        playerInsurance->Text.clear();
+        m_cards.clear();
+        playerCardGrid->Children->Clear();
+    }
 
-        void Clear()
-        {
-            playerBalance->Text = L"";
-            playerBet->Text = L"";
-            playerName->Text = L"";
-            playerInsurance->Text = L"";
-            m_cards.clear();
-            playerCardGrid->Children->Clear();
-        }
+    int CardsHeld() { return int(m_cards.size()); }
 
-        int CardsHeld() { return int(m_cards.size()); }
+private:
+    friend ref class PlayingTable;
 
-    private:
-        friend ref class PlayingTable;
+    void AddCard(Card card);
+    void Update(Player player);
 
-        void AddCard(Card card);
-        void Update(Player player);
+    void ShowResult(BJHandResult result);
 
-        void ShowResult(BJHandResult result);
+    void _init();
 
-        void _init();
-
-        std::vector<Card> m_cards;
-    };
-}
+    std::vector<Card> m_cards;
+};
+} // namespace BlackjackClient

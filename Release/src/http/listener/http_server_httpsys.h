@@ -1,13 +1,13 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* HTTP Library: implementation of HTTP server API built on Windows HTTP Server APIs.
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * HTTP Library: implementation of HTTP server API built on Windows HTTP Server APIs.
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #pragma once
 
@@ -21,10 +21,9 @@
 #include <http.h>
 #pragma warning(pop)
 
+#include "cpprest/details/http_server.h"
 #include <atomic>
 #include <mutex>
-
-#include "cpprest/details/http_server.h"
 
 namespace web
 {
@@ -34,7 +33,6 @@ namespace experimental
 {
 namespace details
 {
-
 class http_windows_server;
 struct windows_request_context;
 
@@ -53,20 +51,19 @@ public:
     /// <summary>
     /// Callback for all I/O completions.
     /// </summary>
-    static void CALLBACK io_completion_callback(
-        PTP_CALLBACK_INSTANCE instance,
-        PVOID context,
-        PVOID pOverlapped,
-        ULONG result,
-        ULONG_PTR numberOfBytesTransferred,
-        PTP_IO io)
+    static void CALLBACK io_completion_callback(PTP_CALLBACK_INSTANCE instance,
+                                                PVOID context,
+                                                PVOID pOverlapped,
+                                                ULONG result,
+                                                ULONG_PTR numberOfBytesTransferred,
+                                                PTP_IO io)
     {
-        CASABLANCA_UNREFERENCED_PARAMETER(io);
-        CASABLANCA_UNREFERENCED_PARAMETER(context);
-        CASABLANCA_UNREFERENCED_PARAMETER(instance);
+        (void)io;
+        (void)context;
+        (void)instance;
 
-        http_overlapped *p_http_overlapped = (http_overlapped *)pOverlapped;
-        p_http_overlapped->m_http_io_completion(result, (DWORD) numberOfBytesTransferred);
+        http_overlapped* p_http_overlapped = (http_overlapped*)pOverlapped;
+        p_http_overlapped->m_http_io_completion(result, (DWORD)numberOfBytesTransferred);
     }
 
 private:
@@ -85,14 +82,15 @@ struct windows_request_context : http::details::_http_server_context
     void async_process_request(HTTP_REQUEST_ID request_id, http::http_request msg, const unsigned long headers_size);
 
     // Dispatch request to the provided http_listener.
-    void dispatch_request_to_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
+    void dispatch_request_to_listener(_In_ web::http::experimental::listener::details::http_listener_impl* pListener);
 
     enum class ShouldWaitForBody
     {
         Wait,
         DontWait
     };
-    // Initialise the response task callbacks. If the body has been requested, we should wait for it to avoid race conditions.
+    // Initialise the response task callbacks. If the body has been requested, we should wait for it to avoid race
+    // conditions.
     void init_response_callbacks(ShouldWaitForBody shouldWait);
 
     // Read in a portion of the request body.
@@ -131,10 +129,10 @@ struct windows_request_context : http::details::_http_server_context
 
     size_t m_remaining_to_write;
 
-    HTTP_REQUEST *m_request;
+    HTTP_REQUEST* m_request;
     std::unique_ptr<unsigned char[]> m_request_buffer;
 
-    std::unique_ptr<HTTP_UNKNOWN_HEADER []> m_headers;
+    std::unique_ptr<HTTP_UNKNOWN_HEADER[]> m_headers;
     std::vector<std::string> m_headers_buffer;
 
     http_overlapped m_overlapped;
@@ -143,12 +141,19 @@ struct windows_request_context : http::details::_http_server_context
     http_response m_response;
 
     std::exception_ptr m_except_ptr;
+
+    std::vector<uint8_t> m_compress_buffer;
+    std::unique_ptr<web::http::compression::compress_provider> m_compressor;
+    std::unique_ptr<web::http::compression::decompress_provider> m_decompressor;
+    utility::string_t m_decompress_header;
+    http::compression::details::header_types m_decompress_header_type;
+
 private:
-    windows_request_context(const windows_request_context &);
-    windows_request_context& operator=(const windows_request_context &);
+    windows_request_context(const windows_request_context&);
+    windows_request_context& operator=(const windows_request_context&);
 
     // Sends entity body chunk.
-    void send_entity_body(_In_reads_(data_length) unsigned char * data, _In_ size_t data_length);
+    void send_entity_body(_In_reads_(data_length) unsigned char* data, _In_ size_t data_length);
 
     // Cancels this request.
     void cancel_request(std::exception_ptr except_ptr);
@@ -162,7 +167,6 @@ private:
 class http_windows_server : public http_server
 {
 public:
-
     /// <summary>
     /// Constructs a http_windows_server.
     /// </summary>
@@ -181,12 +185,14 @@ public:
     /// <summary>
     /// Registers an http listener.
     /// </summary>
-    virtual pplx::task<void> register_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
+    virtual pplx::task<void> register_listener(
+        _In_ web::http::experimental::listener::details::http_listener_impl* pListener);
 
     /// <summary>
     /// Unregisters an http listener.
     /// </summary>
-    virtual pplx::task<void> unregister_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
+    virtual pplx::task<void> unregister_listener(
+        _In_ web::http::experimental::listener::details::http_listener_impl* pListener);
 
     /// <summary>
     /// Stop processing and listening for incoming requests.
@@ -207,9 +213,7 @@ private:
     class listener_registration
     {
     public:
-        listener_registration(HTTP_URL_GROUP_ID urlGroupId)
-            : m_urlGroupId(urlGroupId)
-        {}
+        listener_registration(HTTP_URL_GROUP_ID urlGroupId) : m_urlGroupId(urlGroupId) {}
 
         // URL group id for this listener. Each listener needs it own URL group
         // because configuration like timeouts, authentication, etc...
@@ -221,7 +225,9 @@ private:
 
     // Registered listeners
     pplx::extensibility::reader_writer_lock_t _M_listenersLock;
-    std::unordered_map<web::http::experimental::listener::details::http_listener_impl *, std::unique_ptr<listener_registration>> _M_registeredListeners;
+    std::unordered_map<web::http::experimental::listener::details::http_listener_impl*,
+                       std::unique_ptr<listener_registration>>
+        _M_registeredListeners;
 
     // HTTP Server API server session id.
     HTTP_SERVER_SESSION_ID m_serverSessionId;
@@ -234,13 +240,14 @@ private:
     HANDLE m_hRequestQueue;
 
     // Threadpool I/O structure for overlapped I/O.
-    TP_IO * m_threadpool_io;
+    TP_IO* m_threadpool_io;
 
     // Task which actually handles receiving requests from HTTP Server API request queue.
     pplx::task<void> m_receivingTask;
     void receive_requests();
 };
 
-} // namespace details;
+} // namespace details
 } // namespace experimental
-}} // namespace web::http
+} // namespace http
+} // namespace web
