@@ -1,0 +1,41 @@
+name: Mobile
+
+on: [push]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest,macos-latest]
+        flavor: [Release] # Only use one of Debug/Release (capitalized) for now to save on minutes
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout Sources
+      uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+    - name: Update Submodules
+      run: git submodule update --init
+    - name: Build (iOS)
+      timeout-minutes: 40
+      run: |
+        set -x
+        pushd Build_iOS
+        BOOST_VERSION="1.69.0" OPENSSL_VERSION="1.1.1d" ./configure.sh -build_type ${{ matrix.flavor }}
+        ls -alFR .
+      if: matrix.os == 'macos-latest'
+    - name: Build (Android)
+      timeout-minutes: 25
+      run: |
+        set -x
+        export NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
+        echo "::set-env name=NDK_ROOT::$NDK_ROOT"
+        pushd Build_android
+        mkdir build
+        pushd build
+        ../configure.sh --boost 1.69.0 --openssl 1.1.0j --ndk ${NDK_ROOT}
+        ls -alFR .
+      if: matrix.os == 'ubuntu-latest'

@@ -12,6 +12,7 @@ The C++ REST SDK is a Microsoft project for cloud-based client-server communicat
 [![Debian Testing package](https://repology.org/badge/version-for-repo/debian_testing/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
 
 [![Build Status](https://dev.azure.com/vclibs/cpprestsdk/_apis/build/status/Microsoft.cpprestsdk.Ubuntu)](https://dev.azure.com/vclibs/cpprestsdk/_build/latest?definitionId=1)
+[![Build Status: Mobile](https://github.com/solodon4/cpprestsdk/workflows/Mobile/badge.svg)](https://github.com/solodon4/cpprestsdk/actions)
 
 With [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
 ```
