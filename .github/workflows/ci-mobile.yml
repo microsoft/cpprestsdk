@@ -63,6 +63,8 @@ jobs:
       run: |
         # It is about 30 times faster to zip artifacts first instead of letting
         # upload artifact action send about 44K boost headers over the network.
+        # The artifact with binaries from both platforms takes about 345M, which
+        # is why we only create and upload them for tagged commits.
         set -x
         mkdir binaries
         mkdir binaries/ios
@@ -74,9 +76,11 @@ jobs:
         if [ -d bins/ios/openssl         ]; then (cd bins/ios     && zip -r ${GITHUB_WORKSPACE}/binaries/ios/openssl.zip         openssl);         fi
         if [ -d bins/ios/boost.framework ]; then (cd bins/ios     && zip -r ${GITHUB_WORKSPACE}/binaries/ios/boost.framework.zip boost.framework); fi
         ls -alFR binaries
+      if: contains(github.ref, 'tags')
     - name: Upload Binaries
       timeout-minutes: 2
       uses: actions/upload-artifact@v2
       with:
         name: binaries
         path: ./binaries
+      if: contains(github.ref, 'tags')
