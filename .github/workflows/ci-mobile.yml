@@ -1,9 +1,9 @@
 #
 # GitHub Actions workflow for building cpprestsdk on iOS and Android
 #
-# Note: please do not include any non-mobile targets here cause we don't want
-#       a failure in one of several dozens of Linux distributions hide a
-#       problem in the only 2 targets our mobile developers care about.
+# Note: Please do not include any non-mobile targets in this workflow because
+#       we don't want a failure in one of several dozens Linux distributions
+#       hide a problem in the only 2 targets our mobile developers care about!
 #
 name: Mobile
 
@@ -45,8 +45,6 @@ jobs:
         export NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
         echo "::set-env name=NDK_ROOT::$NDK_ROOT"
         mkdir -p bins/android/cpprestsdk
-        mkdir bins/android/openssl
-        mkdir bins/android/boost
         pushd Build_android
         mkdir build
         pushd build
@@ -63,17 +61,18 @@ jobs:
     - name: Prepare Binaries
       timeout-minutes: 5
       run: |
-        # It is about 30 times faster to zip artifacts first instead of letting upload artifact action send about 44K boost headers over the network
+        # It is about 30 times faster to zip artifacts first instead of letting
+        # upload artifact action send about 44K boost headers over the network.
         set -x
         mkdir binaries
         mkdir binaries/ios
         mkdir binaries/android
-        if [ -d bins/android/cpprestsdk  ]; then zip -r binaries/android/cpprestsdk.zip  bins/android/cpprestsdk;  fi
-        if [ -d bins/android/openssl     ]; then zip -r binaries/android/openssl.zip     bins/android/openssl;     fi
-        if [ -d bins/android/boost       ]; then zip -r binaries/android/boost.zip       bins/android/boost;       fi
-        if [ -d bins/ios/cpprestsdk      ]; then zip -r binaries/ios/cpprestsdk.zip      bins/ios/cpprestsdk;      fi
-        if [ -d bins/ios/openssl         ]; then zip -r binaries/ios/openssl.zip         bins/ios/openssl;         fi
-        if [ -d bins/ios/boost.framework ]; then zip -r binaries/ios/boost.framework.zip bins/ios/boost.framework; fi
+        if [ -d bins/android/cpprestsdk  ]; then (cd bins/android && zip -r ${GITHUB_WORKSPACE}/binaries/android/cpprestsdk.zip  cpprestsdk);      fi
+        if [ -d bins/android/openssl     ]; then (cd bins/android && zip -r ${GITHUB_WORKSPACE}/binaries/android/openssl.zip     openssl);         fi
+        if [ -d bins/android/boost       ]; then (cd bins/android && zip -r ${GITHUB_WORKSPACE}/binaries/android/boost.zip       boost);           fi
+        if [ -d bins/ios/cpprestsdk      ]; then (cd bins/ios     && zip -r ${GITHUB_WORKSPACE}/binaries/ios/cpprestsdk.zip      cpprestsdk);      fi
+        if [ -d bins/ios/openssl         ]; then (cd bins/ios     && zip -r ${GITHUB_WORKSPACE}/binaries/ios/openssl.zip         openssl);         fi
+        if [ -d bins/ios/boost.framework ]; then (cd bins/ios     && zip -r ${GITHUB_WORKSPACE}/binaries/ios/boost.framework.zip boost.framework); fi
         ls -alFR binaries
     - name: Upload Binaries
       timeout-minutes: 2
