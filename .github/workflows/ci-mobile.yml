@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest,macos-latest]
-        flavor: [Release] # Only use one of Debug/Release (capitalized) for now to save on minutes
+        flavor: [Debug] # Only use one of Debug/Release (capitalized) for now to save on minutes
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -23,9 +23,13 @@ jobs:
       timeout-minutes: 40
       run: |
         set -x
+        mkdir -p bins/ios/cpprestsdk
         pushd Build_iOS
         BOOST_VERSION="1.71.0" OPENSSL_VERSION="1.1.1d" ./configure.sh -build_type ${{ matrix.flavor }}
         ls -alFR .
+        if [ -f build.${{ matrix.flavor }}.ios/lib/libcpprest.a ]; then mv build.${{ matrix.flavor }}.ios/lib ${GITHUB_WORKSPACE}/bins/ios/cpprestsdk/; mv build.${{ matrix.flavor }}.ios/include ${GITHUB_WORKSPACE}/bins/ios/cpprestsdk/; fi
+        if [ -d openssl         ]; then mv openssl         ${GITHUB_WORKSPACE}/bins/ios/; fi
+        if [ -d boost.framework ]; then mv boost.framework ${GITHUB_WORKSPACE}/bins/ios/; fi
       if: matrix.os == 'macos-latest'
     - name: Build (Android)
       timeout-minutes: 25
@@ -33,9 +37,39 @@ jobs:
         set -x
         export NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
         echo "::set-env name=NDK_ROOT::$NDK_ROOT"
+        mkdir bins
+        mkdir bins/android
+        mkdir bins/android/cpprestsdk
+        mkdir bins/android/openssl
+        mkdir bins/android/boost
         pushd Build_android
         mkdir build
         pushd build
         ../configure.sh --boost 1.69.0 --openssl 1.1.0j --ndk ${NDK_ROOT}
         ls -alFR .
+        mv ${GITHUB_WORKSPACE}/Release/include ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/ || true
+        if [ -f   build.armv7.debug/Release/Binaries/libcpprest.a ]; then mkdir -p ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/armeabi-v7a/Debug;   mv   build.armv7.debug/Release/Binaries/libcpprest.a ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/armeabi-v7a/Debug/;   fi
+        if [ -f build.armv7.release/Release/Binaries/libcpprest.a ]; then mkdir -p ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/armeabi-v7a/Release; mv build.armv7.release/Release/Binaries/libcpprest.a ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/armeabi-v7a/Release/; fi
+        if [ -f     build.x86.debug/Release/Binaries/libcpprest.a ]; then mkdir -p ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/x86/Debug;           mv     build.x86.debug/Release/Binaries/libcpprest.a ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/x86/Debug/;           fi
+        if [ -f   build.x86.release/Release/Binaries/libcpprest.a ]; then mkdir -p ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/x86/Release;         mv   build.x86.release/Release/Binaries/libcpprest.a ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/x86/Release/;         fi
+        if [ -d openssl                                           ]; then mv openssl/*                     ${GITHUB_WORKSPACE}/bins/android/openssl/; fi
+        if [ -d Boost-for-Android/build/out                       ]; then mv Boost-for-Android/build/out/* ${GITHUB_WORKSPACE}/bins/android/boost/; fi
       if: matrix.os == 'ubuntu-latest'
+    - name: Prepare Binaries
+      timeout-minutes: 5
+      run: |
+        # It is about 30 times faster to zip artifacts first instead of letting upload artifact action send about 44K boost headers over the network
+        set -x
+        if [ -d bins/android/cpprestsdk  ]; then zip -r a_cpprestsdk.zip      bins/android/cpprestsdk;  fi
+        if [ -d bins/android/openssl     ]; then zip -r a_openssl.zip         bins/android/openssl;     fi
+        if [ -d bins/android/boost       ]; then zip -r a_boost.zip           bins/android/boost;       fi
+        if [ -d bins/ios/cpprestsdk      ]; then zip -r i_cpprestsdk.zip      bins/ios/cpprestsdk;      fi
+        if [ -d bins/ios/openssl         ]; then zip -r i_openssl.zip         bins/ios/openssl;         fi
+        if [ -d bins/ios/boost.framework ]; then zip -r i_boost.framework.zip bins/ios/boost.framework; fi
+        ls -alFR *.zip
+    - name: Upload Binaries
+      timeout-minutes: 2
+      uses: actions/upload-artifact@v1
+      with:
+        name: binaries
+        path: ./*.zip
