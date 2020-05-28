@@ -24,7 +24,7 @@ jobs:
       run: |
         set -x
         pushd Build_iOS
-        BOOST_VERSION="1.69.0" OPENSSL_VERSION="1.1.1d" ./configure.sh -build_type ${{ matrix.flavor }}
+        BOOST_VERSION="1.71.0" OPENSSL_VERSION="1.1.1d" ./configure.sh -build_type ${{ matrix.flavor }}
         ls -alFR .
       if: matrix.os == 'macos-latest'
     - name: Build (Android)
