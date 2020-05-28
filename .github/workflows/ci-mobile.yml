@@ -69,7 +69,7 @@ jobs:
         ls -alFR *.zip
     - name: Upload Binaries
       timeout-minutes: 2
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: binaries
         path: ./*.zip
