@@ -444,6 +444,76 @@ bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std
     return true;
 }
 #endif
+
+#if defined(__linux__)
+bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std::string& hostName)
+{
+    // find system certificates
+    // assume CentOS at first and then fallback on Debian
+    const char* caPath = nullptr;
+    const char* caFile = nullptr;
+
+    struct stat buf;
+    int err = stat("/etc/pki/tls/certs/ca-bundle.crt", &buf);
+    if (0 == err)
+    {
+        caFile = "/etc/pki/tls/certs/ca-bundle.crt";
+    }
+    else
+    {
+        caPath = "/etc/ssl/certs";
+    }
+
+    // at first check hostname
+    const auto* in = reinterpret_cast<const unsigned char*>(certChain[0].c_str());
+    X509* endCert = d2i_X509(nullptr, &in, static_cast<int>(certChain[0].size()));
+
+    int result = X509_check_host(endCert, hostName.c_str(), hostName.size(), X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS, nullptr);
+    if (result != 1)
+    {
+        X509_free(endCert);
+        return false;
+    }
+
+    bool isTrusted = false;
+
+    // validate cert chain
+    X509_STORE* store = X509_STORE_new();
+    if (store)
+    {
+        X509_STORE_set_default_paths(store);
+        X509_STORE_load_locations(store, caFile, caPath);
+
+        X509_STORE_CTX* ctx = X509_STORE_CTX_new();
+        if (ctx)
+        {
+            STACK_OF(X509)* st = sk_X509_new_null();
+            if (st)
+            {
+                for (const auto& certData : certChain)
+                {
+                    const auto* in = reinterpret_cast<const unsigned char*>(certData.c_str());
+                    X509* ca = d2i_X509(nullptr, &in, static_cast<int>(certData.size()));
+
+                    sk_X509_push(st, ca);
+                }
+
+                X509_STORE_CTX_init(ctx, store, endCert, st);
+                result = X509_verify_cert(ctx);
+
+                isTrusted = (1 == result);
+
+                sk_X509_pop_free(st, X509_free);
+            }
+            X509_STORE_CTX_free(ctx);
+        }
+        X509_STORE_free(store);
+    }
+    X509_free(endCert);
+
+    return isTrusted;
+}
+#endif
 } // namespace details
 } // namespace client
 } // namespace http
