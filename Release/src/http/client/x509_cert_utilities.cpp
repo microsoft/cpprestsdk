@@ -445,7 +445,7 @@ bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std
 }
 #endif
 
-#if defined(__linux__)
+#if defined(__linux__) && !defined(__ANDROID__)
 bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std::string& hostName)
 {
     // find system certificates
