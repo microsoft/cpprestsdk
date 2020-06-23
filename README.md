@@ -74,3 +74,6 @@ We'd love to get your review score, whether good or bad, but even more than that
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
+## Size of the file
+
+* 5.39 MB (23-06-2020 05:56 IST)
