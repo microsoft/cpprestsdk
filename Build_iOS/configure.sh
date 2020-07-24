@@ -96,7 +96,7 @@ if [ ! -e $ABS_PATH/boost.framework ] && [ ! -d $ABS_PATH/boost ]; then
         git clone https://github.com/faithfracture/Apple-Boost-BuildScript ${ABS_PATH}/Apple-Boost-BuildScript
     fi
     pushd ${ABS_PATH}/Apple-Boost-BuildScript
-    git checkout 56006cf5e955b114ec56f73d35ce623e0d0f1541
+    git checkout 27ca8978bf3ee029f699356a7d044a5a1fc0cd84
     BOOST_LIBS="thread chrono filesystem regex system random" ./boost.sh -ios -tvos --boost-version $BOOST_VERSION
     popd
     mv ${ABS_PATH}/Apple-Boost-BuildScript/build/boost/${BOOST_VERSION}/ios/release/framework/boost.framework ${ABS_PATH}
