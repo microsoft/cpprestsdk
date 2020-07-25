@@ -35,8 +35,8 @@ jobs:
         BOOST_VERSION="1.71.0" OPENSSL_VERSION="1.1.1d" ./configure.sh -build_type ${{ matrix.flavor }}
         ls -alFR .
         if [ -f build.${{ matrix.flavor }}.ios/lib/libcpprest.a ]; then mv build.${{ matrix.flavor }}.ios/lib ${GITHUB_WORKSPACE}/bins/ios/cpprestsdk/; mv build.${{ matrix.flavor }}.ios/include ${GITHUB_WORKSPACE}/bins/ios/cpprestsdk/; fi
-        if [ -d openssl         ]; then mv openssl         ${GITHUB_WORKSPACE}/bins/ios/; fi
-        if [ -d boost.framework ]; then mv boost.framework ${GITHUB_WORKSPACE}/bins/ios/; fi
+        if [ -d openssl           ]; then mv openssl           ${GITHUB_WORKSPACE}/bins/ios/; fi
+        if [ -d boost.xcframework ]; then mv boost.xcframework ${GITHUB_WORKSPACE}/bins/ios/; fi
       if: matrix.os == 'macos-latest'
     - name: Build (Android)
       timeout-minutes: 25
@@ -74,7 +74,7 @@ jobs:
         if [ -d bins/android/boost       ]; then (cd bins/android && zip -r ${GITHUB_WORKSPACE}/binaries/android/boost.zip       boost);           fi
         if [ -d bins/ios/cpprestsdk      ]; then (cd bins/ios     && zip -r ${GITHUB_WORKSPACE}/binaries/ios/cpprestsdk.zip      cpprestsdk);      fi
         if [ -d bins/ios/openssl         ]; then (cd bins/ios     && zip -r ${GITHUB_WORKSPACE}/binaries/ios/openssl.zip         openssl);         fi
-        if [ -d bins/ios/boost.framework ]; then (cd bins/ios     && zip -r ${GITHUB_WORKSPACE}/binaries/ios/boost.framework.zip boost.framework); fi
+        if [ -d bins/ios/boost.xcframework ]; then (cd bins/ios   && zip -r ${GITHUB_WORKSPACE}/binaries/ios/boost.xcframework.zip boost.xcframework); fi
         ls -alFR binaries
       if: contains(github.ref, 'tags')
     - name: Upload Binaries
