@@ -65,8 +65,10 @@ elseif(CPPREST_WEBSOCKETS_IMPL STREQUAL "wspp")
     websockets/client/ws_client_impl.h
     websockets/client/ws_client_wspp.cpp
   )
-  cpprest_find_websocketpp()
-  target_link_libraries(cpprest PRIVATE cpprestsdk_websocketpp_internal)
+  if(NOT CPPREST_EXCLUDE_WEBSOCKETS)
+    cpprest_find_websocketpp()
+    target_link_libraries(cpprest PRIVATE cpprestsdk_websocketpp_internal)
+  endif()
   cpprest_find_boost()
   cpprest_find_openssl()
   target_link_libraries(cpprest PUBLIC cpprestsdk_boost_internal cpprestsdk_openssl_internal)
