@@ -517,7 +517,8 @@ public:
         : request_context(client, request)
         , m_content_length(0)
         , m_needChunked(false)
-        , m_timer(client->client_config().timeout<std::chrono::microseconds>())
+        , m_timer(client->client_config().timeout<std::chrono::microseconds>(),
+                  client->client_config().connection_timeout<std::chrono::microseconds>())
         , m_resolver(crossplat::threadpool::shared_instance().service())
         , m_connection(connection)
 #ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
@@ -578,8 +579,6 @@ public:
             }
 
             request_stream << CRLF;
-
-            m_context->m_timer.start();
 
             tcp::resolver::query query(utility::conversions::to_utf8string(proxy_host), to_string(proxy_port));
 
@@ -864,12 +863,6 @@ public:
             // Enforce HTTP connection keep alive (even for the old HTTP/1.0 protocol).
             request_stream << "Connection: Keep-Alive\r\n\r\n";
 
-            // Start connection timeout timer.
-            if (!ctx->m_timer.has_started())
-            {
-                ctx->m_timer.start();
-            }
-
             if (ctx->m_connection->is_reused() || proxy_type == http_proxy_type::ssl_tunnel)
             {
                 // If socket is a reused connection or we're connected via an ssl-tunneling proxy, try to write the
@@ -884,6 +877,8 @@ public:
                 // For normal http proxies, we want to connect directly to the proxy server. It will relay our request.
                 auto tcp_host = proxy_type == http_proxy_type::http ? proxy_host : host;
                 auto tcp_port = proxy_type == http_proxy_type::http ? proxy_port : port;
+
+                ctx->m_timer.start_connecting();
 
                 tcp::resolver::query query(tcp_host, to_string(tcp_port));
                 ctx->m_resolver.async_resolve(query,
@@ -917,6 +912,8 @@ public:
             // 'start_http_request_flow'
             std::shared_ptr<ssl_proxy_tunnel> ssl_tunnel =
                 std::make_shared<ssl_proxy_tunnel>(shared_from_this(), start_http_request_flow);
+
+            m_timer.start_connecting();
             ssl_tunnel->start_proxy_connect();
         }
         else
@@ -1091,6 +1088,7 @@ private:
         }
         else
         {
+            m_timer.start_communicating();
             m_connection->async_write(
                 m_body_buf,
                 boost::bind(&asio_context::handle_write_headers, shared_from_this(), boost::asio::placeholders::error));
@@ -1101,6 +1099,7 @@ private:
     {
         if (!ec)
         {
+            m_timer.start_communicating();
             m_connection->async_write(
                 m_body_buf,
                 boost::bind(&asio_context::handle_write_headers, shared_from_this(), boost::asio::placeholders::error));
@@ -1857,44 +1856,43 @@ private:
     class timeout_timer
     {
     public:
-        timeout_timer(const std::chrono::microseconds& timeout)
-            : m_duration(timeout.count()), m_state(created), m_timer(crossplat::threadpool::shared_instance().service())
+        timeout_timer(const std::chrono::microseconds& timeout, const std::chrono::microseconds &connection_timeout)
+            : m_timeout_duration(timeout.count())
+            , m_connection_timeout_duration(connection_timeout.count())
+            , m_state(created)
+            , m_timer(crossplat::threadpool::shared_instance().service())
         {
         }
 
         void set_ctx(const std::weak_ptr<asio_context>& ctx) { m_ctx = ctx; }
 
-        void start()
+        void start_connecting()
         {
             assert(m_state == created);
             assert(!m_ctx.expired());
-            m_state = started;
+            m_state = connecting;
+            schedule_timeout(true /* initial_scheduling -- implied by state transition from created -> connecting */);
+        }
 
-            m_timer.expires_from_now(m_duration);
-            auto ctx = m_ctx;
-            m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec) {
-                handle_timeout(ec, ctx);
-            });
+        void start_communicating()
+        {
+            assert(m_state == created || m_state == connecting);
+            assert(!m_ctx.expired());
+            const bool timer_just_started = (m_state == created);
+            m_state = communicating;
+            schedule_timeout(timer_just_started);
         }
 
         void reset()
         {
-            assert(m_state == started || m_state == timedout);
+            assert(m_state == connecting || m_state == communicating || m_state == timedout);
             assert(!m_ctx.expired());
-            if (m_timer.expires_from_now(m_duration) > 0)
-            {
-                // The existing handler was canceled so schedule a new one.
-                assert(m_state == started);
-                auto ctx = m_ctx;
-                m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec) {
-                    handle_timeout(ec, ctx);
-                });
-            }
+            schedule_timeout(false /* initial_scheduling -- reset implies that timer was started before */);
         }
 
         bool has_timedout() const { return m_state == timedout; }
 
-        bool has_started() const { return m_state == started; }
+        bool has_started() const { return m_state == connecting || m_state == communicating; }
 
         void stop()
         {
@@ -1920,15 +1918,34 @@ private:
         enum timer_state
         {
             created,
-            started,
+            connecting,
+            communicating,
             stopped,
             timedout
         };
 
+        void schedule_timeout(const bool initial_scheduling)
+        {
+            const auto duration = (m_state == connecting)
+                                    ? m_connection_timeout_duration
+                                    : m_timeout_duration;
+
+            const auto cancelled_handlers = m_timer.expires_from_now(duration);
+            if (initial_scheduling || cancelled_handlers > 0) {
+                // The existing handler was canceled or no handler was ever registered => schedule a new one
+                auto ctx = m_ctx;
+                m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec) {
+                    handle_timeout(ec, ctx);
+                });
+            }
+        }
+
 #if (defined(ANDROID) || defined(__ANDROID__)) && !defined(_LIBCPP_VERSION)
-        boost::chrono::microseconds m_duration;
+        boost::chrono::microseconds m_timeout_duration;
+        boost::chrono::microseconds m_connection_timeout_duration;
 #else
-        std::chrono::microseconds m_duration;
+        std::chrono::microseconds m_timeout_duration;
+        std::chrono::microseconds m_connection_timeout_duration;
 #endif
         std::atomic<timer_state> m_state;
         std::weak_ptr<asio_context> m_ctx;
