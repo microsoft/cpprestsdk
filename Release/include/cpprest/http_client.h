@@ -96,6 +96,7 @@ public:
     http_client_config()
         : m_guarantee_order(false)
         , m_timeout(std::chrono::seconds(30))
+        , m_connection_timeout(std::chrono::seconds::zero()) // defaults to m_timeout if not set specifically
         , m_chunksize(0)
         , m_request_compressed(false)
 #if !defined(__cplusplus_winrt)
@@ -189,6 +190,17 @@ public:
     utility::seconds timeout() const { return std::chrono::duration_cast<utility::seconds>(m_timeout); }
 
     /// <summary>
+    /// Get the connection timeout
+    /// Defaults to the global timeout if not set specifically.
+    /// </summary>
+    /// <returns>The timeout (in seconds) used for each network connection operation (includes DNS lookup) on the client.</returns>
+    utility::seconds connection_timeout() const {
+        return (m_connection_timeout == std::chrono::seconds::zero())
+                    ? timeout()
+                    : std::chrono::duration_cast<utility::seconds>(m_connection_timeout);
+    }
+
+    /// <summary>
     /// Get the timeout
     /// </summary>
     /// <returns>The timeout (in whatever duration) used for each send and receive operation on the client.</returns>
@@ -197,6 +209,20 @@ public:
     {
         return std::chrono::duration_cast<T>(m_timeout);
     }
+
+    /// <summary>
+    /// Get the connection timeout
+    /// Defaults to the global timeout if not set specifically.
+    /// </summary>
+    /// <returns>The timeout (in whatever duration) used for each network connection operation (includes DNS lookup) on the client.</returns>
+    template<class T>
+    T connection_timeout() const
+    {
+        return (m_connection_timeout == std::chrono::seconds::zero())
+                    ? timeout<T>()
+                    : std::chrono::duration_cast<T>(m_connection_timeout);
+    }
+
     /// <summary>
     /// Set the timeout
     /// </summary>
@@ -206,6 +232,17 @@ public:
     void set_timeout(const T& timeout)
     {
         m_timeout = std::chrono::duration_cast<std::chrono::microseconds>(timeout);
+    }
+
+    /// <summary>
+    /// Set the timeout
+    /// </summary>
+    /// <param name="timeout">The timeout (duration from microseconds range and up) used for each network connection
+    /// operation (includes DNS lookup) on the client.</param>
+    template<class T>
+    void set_connection_timeout(const T& timeout)
+    {
+        m_connection_timeout = std::chrono::duration_cast<std::chrono::microseconds>(timeout);
     }
 
     /// <summary>
@@ -408,6 +445,7 @@ private:
     bool m_guarantee_order;
 
     std::chrono::microseconds m_timeout;
+    std::chrono::microseconds m_connection_timeout;
     size_t m_chunksize;
     bool m_request_compressed;
 
