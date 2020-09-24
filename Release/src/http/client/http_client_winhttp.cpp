@@ -897,9 +897,15 @@ protected:
 
         {
             // Set timeouts.
-            const int milliseconds =
+            const int timeout_ms =
                 (std::max)(static_cast<int>(config.timeout<std::chrono::milliseconds>().count()), 1);
-            if (!WinHttpSetTimeouts(m_hSession, milliseconds, milliseconds, milliseconds, milliseconds))
+            const int connection_timeout_ms =
+                (std::max)(static_cast<int>(config.connection_timeout<std::chrono::milliseconds>().count()), 1);
+            if (!WinHttpSetTimeouts(m_hSession,
+                                    connection_timeout_ms, /* nResolveTimeout */
+                                    connection_timeout_ms, /* nConnectTimeout */
+                                    timeout_ms,            /* nSendTimeout    */
+                                    timeout_ms))           /* nReceiveTimeout */
             {
                 return GetLastError();
             }
