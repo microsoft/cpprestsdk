@@ -1892,8 +1892,6 @@ private:
 
         bool has_timedout() const { return m_state == timedout; }
 
-        bool has_started() const { return m_state == connecting || m_state == communicating; }
-
         void stop()
         {
             m_state = stopped;
