@@ -5,3 +5,6 @@
 	path = Release/libs/websocketpp
 	url = https://github.com/zaphoyd/websocketpp
 	fetchRecurseSubmodules = false
+[submodule "Release/libs/asio"]
+	path = Release/libs/asio
+	url = https://github.com/chriskohlhoff/asio.git
