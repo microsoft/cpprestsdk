@@ -16,7 +16,9 @@
 #include <stdio.h>
 
 #ifndef _WIN32
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
+#endif
 #include <inttypes.h>
 #endif
 
