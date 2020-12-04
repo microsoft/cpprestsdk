@@ -490,6 +490,9 @@ public:
     _http_server_context() {}
     virtual ~_http_server_context() {}
 
+    // Can be used to send arbitrary data between ssl_context_callback and message handler
+    std::map<std::string, std::string> m_context_items;
+
 private:
 };
 

@@ -41,7 +41,7 @@ namespace listener
 #if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 typedef std::function<void(boost::asio::ssl::context&)> ssl_context_callback;
 #else
-typedef std::function<bool(PHTTP_SSL_INFO)> ssl_context_callback;
+typedef std::function<void(PHTTP_SSL_INFO, details::_http_server_context*)> ssl_context_callback;
 #endif
 
 /// <summary>
