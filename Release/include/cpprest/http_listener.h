@@ -21,7 +21,7 @@
 #endif
 
 #if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
-#include <wincrypt.h>
+#include <http.h>
 #endif
 
 #if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt)) ||                         \
@@ -41,7 +41,7 @@ namespace listener
 #if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 typedef std::function<void(boost::asio::ssl::context&)> ssl_context_callback;
 #else
-typedef std::function<void(PCCERT_CONTEXT)> ssl_context_callback;
+typedef std::function<bool(PHTTP_SSL_INFO)> ssl_context_callback;
 #endif
 
 /// <summary>

@@ -24,8 +24,6 @@
 #include "http_server_httpsys.h"
 #include "http_server_impl.h"
 
-#include <wincrypt.h>
-
 using namespace web;
 using namespace utility;
 using namespace concurrency;
@@ -743,21 +741,12 @@ void windows_request_context::dispatch_request_to_listener(
 
     auto ssl_context_callback = pListener->configuration().get_ssl_context_callback();
     if (ssl_context_callback != nullptr
-        && m_request->pSslInfo != nullptr
-        && m_request->pSslInfo->pClientCertInfo != nullptr
-        && m_request->pSslInfo->pClientCertInfo->pCertEncoded != nullptr)
+        && m_request->pSslInfo != nullptr)
 
     {
-        PCCERT_CONTEXT cert_context = CertCreateCertificateContext(PKCS_7_ASN_ENCODING | X509_ASN_ENCODING,
-                                     m_request->pSslInfo->pClientCertInfo->pCertEncoded,
-                                     m_request->pSslInfo->pClientCertInfo->CertEncodedSize);
-        if (cert_context != nullptr)
+        if (!ssl_context_callback(m_request->pSslInfo))
         {
-            std::unique_ptr<const CERT_CONTEXT, decltype(&CertFreeCertificateContext)> cert_context_scope_guard(
-                cert_context,
-                &CertFreeCertificateContext);
-
-            ssl_context_callback(cert_context);
+            request._reply_if_not_already(status_codes::Unauthorized);
         }
     }
 
