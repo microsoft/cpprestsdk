@@ -24,6 +24,8 @@
 #include "http_server_httpsys.h"
 #include "http_server_impl.h"
 
+#include <wincrypt.h>
+
 using namespace web;
 using namespace utility;
 using namespace concurrency;
@@ -738,6 +740,27 @@ void windows_request_context::dispatch_request_to_listener(
 
     // Look up the lock for the http_listener.
     auto* pServer = static_cast<http_windows_server*>(http_server_api::server_api());
+
+    auto ssl_context_callback = pListener->configuration().get_ssl_context_callback();
+    if (ssl_context_callback != nullptr
+        && m_request->pSslInfo != nullptr
+        && m_request->pSslInfo->pClientCertInfo != nullptr
+        && m_request->pSslInfo->pClientCertInfo->pCertEncoded != nullptr)
+
+    {
+        PCCERT_CONTEXT cert_context = CertCreateCertificateContext(PKCS_7_ASN_ENCODING | X509_ASN_ENCODING,
+                                     m_request->pSslInfo->pClientCertInfo->pCertEncoded,
+                                     m_request->pSslInfo->pClientCertInfo->CertEncodedSize);
+        if (cert_context != nullptr)
+        {
+            std::unique_ptr<const CERT_CONTEXT, decltype(&CertFreeCertificateContext)> cert_context_scope_guard(
+                cert_context,
+                &CertFreeCertificateContext);
+
+            ssl_context_callback(cert_context);
+        }
+    }
+
     pplx::extensibility::reader_writer_lock_t* pListenerLock;
     {
         pplx::extensibility::scoped_read_lock_t lock(pServer->_M_listenersLock);
