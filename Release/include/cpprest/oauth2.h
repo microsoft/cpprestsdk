@@ -295,7 +295,7 @@ public:
     {
         uri_builder ub;
         ub.append_query(
-        details::oauth2_strings::grant_type, details::oauth2_strings::client_credentials, false);
+            details::oauth2_strings::grant_type, details::oauth2_strings::client_credentials, false);
         return _request_token(ub);
     }
 
