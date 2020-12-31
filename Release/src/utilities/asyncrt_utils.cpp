@@ -736,6 +736,12 @@ static compute_year_result compute_year(int64_t secondsSince1900)
     int secondsInt = static_cast<int>(secondsLeft - year4 * SecondsIn4Years);
 
     int year1 = secondsInt / SecondsInYear;
+    if (year1 == 4)
+    {
+        // this is the last day in a leap year
+        year1 = 3;
+    }
+
     secondsInt -= year1 * SecondsInYear;
 
     // shift back to 1900 base from 1601:

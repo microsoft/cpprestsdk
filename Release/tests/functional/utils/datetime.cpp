@@ -133,6 +133,21 @@ SUITE(datetime)
         TestDateTimeRoundtrip(_XPLATSTR("9999-12-31T23:59:59Z"));
     }
 
+    TEST(parsing_time_roundtrip_year_2016)
+    {
+        TestDateTimeRoundtrip(_XPLATSTR("2016-12-31T20:59:59Z"));
+    }
+
+    TEST(parsing_time_roundtrip_year_2020)
+    {
+        TestDateTimeRoundtrip(_XPLATSTR("2020-12-31T20:59:59Z"));
+    }
+
+    TEST(parsing_time_roundtrip_year_2021)
+    {
+        TestDateTimeRoundtrip(_XPLATSTR("2021-01-01T20:59:59Z"));
+    }
+
     TEST(emitting_time_correct_day) {
         const auto test = utility::datetime() + UINT64_C(132004507640000000); // 2019-04-22T23:52:44 is a Monday
         const auto actual = test.to_string(utility::datetime::RFC_1123);
