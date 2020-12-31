@@ -1,3 +1,11 @@
+cpprestsdk (2.10.17)
+* PR#1550 Fix year calculation for the last day of a leap year
+* PR#1523 Fix wrong linking of Apple Frameworks on MacOS
+* PR#1520 Define __STDC_FORMAT_MACROS when it hasn't been defined to avoid duplicate define error. 
+* PR#1415 Delete apparently broken .vcxprojs and .pfxes.
+* Removed defunct email contact information from the readme
+-- cpprestsdk team WED, 30 Dec 2020 20:08:00 -0700
+
 cpprestsdk (2.10.16)
 * PR#1383 CMake fixes + CMake search for OpenSSL (macOS)
 * PR#1392 Update submodule websocketpp to 0.8.2
