@@ -13,11 +13,11 @@
 
 #pragma once
 
-#if (defined(_MSC_VER))
+#if defined(_MSC_VER) && !defined(__MINGW32__)
 #error This file must not be included for Visual Studio
 #endif
 
-#ifndef _WIN32
+#if !defined(__cplusplus_winrt)
 
 #include "cpprest/details/cpprest_compat.h"
 #include "pthread.h"
@@ -259,12 +259,20 @@ namespace details
 /// Terminate the process due to unhandled exception
 /// </summary>
 #ifndef _REPORT_PPLTASK_UNOBSERVED_EXCEPTION
+#if defined(__MINGW32__)
+#define _REPORT_PPLTASK_UNOBSERVED_EXCEPTION()                                                                         \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        std::terminate();                                                                                              \
+    } while (false)
+#else
 #define _REPORT_PPLTASK_UNOBSERVED_EXCEPTION()                                                                         \
     do                                                                                                                 \
     {                                                                                                                  \
         raise(SIGTRAP);                                                                                                \
         std::terminate();                                                                                              \
     } while (false)
+#endif // defined(__MINGW32__)
 #endif //_REPORT_PPLTASK_UNOBSERVED_EXCEPTION
 } // namespace details
 
@@ -274,4 +282,4 @@ __attribute__((always_inline)) inline void* _ReturnAddress() { return __builtin_
 
 } // namespace pplx
 
-#endif // !_WIN32
+#endif // !defined(__cplusplus_winrt)

@@ -14,7 +14,7 @@
 
 #pragma once
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__MINGW32__)
 
 #if _MSC_VER >= 1900
 #define CPPREST_NOEXCEPT noexcept
@@ -69,7 +69,7 @@
 #endif // __clang__
 #endif // _WIN32
 
-#ifdef _NO_ASYNCRTIMP
+#if defined(_NO_ASYNCRTIMP) || defined(__MINGW32__)
 #define _ASYNCRTIMP
 #else // ^^^ _NO_ASYNCRTIMP ^^^ // vvv !_NO_ASYNCRTIMP vvv
 #ifdef _ASYNCRT_EXPORT

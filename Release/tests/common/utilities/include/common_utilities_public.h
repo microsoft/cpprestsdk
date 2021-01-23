@@ -11,9 +11,9 @@
 
 #pragma once
 
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if (!defined(_WIN32) && !defined(__cplusplus_winrt)) || defined(__MINGW32__)
 #define TEST_UTILITY_API
-#endif // !_WIN32 && !__cplusplus_winrt
+#endif // !_WIN32 && !__cplusplus_winrt || defined(__MINGW32__)
 
 #ifndef TEST_UTILITY_API
 #ifdef COMMONUTILITIES_EXPORTS

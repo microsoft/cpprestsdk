@@ -23,4 +23,8 @@ if(NOT WINDOWS_STORE AND NOT WINDOWS_PHONE)
   endif()
 
   configure_pch(httplistener_test stdafx.h stdafx.cpp)
+
+  if(MINGW)
+    target_link_libraries(httplistener_test PRIVATE ws2_32 wsock32)
+  endif()
 endif()

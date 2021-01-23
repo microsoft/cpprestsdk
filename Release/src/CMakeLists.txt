@@ -213,6 +213,12 @@ if (WIN32 AND NOT WINDOWS_STORE AND NOT WINDOWS_PHONE)
     bcrypt.lib
     crypt32.lib
   )
+  if(MINGW)
+    target_link_libraries(cpprest PRIVATE
+      ws2_32
+      wsock32
+    )
+  endif()
 elseif(WINDOWS_STORE)
   if(NOT CMAKE_GENERATOR MATCHES "Visual Studio .*")
     target_compile_definitions(cpprest PRIVATE -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP)

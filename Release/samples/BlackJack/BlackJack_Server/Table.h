@@ -12,7 +12,7 @@
 #pragma once
 #include "stdafx.h"
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 #include <concrt.h>
 #endif
 #include "messagetypes.h"

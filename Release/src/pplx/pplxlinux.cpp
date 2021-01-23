@@ -15,10 +15,12 @@
 
 #include "pplx/pplx.h"
 #include "pplx/threadpool.h"
+#if !defined(__MINGW32__)
 #include "sys/syscall.h"
+#endif
 #include <thread>
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 #error "ERROR: This file should only be included in non-windows Build"
 #endif
 

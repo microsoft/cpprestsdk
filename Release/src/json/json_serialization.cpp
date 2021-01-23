@@ -160,8 +160,11 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
             _i64toa_s(m_number.m_intval, tempBuffer, tempSize, 10);
         else
             _ui64toa_s(m_number.m_uintval, tempBuffer, tempSize, 10);
-
+#if defined(__MINGW32__)
+        const auto numChars = strnlen(tempBuffer, tempSize);
+#else
         const auto numChars = strnlen_s(tempBuffer, tempSize);
+#endif // defined(__MINGW32__)
 #else
         int numChars;
         if (m_number.m_type == number::type::signed_type)

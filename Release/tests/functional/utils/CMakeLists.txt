@@ -14,3 +14,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 configure_pch(utils_test stdafx.h stdafx.cpp)
+
+if(MINGW)
+  target_link_libraries(utils_test PRIVATE ws2_32 wsock32)
+endif()

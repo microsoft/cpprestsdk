@@ -26,7 +26,7 @@
 #endif
 #endif // _WIN32
 
-#ifdef _NO_PPLXIMP
+#if defined(_NO_PPLXIMP) || defined(__MINGW32__)
 #define _PPLXIMP
 #else
 #ifdef _PPLX_EXPORT
@@ -40,7 +40,11 @@
 
 // Use PPLx
 #ifdef _WIN32
+#if defined(__MINGW32__)
+#include "pplx/pplxlinux.h"
+#else
 #include "pplx/pplxwin.h"
+#endif // defined(__MINGW32__)
 #elif defined(__APPLE__)
 #undef _PPLXIMP
 #define _PPLXIMP

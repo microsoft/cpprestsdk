@@ -25,7 +25,7 @@ using namespace concurrency::streams;
 web::http::client::http_client_config client_config_for_proxy()
 {
     web::http::client::http_client_config client_config;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
     wchar_t* pValue = nullptr;
     std::unique_ptr<wchar_t, void (*)(wchar_t*)> holder(nullptr, [](wchar_t* p) { free(p); });
     size_t len = 0;
@@ -37,7 +37,11 @@ web::http::client::http_client_config client_config_for_proxy()
 #else
     if (const char* env_http_proxy = std::getenv("http_proxy"))
     {
+#if defined(__MINGW32__)
+        std::wstring env_http_proxy_string(utility::conversions::to_utf16string(env_http_proxy));
+#else
         std::string env_http_proxy_string(env_http_proxy);
+#endif
 #endif
         if (env_http_proxy_string == U("auto"))
             client_config.set_proxy(web::web_proxy::use_auto_discovery);
@@ -48,7 +52,7 @@ web::http::client::http_client_config client_config_for_proxy()
     return client_config;
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 int wmain(int argc, wchar_t* args[])
 #else
 int main(int argc, char* args[])
@@ -59,8 +63,9 @@ int main(int argc, char* args[])
         printf("Usage: BingRequest.exe search_term output_file\n");
         return -1;
     }
-    const string_t searchTerm = args[1];
-    const string_t outputFileName = args[2];
+
+    const string_t searchTerm = utility::conversions::to_string_t(args[1]);
+    const string_t outputFileName = utility::conversions::to_string_t(args[2]);
 
     // Open a stream to the file to write the HTTP response body into.
     auto fileBuffer = std::make_shared<streambuf<uint8_t>>();

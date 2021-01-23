@@ -22,7 +22,7 @@
 
 #if defined(_CRTBLD)
 #elif defined(_WIN32)
-#if (_MSC_VER >= 1700)
+#if (_MSC_VER >= 1700) || defined(__MINGW32__)
 #define _USE_REAL_ATOMICS
 #endif
 #else // GCC compiler

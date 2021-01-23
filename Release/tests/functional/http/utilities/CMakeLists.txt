@@ -15,6 +15,12 @@ target_link_libraries(httptest_utilities PUBLIC
   unittestpp
   common_utilities
 )
+if(MINGW)
+  target_link_libraries(httptest_utilities PRIVATE
+    ws2_32
+    wsock32
+  )
+endif()
 if(WINDOWS_STORE)
   target_compile_options(httptest_utilities PRIVATE /DWINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP)
 endif()

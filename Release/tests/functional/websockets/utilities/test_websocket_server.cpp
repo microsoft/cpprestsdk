@@ -22,7 +22,7 @@
 #pragma warning(disable : 4100 4127 4996 4512 4701 4267 4067 4005)
 #define _WEBSOCKETPP_CPP11_STL_
 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
-#if _MSC_VER < 1900
+#if (_MSC_VER < 1900) && !defined(__MINGW32__)
 #define _WEBSOCKETPP_NOEXCEPT_TOKEN_
 #endif
 #endif /* _WIN32 */
@@ -32,8 +32,11 @@
 #pragma clang diagnostic ignored "-Winfinite-recursion"
 #endif
 
+#pragma push_macro("U")
+#undef U
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
+#pragma pop_macro("U")
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

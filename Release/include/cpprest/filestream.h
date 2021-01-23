@@ -714,7 +714,7 @@ private:
     static pplx::task<std::shared_ptr<basic_streambuf<_CharType>>> open(
         const utility::string_t& _Filename,
         std::ios_base::openmode _Mode = std::ios_base::out,
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
         int _Prot = (int)std::ios_base::_Openprot
 #else
         int _Prot = 0                                         // unsupported on Linux, for now
@@ -956,7 +956,7 @@ public:
     /// <returns>A <c>task</c> that returns an opened stream buffer on completion.</returns>
     static pplx::task<streambuf<_CharType>> open(const utility::string_t& file_name,
                                                  std::ios_base::openmode mode = std::ios_base::out,
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
                                                  int prot = _SH_DENYRD
 #else
                                                  int prot = 0 // unsupported on Linux
@@ -1011,7 +1011,7 @@ public:
     /// <returns>A <c>task</c> that returns an opened input stream on completion.</returns>
     static pplx::task<streams::basic_istream<_CharType>> open_istream(const utility::string_t& file_name,
                                                                       std::ios_base::openmode mode = std::ios_base::in,
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
                                                                       int prot = (int)std::ios_base::_Openprot
 #else
                                                                       int prot = 0
@@ -1036,7 +1036,7 @@ public:
     /// <returns>A <c>task</c> that returns an opened output stream on completion.</returns>
     static pplx::task<streams::basic_ostream<_CharType>> open_ostream(const utility::string_t& file_name,
                                                                       std::ios_base::openmode mode = std::ios_base::out,
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
                                                                       int prot = (int)std::ios_base::_Openprot
 #else
                                                                       int prot = 0

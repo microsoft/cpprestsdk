@@ -22,7 +22,7 @@
 using namespace Windows::Storage;
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define DEFAULT_PROT (int)std::ios_base::_Openprot
 #else
 #define DEFAULT_PROT 0
@@ -37,7 +37,11 @@ namespace streams
 using namespace ::pplx;
 using namespace utility;
 
+#if defined(__MINGW32__)
+std::string get_full_name(const utility::string_t& name);
+#else
 utility::string_t get_full_name(const utility::string_t& name);
+#endif // __MINGW32__
 
 template<typename CharType>
 void extract_test(std::basic_istream<CharType>& stream, std::basic_string<CharType> expected)

@@ -12,6 +12,10 @@
 #pragma once
 
 #ifdef _WIN32
+#if defined(__MINGW32__)
+#include <winsock2.h>
+#endif
+
 #include <Windows.h>
 #endif
 
@@ -22,7 +26,7 @@
 #include <time.h>
 #include <vector>
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__MINGW32__)
 #include "pplx/pplxconv.h"
 #else
 #include "pplx/threadpool.h"

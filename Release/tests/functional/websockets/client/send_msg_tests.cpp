@@ -13,6 +13,8 @@
 
 #include "stdafx.h"
 
+#include <cstdlib>
+
 #if defined(__cplusplus_winrt) || !defined(_M_ARM)
 
 using namespace concurrency;
@@ -37,7 +39,11 @@ namespace client
 {
 SUITE(send_msg_tests)
 {
+#if defined(__MINGW32__)
+    std::string get_full_name(const utility::string_t& name)
+#else
     utility::string_t get_full_name(const utility::string_t& name)
+#endif // __MINGW32__
     {
 #if defined(__cplusplus_winrt)
         // On WinRT, we must compensate for the fact that we will be accessing files in the
@@ -48,7 +54,11 @@ SUITE(send_msg_tests)
                 .get();
         return file->Path->Data();
 #else
+#if defined(__MINGW32__)
+        return utility::conversions::to_utf8string(name);
+#else
         return name;
+#endif // __MINGW32__
 #endif
     }
 

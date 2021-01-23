@@ -35,7 +35,11 @@ endif()
 
 configure_pch(httpclient_test stdafx.h stdafx.cpp)
 
-if(NOT WIN32)
+if((NOT WIN32) OR MINGW)
   cpprest_find_boost()
   target_link_libraries(httpclient_test PRIVATE cpprestsdk_boost_internal)
+endif()
+
+if(MINGW)
+  target_link_libraries(httpclient_test PRIVATE ws2_32 wsock32)
 endif()

@@ -505,12 +505,14 @@ int main(int argc, char* argv[])
     Windows::Foundation::Initialize(RO_INIT_MULTITHREADED);
 #elif defined(_WIN32)
     // Add standard error as output as well.
+#if !defined(__MINGW32__)
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW | _CRTDBG_MODE_DEBUG);
     _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
     _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW | _CRTDBG_MODE_DEBUG);
     _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDERR);
     _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
     _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+#endif // !defined(__MINGW32__)
 
     // The test runner built with WinRT support might be used on a pre Win8 machine.
     // Obviously in that case WinRT test cases can't run, but non WinRT ones should be
@@ -567,7 +569,7 @@ int main(int argc, char* argv[])
     {
         listOption = true;
     }
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
     if (UnitTest::GlobalSettings::Has("detectleaks"))
     {
         _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);

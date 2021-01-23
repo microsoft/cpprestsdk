@@ -20,9 +20,17 @@
 
 #ifndef WEBSOCKET_UTILITY_API
 #ifdef WEBSOCKETTESTUTILITY_EXPORTS
+#if defined(__MINGW32__)
+#define WEBSOCKET_UTILITY_API
+#else
 #define WEBSOCKET_UTILITY_API __declspec(dllexport)
+#endif // defined(__MINGW32__)
+#else
+#if defined(__MINGW32__)
+#define WEBSOCKET_UTILITY_API
 #else
 #define WEBSOCKET_UTILITY_API __declspec(dllimport)
+#endif // defined(__MINGW32__)
 #endif
 #endif
 

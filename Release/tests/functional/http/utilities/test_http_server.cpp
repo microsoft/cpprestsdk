@@ -10,7 +10,7 @@
  ****/
 #include "stdafx.h"
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 #include <http.h>
 #pragma comment(lib, "httpapi.lib")
 #pragma warning(push)
@@ -74,7 +74,7 @@ struct test_server_queue
     }
 };
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__MINGW32__)
 // Helper function to parse verb from Windows HTTP Server API.
 static utility::string_t parse_verb(const HTTP_REQUEST* p_http_request)
 {

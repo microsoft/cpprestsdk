@@ -7,3 +7,7 @@ add_executable(blackjackclient
   )
 
 target_link_libraries(blackjackclient cpprest)
+
+if(MINGW)
+  target_link_libraries(blackjackclient ws2_32 wsock32)
+endif()

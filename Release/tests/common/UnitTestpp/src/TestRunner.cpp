@@ -36,7 +36,9 @@
 #include "TestMacros.h"
 
 #if _MSC_VER == 1600
+#if !defined(__MINGW32__)
 #include <agents.h>
+#endif
 #include <functional>
 #else
 #include <future>

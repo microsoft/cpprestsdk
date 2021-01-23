@@ -15,13 +15,32 @@ set(CPPREST_VERSION_REVISION 17)
 
 enable_testing()
 
-set(WERROR ON CACHE BOOL "Treat Warnings as Errors.")
+if(MINGW)
+  # on mingw there are tons of warnings.
+  set(WERROR OFF CACHE BOOL "Treat Warnings as Errors.")
+else()
+  set(WERROR ON CACHE BOOL "Treat Warnings as Errors.")
+endif()
 set(CPPREST_EXCLUDE_WEBSOCKETS OFF CACHE BOOL "Exclude websockets functionality.")
 set(CPPREST_EXCLUDE_COMPRESSION OFF CACHE BOOL "Exclude compression functionality.")
 set(CPPREST_EXCLUDE_BROTLI ON CACHE BOOL "Exclude Brotli compression functionality.")
 set(CPPREST_EXPORT_DIR cmake/cpprestsdk CACHE STRING "Directory to install CMake config files.")
 set(CPPREST_INSTALL_HEADERS ON CACHE BOOL "Install header files.")
 set(CPPREST_INSTALL ON CACHE BOOL "Add install commands.")
+
+SET(DEFAULT_BUILD_TYPE "Release")
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${DEFAULT_BUILD_TYPE}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}" CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+# There's a "string table overflow" with mingw-w64 when optimization is disabled.
+#
+# see also: https://stackoverflow.com/questions/14125007/gcc-string-table-overflow-error-during-compilation
+if(MINGW AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message(FATAL_ERROR "mingw-w64 cannot build the debug version of this library")
+endif()
 
 if(IOS OR ANDROID)
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
@@ -92,6 +111,12 @@ if(APPLE) # Note: also iOS
   set(CPPREST_HTTP_CLIENT_IMPL asio CACHE STRING "Internal use.")
   set(CPPREST_HTTP_LISTENER_IMPL asio CACHE STRING "Internal use.")
 elseif(UNIX AND NOT APPLE) # Note: also android
+  set(CPPREST_PPLX_IMPL linux CACHE STRING "Internal use.")
+  set(CPPREST_WEBSOCKETS_IMPL wspp CACHE STRING "Internal use.")
+  set(CPPREST_FILEIO_IMPL posix CACHE STRING "Internal use.")
+  set(CPPREST_HTTP_CLIENT_IMPL asio CACHE STRING "Internal use.")
+  set(CPPREST_HTTP_LISTENER_IMPL asio CACHE STRING "Internal use.")
+elseif(MINGW)
   set(CPPREST_PPLX_IMPL linux CACHE STRING "Internal use.")
   set(CPPREST_WEBSOCKETS_IMPL wspp CACHE STRING "Internal use.")
   set(CPPREST_FILEIO_IMPL posix CACHE STRING "Internal use.")
@@ -169,8 +194,12 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(LD_FLAGS "${LD_FLAGS} -Wl,-z,defs")
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -D_GLIBCXX_USE_SCHED_YIELD -D_GLIBCXX_USE_NANOSLEEP")
+  if (MINGW)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+  else()
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -D_GLIBCXX_USE_SCHED_YIELD -D_GLIBCXX_USE_NANOSLEEP")
+    endif()
   endif()
 
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")

@@ -13,7 +13,7 @@
 
 #include "stdafx.h"
 
-#if !defined(_WIN32) || CPPREST_FORCE_PPLX
+#if !defined(_WIN32) || defined(__MINGW32__) || CPPREST_FORCE_PPLX
 #include "pplx/pplx.h"
 #include <atomic>
 

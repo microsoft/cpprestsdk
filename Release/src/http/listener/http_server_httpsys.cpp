@@ -1257,7 +1257,9 @@ void windows_request_context::cancel_request(std::exception_ptr except_ptr)
     }
 }
 
-std::unique_ptr<http_server> make_http_httpsys_server() { return std::make_unique<http_windows_server>(); }
+std::unique_ptr<http_server> make_http_httpsys_server() {
+    return std::unique_ptr<http_windows_server>(new http_windows_server());
+}
 
 } // namespace details
 } // namespace experimental

@@ -18,7 +18,7 @@
 #include <cpprest/http_client.h>
 
 // For single_core test case.
-#if defined(_WIN32) && _MSC_VER < 1900
+#if defined(_WIN32) && _MSC_VER < 1900 && !defined(__MINGW32__)
 #include <concrt.h>
 #endif
 
@@ -149,7 +149,7 @@ SUITE(connections_and_errors)
         listener.close().wait();
     }
 
-#if defined(_WIN32) && _MSC_VER < 1900
+#if defined(_WIN32) && _MSC_VER < 1900 && !defined(__MINGW32__)
     TEST_FIXTURE(uri_address, single_core_request)
     {
         // Fake having a scheduler with only 1 core.

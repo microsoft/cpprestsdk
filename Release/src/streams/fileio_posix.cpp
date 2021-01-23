@@ -17,6 +17,9 @@
  ****/
 #include "stdafx.h"
 
+#include <cstdlib>
+#include <cwchar>
+
 #include "cpprest/details/fileio.h"
 
 using namespace boost::asio;
@@ -171,6 +174,10 @@ bool _open_fsb_str(_filestream_callback* callback, const char* filename, std::io
     return true;
 }
 
+bool _open_fsb_str(_filestream_callback* callback, const wchar_t* filename, std::ios_base::openmode mode, int prot) {
+    return _open_fsb_str(callback, utility::conversions::to_utf8string(filename).c_str(), mode, prot);
+}
+
 /// <summary>
 /// Close a file stream buffer.
 /// </summary>
@@ -268,8 +275,12 @@ size_t _write_file_async(Concurrency::streams::details::_file_info_impl* fInfo,
             orig_pos = 0;
             must_restore_pos = false;
         }
-
+#if defined(__MINGW32__)
+        lseek(fInfo->m_handle, abs_position, SEEK_SET);
+        auto bytes_written = write(fInfo->m_handle, ptr, count);
+#else
         auto bytes_written = pwrite(fInfo->m_handle, ptr, count, abs_position);
+#endif // defined(__MINGW32__)
         if (bytes_written == -1)
         {
             callback->on_error(std::make_exception_ptr(utility::details::create_system_error(errno)));
@@ -319,7 +330,13 @@ size_t _read_file_async(Concurrency::streams::details::_file_info_impl* fInfo,
                         size_t offset)
 {
     pplx::create_task([=]() -> void {
+
+#if defined(__MINGW32__)
+        lseek(fInfo->m_handle, offset, SEEK_SET);
+        auto bytes_read = read(fInfo->m_handle, ptr, count);
+#else
         auto bytes_read = pread(fInfo->m_handle, ptr, count, offset);
+#endif // defined(__MINGW32__)
         if (bytes_read < 0)
         {
             callback->on_error(std::make_exception_ptr(utility::details::create_system_error(errno)));

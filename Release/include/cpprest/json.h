@@ -403,7 +403,7 @@ public:
     /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
     _ASYNCRTIMP static value __cdecl parse(const utility::string_t& value, std::error_code& errorCode);
 
-#ifdef _WIN32
+#if defined(_WIN32)
     /// <summary>
     /// Parses a string and construct a JSON value.
     /// </summary>

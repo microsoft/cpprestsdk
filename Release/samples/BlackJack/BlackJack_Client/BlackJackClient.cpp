@@ -157,7 +157,7 @@ void PrintTable(const http_response& response, bool& refresh)
 // Arguments: BlackJack_Client.exe <port>
 // If port is not specified, client will assume that the server is listening on port 34568
 //
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 int wmain(int argc, wchar_t* argv[])
 #else
 int main(int argc, char* argv[])

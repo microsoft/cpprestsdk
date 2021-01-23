@@ -372,7 +372,12 @@ static double anystod(const char* str)
 }
 static double anystod(const wchar_t* str)
 {
+#if defined(__MINGW32__)
+    // link error on mingw-w64: undefined reference to `__imp__wcstod_l'
+    return wcstod(str, nullptr);
+#else
     return _wcstod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
+#endif
 }
 #else
 static int __attribute__((__unused__)) print_llu(char* ptr, size_t n, unsigned long long val64)

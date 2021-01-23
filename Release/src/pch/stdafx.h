@@ -42,7 +42,9 @@
 #include <winhttp.h>
 #endif // !__cplusplus_winrt
 
-#else // LINUX or APPLE
+#endif // _WIN32
+
+#if !defined(_WIN32) || defined(__MINGW32__) // LINUX, APPLE or MinGW
 #define __STDC_LIMIT_MACROS
 #include "pthread.h"
 #include <atomic>
@@ -62,9 +64,14 @@
 #include "boost/thread/mutex.hpp"
 #include <fcntl.h>
 #include <sys/stat.h>
+#if !defined(__MINGW32__)
 #include <sys/syscall.h>
+#endif
 #include <unistd.h>
-#endif // _WIN32
+#endif // !defined(_WIN32) || defined(__MINGW32__)
+
+// include this header to avoid the the U(...) bing affected by macros `U()` in basic_types.h
+#include "boost/move/detail/type_traits.hpp"
 
 // Macro indicating the C++ Rest SDK product itself is being built.
 // This is to help track how many developers are directly building from source themselves.

@@ -87,7 +87,7 @@ private:
     boost::asio::io_service::work m_work;
 };
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__MINGW32__)
 struct shared_threadpool
 {
 #if defined(_MSC_VER) && _MSC_VER < 1900

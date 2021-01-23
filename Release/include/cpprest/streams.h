@@ -1723,7 +1723,7 @@ private:
 
 #ifdef _WIN32
 template<class CharType>
-class type_parser<CharType, std::enable_if_t<sizeof(CharType) == 1, std::basic_string<wchar_t>>>
+class type_parser<CharType, typename std::enable_if<sizeof(CharType) == 1, std::basic_string<wchar_t>>::type>
     : public _type_parser_base<CharType>
 {
     typedef _type_parser_base<CharType> base;

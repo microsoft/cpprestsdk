@@ -112,7 +112,7 @@ class status_codes
 {
 public:
 #define _PHRASES
-#define DAT(a, b, c) const static status_code a = b;
+#define DAT(a, b, c) _ASYNCRTIMP const static status_code a = b;
 #include "cpprest/details/http_constants.dat"
 #undef _PHRASES
 #undef DAT

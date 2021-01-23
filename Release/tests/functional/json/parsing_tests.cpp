@@ -14,7 +14,7 @@
 #include <array>
 #include <iomanip>
 
-#if defined(_WIN32) || defined(__APPLE__)
+#if (defined(_WIN32) && !defined(__MINGW32__)) || defined(__APPLE__)
 #include <regex>
 #elif (defined(ANDROID) || defined(__ANDROID__))
 #else
@@ -172,7 +172,7 @@ namespace json_tests
 {
 inline bool verify_parsing_error_msg(const std::string& str)
 {
-#if defined(_WIN32) || defined(__APPLE__)
+#if (defined(_WIN32) && !defined(__MINGW32__)) || defined(__APPLE__)
     auto spattern = "^\\* Line \\d+, Column \\d+ Syntax error: .+";
     static std::regex pattern(spattern);
     return std::regex_match(str, pattern, std::regex_constants::match_flag_type::match_not_null);

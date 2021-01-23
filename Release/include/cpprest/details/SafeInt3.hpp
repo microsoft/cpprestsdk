@@ -152,8 +152,23 @@ Please read the leading comments before using the class.
 
 #ifndef C_ASSERT
 #define C_ASSERT_DEFINED_SAFEINT
+#if defined(__MINGW32__)
+#define C_ASSERT(e) void __C_ASSERT__(int [(e)?1:-1])
+#else // defined(__MINGW32__)
 #define C_ASSERT(e) typedef char __C_ASSERT__[(e) ? 1 : -1]
-#endif
+#endif // defined(__MINGW32__)
+#else
+#if defined(__MINGW32__)
+// the default definition from mingw is: extern void __C_ASSERT__(int [(e)?1:-1])
+//
+// When be used in class declration the compiler will complains: error: storage class specified for '__C_ASSERT__'.
+// See also: https://github.com/Alexpux/mingw-w64/blob/master/mingw-w64-tools/widl/include/winnt.h
+//
+// But we cannot define it as `typedef char __C_ASSERT__[(e) ? 1 : -1]`, since it may conflict with the system's one.
+#undef C_ASSERT
+#define C_ASSERT(e) void __C_ASSERT__(int [(e)?1:-1])
+#endif // defined(__MINGW32__)
+#endif // C_ASSERT
 
 // Let's test some assumptions
 // We're assuming two's complement negative numbers

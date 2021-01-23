@@ -15,7 +15,7 @@
 
 #include "cpprest/details/http_helpers.h"
 #include "cpprest/uri.h"
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 #include <winhttp.h>
 #pragma comment(lib, "winhttp.lib")
 #pragma warning(push)
@@ -47,7 +47,7 @@ utility::string_t flatten_http_headers(const std::map<utility::string_t, utility
     return flattened_headers;
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 
 // Helper function to query for the size of header values.
 static void query_header_length(HINTERNET request_handle, DWORD header, DWORD& length)
@@ -403,7 +403,7 @@ public:
                           size_t data_length)
     {
         auto localHeaders = headers;
-        localHeaders["User-Agent"] = "test_http_client";
+        localHeaders[_XPLATSTR("User-Agent")] = _XPLATSTR("test_http_client");
         web::http::http_request request;
         request.set_method(method);
         request.set_request_uri(web::http::uri_builder(m_uri).append_path(path).to_uri());
@@ -416,7 +416,7 @@ public:
             else
                 currentValue = currentValue + U(", ") + it->second;
         }
-        request.set_body(utility::string_t(reinterpret_cast<const char*>(data), data_length));
+        request.set_body(utility::string_t(reinterpret_cast<const utility::char_t*>(data), data_length));
 
         m_responses.push_back(m_client.request(request));
         return 0;

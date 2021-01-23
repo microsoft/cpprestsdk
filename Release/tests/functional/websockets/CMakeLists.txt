@@ -16,6 +16,10 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
       cpprestsdk_websocketpp_internal
   )
 
+  if(MINGW)
+    target_link_libraries(websockettest_utilities PRIVATE ws2_32 wsock32)
+  endif()
+
   # websocketsclient_test
   set(SOURCES
     client/authentication_tests.cpp
@@ -32,4 +36,8 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
     target_link_libraries(websocketsclient_test PRIVATE websockettest_utilities)
   endif()
   target_include_directories(websocketsclient_test PRIVATE utilities)
+
+  if(MINGW)
+    target_link_libraries(websocketsclient_test PRIVATE ws2_32 wsock32)
+  endif()
 endif()

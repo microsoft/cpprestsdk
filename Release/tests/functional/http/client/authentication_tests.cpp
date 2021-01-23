@@ -477,7 +477,7 @@ SUITE(authentication_tests)
     }
 #endif // __cplusplus_winrt
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 #if !defined(__cplusplus_winrt)
     TEST_FIXTURE(server_properties, set_user_options, "Requires", "Server;UserName;Password")
     {

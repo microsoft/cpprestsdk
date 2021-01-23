@@ -48,8 +48,13 @@
 #endif
 
 #ifdef UNITTEST_WIN32_DLL
+#if defined(__MINGW32__)
+#define UNITTEST_IMPORT
+#define UNITTEST_EXPORT
+#else
 #define UNITTEST_IMPORT __declspec(dllimport)
 #define UNITTEST_EXPORT __declspec(dllexport)
+#endif
 
 #ifdef UNITTEST_DLL_EXPORT
 #define UNITTEST_LINKAGE UNITTEST_EXPORT

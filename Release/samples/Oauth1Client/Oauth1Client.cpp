@@ -279,7 +279,7 @@ protected:
     }
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 int wmain(int argc, wchar_t* argv[])
 #else
 int main(int argc, char* argv[])

@@ -63,7 +63,11 @@
 #define CREATED_GET_TEST_LIST
 
 #ifdef _WIN32
+#if defined(__MINGW32__)
+#define _DLL_EXPORT
+#else
 #define _DLL_EXPORT __declspec(dllexport)
+#endif
 #elif __APPLE__
 #define _DLL_EXPORT __attribute__((visibility("default")))
 #else
@@ -93,7 +97,7 @@ extern "C" _DLL_EXPORT TestList& __cdecl GetTestList();
     }                                                                                                                  \
     namespace Suite##Name
 
-#ifdef _WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 #define TEST_EX(Name, List, ...)                                                                                       \
     class Test##Name : public UnitTest::Test                                                                           \
     {                                                                                                                  \
@@ -124,13 +128,13 @@ extern "C" _DLL_EXPORT TestList& __cdecl GetTestList();
     void Test##Name::RunImpl() const
 #endif
 
-#ifdef _WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 #define TEST(Name, ...) TEST_EX(Name, UnitTest::GetTestList(), __VA_ARGS__)
 #else
 #define TEST(Name, ...) TEST_EX(Name, UnitTest::GetTestList(), ##__VA_ARGS__)
 #endif
 
-#ifdef _WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 #define TEST_FIXTURE_EX(Fixture, Name, List, ...)                                                                      \
     class Fixture##Name##Helper : public Fixture                                                                       \
     {                                                                                                                  \
@@ -242,7 +246,7 @@ extern "C" _DLL_EXPORT TestList& __cdecl GetTestList();
     void Fixture##Name##Helper::RunImpl()
 #endif
 
-#ifdef _WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 #define TEST_FIXTURE(Fixture, Name, ...) TEST_FIXTURE_EX(Fixture, Name, UnitTest::GetTestList(), __VA_ARGS__)
 #else
 #define TEST_FIXTURE(Fixture, Name, ...) TEST_FIXTURE_EX(Fixture, Name, UnitTest::GetTestList(), ##__VA_ARGS__)

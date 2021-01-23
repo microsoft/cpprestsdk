@@ -21,7 +21,7 @@
 using namespace Windows::Storage;
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define DEFAULT_PROT (int)std::ios_base::_Openprot
 #else
 #define DEFAULT_PROT 0
@@ -39,7 +39,11 @@ using namespace concurrency::streams;
 
 // Used to prepare data for file-stream read tests
 
+#if defined(__MINGW32__)
+std::string get_full_name(const utility::string_t& name)
+#else
 utility::string_t get_full_name(const utility::string_t& name)
+#endif // __MINGW32__
 {
 #if defined(__cplusplus_winrt)
     // On WinRT, we must compensate for the fact that we will be accessing files in the
@@ -49,7 +53,11 @@ utility::string_t get_full_name(const utility::string_t& name)
                     .get();
     return file->Path->Data();
 #else
+#if defined(__MINGW32__)
+    return utility::conversions::to_utf8string(name);
+#else
     return name;
+#endif // __MINGW32__
 #endif
 }
 
@@ -77,7 +85,7 @@ void fill_file_with_lines(const utility::string_t& name, const std::string& end,
 void fill_file_w(const utility::string_t& name, size_t repetitions = 1)
 {
     FILE* stream = nullptr;
-    _wfopen_s(&stream, get_full_name(name).c_str(), L"w");
+    _wfopen_s(&stream, utility::conversions::to_utf16string(get_full_name(name)).c_str(), L"w");
     if (stream == nullptr)
     {
         VERIFY_IS_TRUE(false, "FILE pointer is null");

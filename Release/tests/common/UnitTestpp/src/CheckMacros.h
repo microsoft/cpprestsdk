@@ -94,7 +94,7 @@
 #error UnitTest++ redefines VERIFY_IS_NULL
 #endif
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 #define VERIFY_IS_TRUE(expression, ...) CHECK_EQUAL(true, expression, __VA_ARGS__)
 #define VERIFY_IS_FALSE(expression, ...) CHECK_EQUAL(false, expression, __VA_ARGS__)
 #define VERIFY_ARE_NOT_EQUAL(expected, actual, ...) CHECK_NOT_EQUAL(expected, actual, __VA_ARGS__)
@@ -118,7 +118,7 @@
             UnitTest::TestDetails(*UnitTest::CurrentTest::Details(), __LINE__), #value);                               \
     UNITTEST_MULTILINE_MACRO_END
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 
 #define CHECK_EQUAL(expected, actual, ...)                                                                             \
     do                                                                                                                 \
