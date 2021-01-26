@@ -995,10 +995,20 @@ zone        =  "UT"  / "GMT"                ; Universal Time
                                             ;  hours+min. (HHMM)
 */
 
-
 datetime __cdecl datetime::from_string(const utility::string_t& dateString, date_format format)
 {
-    datetime result;
+    auto result = from_string_maximum_error(dateString, format);
+    if (result == datetime::maximum())
+    {
+        return datetime();
+    }
+
+    return result;
+}
+
+datetime __cdecl datetime::from_string_maximum_error(const utility::string_t& dateString, date_format format)
+{
+    datetime result = datetime::maximum();
     int64_t secondsSince1900;
     uint64_t fracSec = 0;
     auto str = dateString.c_str();
