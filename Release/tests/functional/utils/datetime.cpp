@@ -138,6 +138,14 @@ SUITE(datetime)
 
     TEST(parsing_time_roundtrip_year_2021) { TestDateTimeRoundtrip(_XPLATSTR("2021-01-01T20:59:59Z")); }
 
+    TEST(parsing_time_roundtrip_year_1601) { TestDateTimeRoundtrip(_XPLATSTR("1601-01-01T00:00:00Z")); }
+
+    TEST(parsing_time_roundtrip_year_1602) { TestDateTimeRoundtrip(_XPLATSTR("1602-01-01T00:00:00Z")); }
+
+    TEST(parsing_time_roundtrip_year_1603) { TestDateTimeRoundtrip(_XPLATSTR("1603-01-01T00:00:00Z")); }
+
+    TEST(parsing_time_roundtrip_year_1604) { TestDateTimeRoundtrip(_XPLATSTR("1604-01-01T00:00:00Z")); }
+
     TEST(emitting_time_correct_day)
     {
         const auto test = utility::datetime() + UINT64_C(132004507640000000); // 2019-04-22T23:52:44 is a Monday
@@ -287,7 +295,7 @@ SUITE(datetime)
             _XPLATSTR("Thu, 01 Jan 1970 00:00:00 G"),
             _XPLATSTR("Thu, 01 Jan 1970 00:00:00 GM"),
             _XPLATSTR("Fri, 01 Jan 1970 00:00:00 GMT"), // wrong day
-            _XPLATSTR("01 Jan 1899 00:00:00 GMT"),      // year too small
+            _XPLATSTR("01 Jan 1600 00:00:00 GMT"),      // year too small
             _XPLATSTR("01 Xxx 1971 00:00:00 GMT"),      // month bad
             _XPLATSTR("00 Jan 1971 00:00:00 GMT"),      // day too small
             _XPLATSTR("32 Jan 1971 00:00:00 GMT"),      // day too big
@@ -308,7 +316,7 @@ SUITE(datetime)
             _XPLATSTR("01 Jan 1971 00:60:00 GMT"), // minute too big
             _XPLATSTR("01 Jan 1971 00:00:70 GMT"), // second too big
             _XPLATSTR("01 Jan 1971 00:00:61 GMT"),
-            _XPLATSTR("01 Jan 1899 00:00:00 GMT"),   // underflow
+            _XPLATSTR("01 Jan 1600 00:00:00 GMT"),   // underflow
             _XPLATSTR("01 Jan 1969 00:00:00 CEST"),  // bad tz
             _XPLATSTR("14 Jan 2019 23:16:21 G0100"), // bad tzoffsets
             _XPLATSTR("01 Jan 1970 00:00:00 +2400"),
@@ -454,7 +462,7 @@ SUITE(datetime)
             _XPLATSTR("1970-01-01T00:00:"),
             _XPLATSTR("1970-01-01T00:00:0"),
             // _XPLATSTR("1970-01-01T00:00:00"), // accepted as invalid timezone above
-            _XPLATSTR("1899-01-01T00:00:00Z"), // year too small
+            _XPLATSTR("1600-01-01T00:00:00Z"), // year too small
             _XPLATSTR("1971-00-01T00:00:00Z"), // month too small
             _XPLATSTR("1971-20-01T00:00:00Z"), // month too big
             _XPLATSTR("1971-13-01T00:00:00Z"),
@@ -477,8 +485,8 @@ SUITE(datetime)
             _XPLATSTR("1971-01-01T00:60:00Z"), // minute too big
             _XPLATSTR("1971-01-01T00:00:70Z"), // second too big
             _XPLATSTR("1971-01-01T00:00:61Z"),
-            _XPLATSTR("1899-01-01T00:00:00Z"),      // underflow
-            _XPLATSTR("1900-01-01T00:00:00+00:01"), // time zone underflow
+            _XPLATSTR("1600-01-01T00:00:00Z"),      // underflow
+            _XPLATSTR("1601-01-01T00:00:00+00:01"), // time zone underflow
             // _XPLATSTR("1970-01-01T00:00:00.Z"), // accepted as invalid timezone above
             _XPLATSTR("1970-01-01T00:00:00+24:00"), // bad tzoffsets
             _XPLATSTR("1970-01-01T00:00:00-30:00"),
@@ -507,6 +515,39 @@ SUITE(datetime)
     {
         auto result = utility::datetime {}.to_string(utility::datetime::ISO_8601);
         VERIFY_ARE_EQUAL(_XPLATSTR("1601-01-01T00:00:00Z"), result);
+    }
+
+    TEST(can_emit_year_9999_rfc_1123)
+    {
+        auto result =
+            utility::datetime::from_interval(INT64_C(0x24C85A5ED1C018F0)).to_string(utility::datetime::RFC_1123);
+        VERIFY_ARE_EQUAL(_XPLATSTR("Fri, 31 Dec 9999 23:59:59 GMT"), result);
+    }
+
+    TEST(can_emit_year_9999_iso_8601)
+    {
+        auto result =
+            utility::datetime::from_interval(INT64_C(0x24C85A5ED1C018F0)).to_string(utility::datetime::ISO_8601);
+        VERIFY_ARE_EQUAL(_XPLATSTR("9999-12-31T23:59:59.999Z"), result);
+    }
+
+    TEST(can_parse_nt_epoch_zero_rfc_1123)
+    {
+        auto dt =
+            utility::datetime::from_string(_XPLATSTR("Mon, 01 Jan 1601 00:00:00 GMT"), utility::datetime::RFC_1123);
+        VERIFY_ARE_EQUAL(0U, dt.to_interval());
+        auto dt_me = utility::datetime::from_string_maximum_error(_XPLATSTR("Mon, 01 Jan 1601 00:00:00 GMT"),
+                                                                  utility::datetime::RFC_1123);
+        VERIFY_ARE_EQUAL(0U, dt_me.to_interval());
+    }
+
+    TEST(can_parse_nt_epoch_zero_iso_8601)
+    {
+        auto dt = utility::datetime::from_string(_XPLATSTR("1601-01-01T00:00:00Z"), utility::datetime::ISO_8601);
+        VERIFY_ARE_EQUAL(0U, dt.to_interval());
+        auto dt_me = utility::datetime::from_string_maximum_error(_XPLATSTR("1601-01-01T00:00:00Z"),
+                                                                  utility::datetime::ISO_8601);
+        VERIFY_ARE_EQUAL(0U, dt_me.to_interval());
     }
 } // SUITE(datetime)
 

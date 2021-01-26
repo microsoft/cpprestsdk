@@ -628,6 +628,8 @@ public:
     /// </summary>
     interval_type to_interval() const { return m_interval; }
 
+    static datetime from_interval(interval_type interval) { return datetime(interval); }
+
     datetime operator-(interval_type value) const { return datetime(m_interval - value); }
 
     datetime operator+(interval_type value) const { return datetime(m_interval + value); }
