@@ -502,6 +502,20 @@ SUITE(datetime)
         }
     }
 
+    TEST(can_emit_nt_epoch_zero)
+    {
+        // ISO 8601
+        {
+            auto result = utility::datetime{}.to_string(utility::datetime::RFC_1123);
+            VERIFY_ARE_EQUAL(_XPLATSTR("Mon, 01 Jan 1601 00:00:00 GMT"), result);
+        }
+        // ISO 8601
+        {
+            auto result = utility::datetime{}.to_string(utility::datetime::ISO_8601);
+            VERIFY_ARE_EQUAL(_XPLATSTR("1601-01-01T00:00:00Z"), result);
+        }
+    }
+
 } // SUITE(datetime)
 
 } // namespace utils_tests

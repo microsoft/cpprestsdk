@@ -177,8 +177,8 @@ scoped_c_thread_locale::~scoped_c_thread_locale()
     }
 }
 #elif (defined(ANDROID) || defined(__ANDROID__))
-scoped_c_thread_locale::scoped_c_thread_locale() {}
-scoped_c_thread_locale::~scoped_c_thread_locale() {}
+scoped_c_thread_locale::scoped_c_thread_locale() { }
+scoped_c_thread_locale::~scoped_c_thread_locale() { }
 #else
 scoped_c_thread_locale::scoped_c_thread_locale() : m_prevLocale(nullptr)
 {
@@ -620,7 +620,13 @@ utf16string __cdecl conversions::to_utf16string(const std::string& value) { retu
 
 static const int64_t NtToUnixOffsetSeconds = 11644473600; // diff between windows and unix epochs (seconds)
 
-static bool year_is_leap_year(int year) { return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)); }
+static bool year_is_leap_year_1601(int year)
+{
+    int decimal_year = year + 1601;
+    return (decimal_year % 4 == 0 && (decimal_year % 100 != 0 || decimal_year % 400 == 0));
+}
+
+static bool year_is_leap_year(int year) { return year_is_leap_year_1601(year + 299); }
 
 static const int SecondsInMinute = 60;
 static const int SecondsInHour = SecondsInMinute * 60;
@@ -639,24 +645,25 @@ static const int64_t SecondsFrom1900To2001 = INT64_C(3187296000);
 
 static const int64_t NtTo1900OffsetInterval = INT64_C(0x014F373BFDE04000);
 
-static int count_leap_years(const int yearsSince1900)
+static int count_leap_years_1601(int yearsSince1601)
 {
-    int tmpYears = yearsSince1900 + 299; // shift into 1601, the first 400 year cycle including 1900
-
-    int year400 = tmpYears / 400;
-    tmpYears -= year400 * 400;
+    int year400 = yearsSince1601 / 400;
+    yearsSince1601 -= year400 * 400;
     int result = year400 * 97;
 
-    int year100 = tmpYears / 100;
-    tmpYears -= year100 * 100;
+    int year100 = yearsSince1601 / 100;
+    yearsSince1601 -= year100 * 100;
     result += year100 * 24;
 
-    result += tmpYears / 4;
-
-    // subtract off leap years from 1601
-    result -= 72;
+    result += yearsSince1601 / 4;
 
     return result;
+}
+
+static int count_leap_years(const int yearsSince1900)
+{
+    // shift into 1601, the first 400 year cycle including 1900, then subtract leap years from 1601->1900
+    return count_leap_years_1601(yearsSince1900 + 299) - 72;
 }
 
 // The following table assumes no leap year; leap year is added separately
@@ -720,20 +727,16 @@ struct compute_year_result
     int secondsLeftThisYear;
 };
 
-static const int64_t secondsFrom1601To1900 = INT64_C(9435484800);
-
-static compute_year_result compute_year(int64_t secondsSince1900)
+static compute_year_result compute_year_1601(int64_t secondsSince1601)
 {
-    int64_t secondsLeft = secondsSince1900 + secondsFrom1601To1900; // shift to start of this 400 year cycle
+    int year400 = static_cast<int>(secondsSince1601 / SecondsIn400Years);
+    secondsSince1601 -= year400 * SecondsIn400Years;
 
-    int year400 = static_cast<int>(secondsLeft / SecondsIn400Years);
-    secondsLeft -= year400 * SecondsIn400Years;
+    int year100 = static_cast<int>(secondsSince1601 / SecondsIn100Years);
+    secondsSince1601 -= year100 * SecondsIn100Years;
 
-    int year100 = static_cast<int>(secondsLeft / SecondsIn100Years);
-    secondsLeft -= year100 * SecondsIn100Years;
-
-    int year4 = static_cast<int>(secondsLeft / SecondsIn4Years);
-    int secondsInt = static_cast<int>(secondsLeft - year4 * SecondsIn4Years);
+    int year4 = static_cast<int>(secondsSince1601 / SecondsIn4Years);
+    int secondsInt = static_cast<int>(secondsSince1601 - year4 * SecondsIn4Years);
 
     int year1 = secondsInt / SecondsInYear;
     if (year1 == 4)
@@ -743,9 +746,16 @@ static compute_year_result compute_year(int64_t secondsSince1900)
     }
 
     secondsInt -= year1 * SecondsInYear;
+    return {year400 * 400 + year100 * 100 + year4 * 4 + year1, secondsInt};
+}
 
-    // shift back to 1900 base from 1601:
-    return {year400 * 400 + year100 * 100 + year4 * 4 + year1 - 299, secondsInt};
+static const int64_t secondsFrom1601To1900 = INT64_C(9435484800);
+static compute_year_result compute_year(int64_t secondsSince1900)
+{
+    // shift to start of this 400 year cycle
+    auto partialResult = compute_year_1601(secondsSince1900 + secondsFrom1601To1900);
+    // shift back to 1900
+    return {partialResult.year - 299, partialResult.secondsLeftThisYear};
 }
 
 utility::string_t datetime::to_string(date_format format) const
@@ -755,11 +765,11 @@ utility::string_t datetime::to_string(date_format format) const
         throw std::out_of_range("The requested year exceeds the year 9999.");
     }
 
-    const int64_t epochAdjusted = static_cast<int64_t>(m_interval) - NtTo1900OffsetInterval;
-    const int64_t secondsSince1900 = epochAdjusted / _secondTicks; // convert to seconds
-    const int fracSec = static_cast<int>(epochAdjusted % _secondTicks);
+    const int64_t interval = static_cast<int64_t>(m_interval);
+    const int64_t secondsSince1601 = interval / _secondTicks; // convert to seconds
+    const int fracSec = static_cast<int>(interval % _secondTicks);
 
-    const auto yearData = compute_year(secondsSince1900);
+    const auto yearData = compute_year_1601(secondsSince1601);
     const int year = yearData.year;
     const int yearDay = yearData.secondsLeftThisYear / SecondsInDay;
     int leftover = yearData.secondsLeftThisYear % SecondsInDay;
@@ -768,7 +778,7 @@ utility::string_t datetime::to_string(date_format format) const
     const int minute = leftover / SecondsInMinute;
     leftover = leftover % SecondsInMinute;
 
-    const auto& monthTable = year_is_leap_year(year) ? cumulative_days_to_month_leap : cumulative_days_to_month;
+    const auto& monthTable = year_is_leap_year_1601(year) ? cumulative_days_to_month_leap : cumulative_days_to_month;
     int month = 0;
     while (month < 11 && monthTable[month + 1] <= yearDay)
     {
@@ -776,7 +786,7 @@ utility::string_t datetime::to_string(date_format format) const
     }
 
     const auto monthDay = yearDay - monthTable[month] + 1;
-    const auto weekday = static_cast<int>((secondsSince1900 / SecondsInDay + 1) % 7);
+    const auto weekday = static_cast<int>((secondsSince1601 / SecondsInDay + 1) % 7);
 
     char outBuffer[38]; // Thu, 01 Jan 1970 00:00:00 GMT\0
                         // 1970-01-01T00:00:00.1234567Z\0
@@ -791,7 +801,7 @@ utility::string_t datetime::to_string(date_format format) const
                       dayNames + 4 * weekday,
                       monthDay,
                       monthNames + 4 * month,
-                      year + 1900,
+                      year + 1601,
                       hour,
                       minute,
                       leftover);
@@ -801,7 +811,7 @@ utility::string_t datetime::to_string(date_format format) const
                     dayNames + 4 * weekday,
                     monthDay,
                     monthNames + 4 * month,
-                    year + 1900,
+                    year + 1601,
                     hour,
                     minute,
                     leftover);
@@ -815,7 +825,7 @@ utility::string_t datetime::to_string(date_format format) const
             sprintf_s(outCursor,
                       20,
                       "%04d-%02d-%02dT%02d:%02d:%02d",
-                      year + 1900,
+                      year + 1601,
                       month + 1,
                       monthDay,
                       hour,
@@ -823,7 +833,7 @@ utility::string_t datetime::to_string(date_format format) const
                       leftover);
 #else  // ^^^ _MSC_VER // !_MSC_VER vvv
             sprintf(
-                outCursor, "%04d-%02d-%02dT%02d:%02d:%02d", year + 1900, month + 1, monthDay, hour, minute, leftover);
+                outCursor, "%04d-%02d-%02dT%02d:%02d:%02d", year + 1601, month + 1, monthDay, hour, minute, leftover);
 #endif // _MSC_VER
             outCursor += 19;
             if (fracSec != 0)
