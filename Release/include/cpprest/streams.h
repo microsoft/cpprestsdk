@@ -17,6 +17,7 @@
 
 #include "cpprest/astreambuf.h"
 #include <iosfwd>
+#include <cstdio>
 
 namespace Concurrency
 {
@@ -1434,7 +1435,8 @@ static pplx::task<FloatingPoint> _extract_result(std::shared_ptr<_double_state<F
 
     if (state->exponent_number >= 0)
     {
-        result *= pow(FloatingPoint(10.0), state->exponent_number);
+        result *= static_cast<FloatingPoint>(
+            std::pow(static_cast<FloatingPoint>(10.0), static_cast<FloatingPoint>(state->exponent_number)));
 
 #pragma push_macro("max")
 #undef max
@@ -1447,7 +1449,8 @@ static pplx::task<FloatingPoint> _extract_result(std::shared_ptr<_double_state<F
     {
         bool is_zero = (result == 0);
 
-        result /= pow(FloatingPoint(10.0), -state->exponent_number);
+        result /= static_cast<FloatingPoint>(
+            std::pow(static_cast<FloatingPoint>(10.0), static_cast<FloatingPoint>(-state->exponent_number)));
 
         if (!is_zero && result > -std::numeric_limits<FloatingPoint>::denorm_min() &&
             result < std::numeric_limits<FloatingPoint>::denorm_min())

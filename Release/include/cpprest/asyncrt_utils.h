@@ -603,13 +603,20 @@ public:
         }
     }
 
-    datetime() : m_interval(0) {}
+    datetime() : m_interval(0) { }
 
     /// <summary>
-    /// Creates <c>datetime</c> from a string representing time in UTC in RFC 1123 format.
+    /// Creates <c>datetime</c> from a string representing time in UTC in RFC 1123 or ISO 8601 format.
     /// </summary>
     /// <returns>Returns a <c>datetime</c> of zero if not successful.</returns>
     static _ASYNCRTIMP datetime __cdecl from_string(const utility::string_t& timestring, date_format format = RFC_1123);
+
+    /// <summary>
+    /// Creates <c>datetime</c> from a string representing time in UTC in RFC 1123 or ISO 8601 format.
+    /// </summary>
+    /// <returns>Returns <c>datetime::maximum()</c> if not successful.</returns>
+    static _ASYNCRTIMP datetime __cdecl from_string_maximum_error(const utility::string_t& timestring,
+                                                                  date_format format = RFC_1123);
 
     /// <summary>
     /// Returns a string representation of the <c>datetime</c>.
@@ -621,6 +628,8 @@ public:
     /// </summary>
     interval_type to_interval() const { return m_interval; }
 
+    static datetime from_interval(interval_type interval) { return datetime(interval); }
+
     datetime operator-(interval_type value) const { return datetime(m_interval - value); }
 
     datetime operator+(interval_type value) const { return datetime(m_interval + value); }
@@ -628,13 +637,13 @@ public:
     bool operator==(datetime dt) const { return m_interval == dt.m_interval; }
 
     bool operator!=(const datetime& dt) const { return !(*this == dt); }
-   
+
     bool operator>(const datetime& dt) const { return this->m_interval > dt.m_interval; }
-   
+
     bool operator<(const datetime& dt) const { return this->m_interval < dt.m_interval; }
-      
+
     bool operator>=(const datetime& dt) const { return this->m_interval >= dt.m_interval; }
-   
+
     bool operator<=(const datetime& dt) const { return this->m_interval <= dt.m_interval; }
 
     static interval_type from_milliseconds(unsigned int milliseconds) { return milliseconds * _msTicks; }
@@ -649,6 +658,8 @@ public:
 
     bool is_initialized() const { return m_interval != 0; }
 
+    static datetime maximum() { return datetime(static_cast<interval_type>(-1)); }
+
 private:
     friend int operator-(datetime t1, datetime t2);
 
@@ -659,7 +670,7 @@ private:
     static const interval_type _dayTicks = 24 * 60 * 60 * _secondTicks;
 
     // Private constructor. Use static methods to create an instance.
-    datetime(interval_type interval) : m_interval(interval) {}
+    datetime(interval_type interval) : m_interval(interval) { }
 
     // Storing as hundreds of nanoseconds 10e-7, i.e. 1 here equals 100ns.
     interval_type m_interval;
