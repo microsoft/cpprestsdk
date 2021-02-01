@@ -13,7 +13,7 @@ jobs:
       sudo apt install g++-9 ninja-build -y
       git submodule update --init vcpkg
       ./vcpkg/bootstrap-vcpkg.sh
-      ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
+      ./vcpkg/vcpkg install zlib openssl boost-locale boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
     displayName: Vcpkg install dependencies
   - script: |
       mkdir build.debug

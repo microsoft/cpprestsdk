@@ -121,7 +121,7 @@ jobs:
       displayName: Checkout vcpkg submodule
     - script: |
         ./vcpkg/bootstrap-vcpkg.sh
-        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
+        ./vcpkg/vcpkg install zlib openssl boost-locale boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
       displayName: Vcpkg install dependencies
     - script: |
         mkdir build.debug
