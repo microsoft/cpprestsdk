@@ -1,3 +1,9 @@
+cpprestsdk (2.10.18)
+* PR#1571 Add ability to parse and emit the NT Epoch 1601-01-01T00:00:00Z
+* PR#1571 Update vcpkg submodule
+* Update CI configuration
+-- cpprestsdk team MON, 1 Feb 2021 20:02:00 -0700
+
 cpprestsdk (2.10.17)
 * PR#1550 Fix year calculation for the last day of a leap year
 * PR#1523 Fix wrong linking of Apple Frameworks on MacOS
