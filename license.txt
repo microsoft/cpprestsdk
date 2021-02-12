@@ -2,7 +2,7 @@ C++ REST SDK
 
 The MIT License (MIT)
 
-Copyright (c) Microsoft Corporation
+Copyright (c) Feb 12 2021 Microsoft Corporation
 
 All rights reserved.
 
