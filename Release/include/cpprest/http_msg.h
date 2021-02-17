@@ -187,7 +187,11 @@ public:
 /// <summary>
 /// Represents an HTTP error. This class holds an error message and an optional error code.
 /// </summary>
+#ifdef _WIN32
 class http_exception : public std::exception
+#else
+class _ASYNCRTIMP http_exception : public std::exception
+#endif
 {
 public:
     /// <summary>
