@@ -97,6 +97,7 @@ public:
         : m_guarantee_order(false)
         , m_timeout(std::chrono::seconds(30))
         , m_chunksize(0)
+        , m_socket_send_buffer_disabled(false)
         , m_request_compressed(false)
 #if !defined(__cplusplus_winrt)
         , m_validate_certificates(true)
@@ -206,6 +207,19 @@ public:
     void set_timeout(const T& timeout)
     {
         m_timeout = std::chrono::duration_cast<std::chrono::microseconds>(timeout);
+    }
+
+    /// <summary>
+    /// Returns true if the socket send buffer is disabled (SO_SNDBUF == 0 bytes size)
+    /// </summary>
+    /// <returns>True if disabled</returns>
+    bool is_socket_send_buffer_disabled() const { return m_socket_send_buffer_disabled; }
+    /// <summary>
+    /// Disables the sockets send buffer (SO_SNDBUF = 0)
+    /// </summary>
+    void disable_socket_send_buffer()
+    { 
+      m_socket_send_buffer_disabled = true;
     }
 
     /// <summary>
@@ -409,6 +423,7 @@ private:
 
     std::chrono::microseconds m_timeout;
     size_t m_chunksize;
+    bool m_socket_send_buffer_disabled;
     bool m_request_compressed;
 
 #if !defined(__cplusplus_winrt)
