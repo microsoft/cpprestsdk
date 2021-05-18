@@ -306,12 +306,12 @@ public:
     // See: https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.3
     // </summary>
     // <returns>Task that fetches token(s) using a username and password.</returns>
-    pplx::task<void> token_from_password() 
+    pplx::task<void> token_from_password(const utility::string_t username, const utility::string_t password) 
     { 
         uri_builder ub;
         ub.append_query(details::oauth2_strings::grant_type, details::oauth2_strings::password, false);
-        ub.append_query(details::oauth2_strings::username, m_credentials.username(), false);
-        ub.append_query(details::oauth2_strings::password, m_credentials.password(), false);
+        ub.append_query(details::oauth2_strings::username, username, false);
+        ub.append_query(details::oauth2_strings::password, password, false);
         return _request_token(ub);
     }
 
@@ -496,16 +496,6 @@ public:
     /// </summary>
     void set_user_agent(utility::string_t user_agent) { m_user_agent = std::move(user_agent); }
 
-    // <summary>
-    // Set user credentials to be used in oauth2 flow
-    // </summary>
-    void set_user_credentials(const credentials& user_credentials) { m_credentials = user_credentials; }
-
-    // <summary>
-    // Get user credentials
-    // </summary>
-    const credentials& user_credentials() { return m_credentials; }
-
 private:
     friend class web::http::client::http_client_config;
     friend class web::http::oauth2::details::oauth2_handler;
@@ -538,8 +528,6 @@ private:
     utility::string_t m_scope;
     utility::string_t m_state;
     utility::string_t m_user_agent;
-
-    credentials m_credentials;
 
     web::web_proxy m_proxy;
 
