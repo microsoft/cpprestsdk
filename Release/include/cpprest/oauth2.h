@@ -299,13 +299,13 @@ public:
         return _request_token(ub);
     }
 
-    // <summary>
-    // Fetch an access token from the token endpoint using password grant type.
-    // The task creates an HTTP request to the token_endpoint() 
-    // If successful, resulting access token is set as active via set_token()
-    // See: https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.3
-    // </summary>
-    // <returns>Task that fetches token(s) using a username and password.</returns>
+    /// <summary>
+    /// Fetch an access token from the token endpoint using password grant type.
+    /// The task creates an HTTP request to the token_endpoint() 
+    /// If successful, resulting access token is set as active via set_token()
+    /// See: https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.3
+    /// </summary>
+    /// <returns>Task that fetches token(s) using a username and password.</returns>
     pplx::task<void> token_from_password(const utility::string_t username, const utility::string_t password) 
     { 
         uri_builder ub;
