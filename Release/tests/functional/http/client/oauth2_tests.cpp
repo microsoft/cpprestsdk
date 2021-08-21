@@ -359,6 +359,65 @@ SUITE(oauth2_tests)
         }
     }
 
+    TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_password)
+    {
+        VERIFY_IS_FALSE(m_oauth2_config.is_enabled());
+        m_oauth2_config.set_user_agent(U("test_user_agent"));
+
+        {
+            m_scoped.server()->next_request().then([](test_request* request) {
+                VERIFY_ARE_EQUAL(request->m_method, methods::POST);
+
+                VERIFY_IS_TRUE(is_application_x_www_form_urlencoded(request));
+
+                VERIFY_ARE_EQUAL(
+                    U("Basic MTIzQUJDOjQ1NkRFRg=="),
+                    request->m_headers[header_names::authorization]);
+
+                VERIFY_ARE_EQUAL(
+                    to_body_data(U("grant_type=password&username=Kappa&password=OMEGALUL")),
+                    request->m_body);
+
+                VERIFY_ARE_EQUAL(
+                    U("test_user_agent"),
+                    get_request_user_agent(request));
+
+                std::map<utility::string_t, utility::string_t> headers;
+                headers[header_names::content_type] = mime_types::application_json;
+                request->reply(
+                    status_codes::OK, U(""), headers, "{\"access_token\":\"super\",\"token_type\":\"bearer\"}");
+
+            });
+            m_oauth2_config.token_from_password(U("Kappa"), U("OMEGALUL")).wait();
+            VERIFY_ARE_EQUAL(U("super"), m_oauth2_config.token().access_token());
+            VERIFY_IS_TRUE(m_oauth2_config.is_enabled());
+        }
+
+        {
+            m_scoped.server()->next_request().then([](test_request* request) {
+                VERIFY_ARE_EQUAL(request->m_method, methods::POST);
+
+                VERIFY_ARE_EQUAL(
+                    to_body_data(U("grant_type=password&username=Kappa&password=OMEGALUL&client_id=123ABC&client_secret=456DEF")),
+                    request->m_body);
+
+                VERIFY_ARE_EQUAL(
+                    U("test_user_agent"),
+                    get_request_user_agent(request));
+
+                std::map<utility::string_t, utility::string_t> headers;
+                headers[header_names::content_type] = mime_types::application_json;
+                request->reply(
+                    status_codes::OK, U(""), headers, "{\"access_token\":\"super\",\"token_type\":\"bearer\"}");
+
+            });
+            m_oauth2_config.set_http_basic_auth(false);
+            m_oauth2_config.token_from_password(U("Kappa"), U("OMEGALUL")).wait();
+            VERIFY_ARE_EQUAL(U("super"), m_oauth2_config.token().access_token());
+            VERIFY_IS_TRUE(m_oauth2_config.is_enabled());
+        }
+    }
+
     TEST_FIXTURE(oauth2_test_setup, oauth2_bearer_token)
     {
         m_oauth2_config.set_token(oauth2_token(U("12345678")));
