@@ -228,7 +228,6 @@ public:
     }
 
 private:
-    http::client::CertificateChainFunction m_certificate_chain_callback;
     web::web_proxy m_proxy;
     web::credentials m_credentials;
     web::http::http_headers m_headers;
@@ -237,8 +236,8 @@ private:
     bool m_validate_certificates;
     http::client::CertificateChainFunction m_certificate_chain_callback;
 
-#if !defined(_WIN32) ||
-    !defined(__cplusplus_winrt) std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
+#if !defined(_WIN32) || !defined(__cplusplus_winrt)
+    std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
 #endif
 };
 
@@ -252,14 +251,14 @@ public:
     /// Creates an <c>websocket_exception</c> with just a string message and no error code.
     /// </summary>
     /// <param name="whatArg">Error message string.</param>
-    websocket_exception(const utility::string_t& whatArg) : m_msg(utility::conversions::to_utf8string(whatArg)) { }
+    websocket_exception(const utility::string_t& whatArg) : m_msg(utility::conversions::to_utf8string(whatArg)) {}
 
 #ifdef _WIN32
     /// <summary>
     /// Creates an <c>websocket_exception</c> with just a string message and no error code.
     /// </summary>
     /// <param name="whatArg">Error message string.</param>
-    websocket_exception(std::string whatArg) : m_msg(std::move(whatArg)) { }
+    websocket_exception(std::string whatArg) : m_msg(std::move(whatArg)) {}
 #endif
 
     /// <summary>
@@ -349,9 +348,9 @@ namespace details
 class websocket_client_callback_impl
 {
 public:
-    websocket_client_callback_impl(websocket_client_config config) : m_config(std::move(config)) { }
+    websocket_client_callback_impl(websocket_client_config config) : m_config(std::move(config)) {}
 
-    virtual ~websocket_client_callback_impl() CPPREST_NOEXCEPT { }
+    virtual ~websocket_client_callback_impl() CPPREST_NOEXCEPT {}
 
     virtual pplx::task<void> connect() = 0;
 
@@ -443,7 +442,7 @@ public:
     /// <summary>
     ///  Creates a new websocket_client.
     /// </summary>
-    websocket_client() : m_client(std::make_shared<details::websocket_client_task_impl>(websocket_client_config())) { }
+    websocket_client() : m_client(std::make_shared<details::websocket_client_task_impl>(websocket_client_config())) {}
 
     /// <summary>
     ///  Creates a new websocket_client.
@@ -467,19 +466,17 @@ public:
         m_client->callback_client()->verify_uri(uri);
         m_client->callback_client()->set_uri(uri);
         auto client = m_client;
-        return m_client->callback_client()->connect().then(
-            [client](pplx::task<void> result)
+        return m_client->callback_client()->connect().then([client](pplx::task<void> result) {
+            try
             {
-                try
-                {
-                    result.get();
-                }
-                catch (const websocket_exception& ex)
-                {
-                    client->close_pending_tasks_with_error(ex);
-                    throw;
-                }
-            });
+                result.get();
+            }
+            catch (const websocket_exception& ex)
+            {
+                client->close_pending_tasks_with_error(ex);
+                throw;
+            }
+        });
     }
 
     /// <summary>

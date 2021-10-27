@@ -53,7 +53,7 @@ class request_context
 {
 public:
     // Destructor to clean up any held resources.
-    virtual ~request_context() { }
+    virtual ~request_context() {}
 
     virtual void report_exception(std::exception_ptr exceptionPtr);
 

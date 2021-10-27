@@ -59,8 +59,8 @@ namespace experimental
 class oauth2_exception : public std::exception
 {
 public:
-    oauth2_exception(utility::string_t msg) : m_msg(utility::conversions::to_utf8string(std::move(msg))) { }
-    ~oauth2_exception() CPPREST_NOEXCEPT { }
+    oauth2_exception(utility::string_t msg) : m_msg(utility::conversions::to_utf8string(std::move(msg))) {}
+    ~oauth2_exception() CPPREST_NOEXCEPT {}
     const char* what() const CPPREST_NOEXCEPT { return m_msg.c_str(); }
 
 private:
@@ -503,7 +503,7 @@ private:
     friend class web::http::client::http_client_config;
     friend class web::http::oauth2::details::oauth2_handler;
 
-    oauth2_config() : m_implicit_grant(false), m_bearer_auth(true), m_http_basic_auth(true) { }
+    oauth2_config() : m_implicit_grant(false), m_bearer_auth(true), m_http_basic_auth(true) {}
 
     _ASYNCRTIMP pplx::task<void> _request_token(uri_builder& request_body);
 
@@ -553,7 +553,7 @@ namespace details
 class oauth2_handler : public http_pipeline_stage
 {
 public:
-    oauth2_handler(std::shared_ptr<experimental::oauth2_config> cfg) : m_config(std::move(cfg)) { }
+    oauth2_handler(std::shared_ptr<experimental::oauth2_config> cfg) : m_config(std::move(cfg)) {}
 
     virtual pplx::task<http_response> propagate(http_request request) override
     {
