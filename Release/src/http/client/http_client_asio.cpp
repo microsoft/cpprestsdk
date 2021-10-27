@@ -1,4 +1,3 @@
-
 /***
  * Copyright (C) Microsoft. All rights reserved.
  * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
@@ -432,40 +431,38 @@ private:
         std::weak_ptr<asio_connection_pool> weak_pool = pool;
 
         self.m_pool_epoch_timer.expires_from_now(boost::posix_time::seconds(30));
-        self.m_pool_epoch_timer.async_wait(
-            [weak_pool](const boost::system::error_code& ec)
+        self.m_pool_epoch_timer.async_wait([weak_pool](const boost::system::error_code& ec) {
+            if (ec)
             {
-                if (ec)
-                {
-                    return;
-                }
+                return;
+            }
 
-                auto pool = weak_pool.lock();
-                if (!pool)
-                {
-                    return;
-                }
+            auto pool = weak_pool.lock();
+            if (!pool)
+            {
+                return;
+            }
 
-                auto& self = *pool;
-                std::lock_guard<std::mutex> lock(self.m_lock);
-                bool restartTimer = false;
-                for (auto& entry : self.m_connections)
+            auto& self = *pool;
+            std::lock_guard<std::mutex> lock(self.m_lock);
+            bool restartTimer = false;
+            for (auto& entry : self.m_connections)
+            {
+                if (entry.second.free_stale_connections())
                 {
-                    if (entry.second.free_stale_connections())
-                    {
-                        restartTimer = true;
-                    }
+                    restartTimer = true;
                 }
+            }
 
-                if (restartTimer)
-                {
-                    start_epoch_interval(pool);
-                }
-                else
-                {
-                    self.m_is_timer_running = false;
-                }
-            });
+            if (restartTimer)
+            {
+                start_epoch_interval(pool);
+            }
+            else
+            {
+                self.m_is_timer_running = false;
+            }
+        });
     }
 
     std::mutex m_lock;
@@ -757,9 +754,8 @@ public:
             proxy_host = utility::conversions::to_utf8string(proxy_uri.host());
         }
 
-        auto start_http_request_flow =
-            [proxy_type, proxy_host, proxy_port AND_CAPTURE_MEMBER_FUNCTION_POINTERS](std::shared_ptr<asio_context> ctx)
-        {
+        auto start_http_request_flow = [proxy_type, proxy_host, proxy_port AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
+                                            std::shared_ptr<asio_context> ctx) {
             if (ctx->m_request._cancellation_token().is_canceled())
             {
                 ctx->request_context::report_error(make_error_code(std::errc::operation_canceled).value(),
@@ -904,15 +900,13 @@ public:
                 // weak_ptr prevents lambda from taking shared ownership of the context.
                 // Otherwise context replacement in the handle_status_line() would leak the objects.
                 std::weak_ptr<asio_context> ctx_weak(ctx);
-                ctx->m_cancellationRegistration = ctx->m_request._cancellation_token().register_callback(
-                    [ctx_weak]()
+                ctx->m_cancellationRegistration = ctx->m_request._cancellation_token().register_callback([ctx_weak]() {
+                    if (auto ctx_lock = ctx_weak.lock())
                     {
-                        if (auto ctx_lock = ctx_weak.lock())
-                        {
-                            // Shut down transmissions, close the socket and prevent connection from being pooled.
-                            ctx_lock->m_connection->close();
-                        }
-                    });
+                        // Shut down transmissions, close the socket and prevent connection from being pooled.
+                        ctx_lock->m_connection->close();
+                    }
+                });
             }
         };
 
@@ -1087,8 +1081,7 @@ private:
                 // Use a weak_ptr since the verify_callback is stored until the connection is
                 // destroyed. This avoids creating a circular reference since we pool connection
                 // objects.
-                [weakCtx](bool preverified, boost::asio::ssl::verify_context& verify_context)
-                {
+                [weakCtx](bool preverified, boost::asio::ssl::verify_context& verify_context) {
                     auto this_request = weakCtx.lock();
                     if (this_request)
                     {
@@ -1221,42 +1214,40 @@ private:
             m_body_buf.prepare(chunkSize + http::details::chunked_encoding::additional_encoding_space));
         const auto this_request = shared_from_this();
         readbuf.getn(buf + http::details::chunked_encoding::data_offset, chunkSize)
-            .then(
-                [this_request, buf, chunkSize AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op)
+            .then([this_request, buf, chunkSize AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op) {
+                size_t readSize = 0;
+                try
                 {
-                    size_t readSize = 0;
-                    try
-                    {
-                        readSize = op.get();
-                    }
-                    catch (...)
-                    {
-                        this_request->report_exception(std::current_exception());
-                        return;
-                    }
+                    readSize = op.get();
+                }
+                catch (...)
+                {
+                    this_request->report_exception(std::current_exception());
+                    return;
+                }
 
-                    const size_t offset = http::details::chunked_encoding::add_chunked_delimiters(
-                        buf, chunkSize + http::details::chunked_encoding::additional_encoding_space, readSize);
-                    this_request->m_body_buf.commit(readSize +
-                                                    http::details::chunked_encoding::additional_encoding_space);
-                    this_request->m_body_buf.consume(offset);
-                    this_request->m_uploaded += static_cast<uint64_t>(readSize);
+                const size_t offset = http::details::chunked_encoding::add_chunked_delimiters(
+                    buf, chunkSize + http::details::chunked_encoding::additional_encoding_space, readSize);
+                this_request->m_body_buf.commit(readSize +
+                                                http::details::chunked_encoding::additional_encoding_space);
+                this_request->m_body_buf.consume(offset);
+                this_request->m_uploaded += static_cast<uint64_t>(readSize);
 
-                    if (readSize != 0)
-                    {
-                        this_request->m_connection->async_write(this_request->m_body_buf,
-                                                                boost::bind(&asio_context::handle_write_chunked_body,
-                                                                            this_request,
-                                                                            boost::asio::placeholders::error));
-                    }
-                    else
-                    {
-                        this_request->m_connection->async_write(this_request->m_body_buf,
-                                                                boost::bind(&asio_context::handle_write_body,
-                                                                            this_request,
-                                                                            boost::asio::placeholders::error));
-                    }
-                });
+                if (readSize != 0)
+                {
+                    this_request->m_connection->async_write(this_request->m_body_buf,
+                                                            boost::bind(&asio_context::handle_write_chunked_body,
+                                                                        this_request,
+                                                                        boost::asio::placeholders::error));
+                }
+                else
+                {
+                    this_request->m_connection->async_write(this_request->m_body_buf,
+                                                            boost::bind(&asio_context::handle_write_body,
+                                                                        this_request,
+                                                                        boost::asio::placeholders::error));
+                }
+            });
     }
 
     void handle_write_large_body(const boost::system::error_code& ec)
@@ -1283,36 +1274,33 @@ private:
         }
 
         const auto this_request = shared_from_this();
-        const auto readSize =
-            static_cast<size_t>((std::min)(static_cast<uint64_t>(m_http_client->client_config().chunksize()),
-                                           m_content_length - m_uploaded));
+        const auto readSize = static_cast<size_t>((std::min)(
+            static_cast<uint64_t>(m_http_client->client_config().chunksize()), m_content_length - m_uploaded));
         auto readbuf = _get_readbuffer();
         readbuf.getn(boost::asio::buffer_cast<uint8_t*>(m_body_buf.prepare(readSize)), readSize)
-            .then(
-                [this_request AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op)
+            .then([this_request AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op) {
+                try
                 {
-                    try
+                    const auto actualReadSize = op.get();
+                    if (actualReadSize == 0)
                     {
-                        const auto actualReadSize = op.get();
-                        if (actualReadSize == 0)
-                        {
-                            this_request->report_exception(http_exception(
-                                "Unexpected end of request body stream encountered before Content-Length satisfied."));
-                            return;
-                        }
-                        this_request->m_uploaded += static_cast<uint64_t>(actualReadSize);
-                        this_request->m_body_buf.commit(actualReadSize);
-                        this_request->m_connection->async_write(this_request->m_body_buf,
-                                                                boost::bind(&asio_context::handle_write_large_body,
-                                                                            this_request,
-                                                                            boost::asio::placeholders::error));
-                    }
-                    catch (...)
-                    {
-                        this_request->report_exception(std::current_exception());
+                        this_request->report_exception(http_exception(
+                            "Unexpected end of request body stream encountered before Content-Length satisfied."));
                         return;
                     }
-                });
+                    this_request->m_uploaded += static_cast<uint64_t>(actualReadSize);
+                    this_request->m_body_buf.commit(actualReadSize);
+                    this_request->m_connection->async_write(this_request->m_body_buf,
+                                                            boost::bind(&asio_context::handle_write_large_body,
+                                                                        this_request,
+                                                                        boost::asio::placeholders::error));
+                }
+                catch (...)
+                {
+                    this_request->report_exception(std::current_exception());
+                    return;
+                }
+            });
     }
 
     void handle_write_body(const boost::system::error_code& ec)
@@ -1706,27 +1694,25 @@ private:
                         auto shared_decompressed = std::make_shared<std::vector<uint8_t>>(std::move(decompressed));
 
                         writeBuffer.putn_nocopy(shared_decompressed->data(), shared_decompressed->size())
-                            .then(
-                                [this_request, to_read, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
-                                    pplx::task<size_t> op)
+                            .then([this_request, to_read, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
+                                    pplx::task<size_t> op) {
+                                try
                                 {
-                                    try
-                                    {
-                                        op.get();
-                                        this_request->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
-                                        this_request->m_connection->async_read_until(
-                                            this_request->m_body_buf,
-                                            CRLF,
-                                            boost::bind(&asio_context::handle_chunk_header,
-                                                        this_request,
-                                                        boost::asio::placeholders::error));
-                                    }
-                                    catch (...)
-                                    {
-                                        this_request->report_exception(std::current_exception());
-                                        return;
-                                    }
-                                });
+                                    op.get();
+                                    this_request->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
+                                    this_request->m_connection->async_read_until(
+                                        this_request->m_body_buf,
+                                        CRLF,
+                                        boost::bind(&asio_context::handle_chunk_header,
+                                                    this_request,
+                                                    boost::asio::placeholders::error));
+                                }
+                                catch (...)
+                                {
+                                    this_request->report_exception(std::current_exception());
+                                    return;
+                                }
+                            });
                     }
                 }
                 else
@@ -1822,10 +1808,9 @@ private:
                         this_request->m_downloaded += static_cast<uint64_t>(read_size);
 
                         this_request->async_read_until_buffersize(
-                            static_cast<size_t>(
-                                (std::min)(static_cast<uint64_t>(
-                                               this_request->m_http_client->client_config().chunksize()),
-                                           this_request->m_content_length - this_request->m_downloaded)),
+                            static_cast<size_t>((std::min)(
+                                static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()),
+                                this_request->m_content_length - this_request->m_downloaded)),
                             boost::bind(
                                 &asio_context::handle_read_content, this_request, boost::asio::placeholders::error));
                     }
@@ -1842,51 +1827,20 @@ private:
                     auto shared_decompressed = std::make_shared<std::vector<uint8_t>>(std::move(decompressed));
 
                     writeBuffer.putn_nocopy(shared_decompressed->data(), shared_decompressed->size())
-                        .then(
-                            [this_request, read_size, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
-                                pplx::task<size_t> op)
-                            {
-                                size_t writtenSize = 0;
-                                (void)writtenSize;
-                                try
-                                {
-                                    writtenSize = op.get();
-                                    this_request->m_downloaded += static_cast<uint64_t>(read_size);
-                                    this_request->m_body_buf.consume(read_size);
-                                    this_request->async_read_until_buffersize(
-                                        static_cast<size_t>(
-                                            (std::min)(static_cast<uint64_t>(
-                                                           this_request->m_http_client->client_config().chunksize()),
-                                                       this_request->m_content_length - this_request->m_downloaded)),
-                                        boost::bind(&asio_context::handle_read_content,
-                                                    this_request,
-                                                    boost::asio::placeholders::error));
-                                }
-                                catch (...)
-                                {
-                                    this_request->report_exception(std::current_exception());
-                                    return;
-                                }
-                            });
-                }
-            }
-            else
-            {
-                writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t*>(m_body_buf.data()), read_size)
-                    .then(
-                        [this_request AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op)
-                        {
+                        .then([this_request, read_size, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
+                                pplx::task<size_t> op) {
                             size_t writtenSize = 0;
+                            (void)writtenSize;
                             try
                             {
                                 writtenSize = op.get();
-                                this_request->m_downloaded += static_cast<uint64_t>(writtenSize);
-                                this_request->m_body_buf.consume(writtenSize);
+                                this_request->m_downloaded += static_cast<uint64_t>(read_size);
+                                this_request->m_body_buf.consume(read_size);
                                 this_request->async_read_until_buffersize(
                                     static_cast<size_t>(
                                         (std::min)(static_cast<uint64_t>(
-                                                       this_request->m_http_client->client_config().chunksize()),
-                                                   this_request->m_content_length - this_request->m_downloaded)),
+                                                        this_request->m_http_client->client_config().chunksize()),
+                                                    this_request->m_content_length - this_request->m_downloaded)),
                                     boost::bind(&asio_context::handle_read_content,
                                                 this_request,
                                                 boost::asio::placeholders::error));
@@ -1897,6 +1851,33 @@ private:
                                 return;
                             }
                         });
+                }
+            }
+            else
+            {
+                writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t*>(m_body_buf.data()), read_size)
+                    .then([this_request AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op) {
+                        size_t writtenSize = 0;
+                        try
+                        {
+                            writtenSize = op.get();
+                            this_request->m_downloaded += static_cast<uint64_t>(writtenSize);
+                            this_request->m_body_buf.consume(writtenSize);
+                            this_request->async_read_until_buffersize(
+                                static_cast<size_t>(
+                                    (std::min)(static_cast<uint64_t>(
+                                                this_request->m_http_client->client_config().chunksize()),
+                                            this_request->m_content_length - this_request->m_downloaded)),
+                                boost::bind(&asio_context::handle_read_content,
+                                            this_request,
+                                            boost::asio::placeholders::error));
+                        }
+                        catch (...)
+                        {
+                            this_request->report_exception(std::current_exception());
+                            return;
+                        }
+                    });
             }
         }
         else
@@ -1926,8 +1907,8 @@ private:
 
             m_timer.expires_from_now(m_duration);
             auto ctx = m_ctx;
-            m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec)
-                               { handle_timeout(ec, ctx); });
+            m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec) {
+                handle_timeout(ec, ctx); });
         }
 
         void reset()
@@ -1939,8 +1920,8 @@ private:
                 // The existing handler was canceled so schedule a new one.
                 assert(m_state == started);
                 auto ctx = m_ctx;
-                m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec)
-                                   { handle_timeout(ec, ctx); });
+                m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec) {
+                    handle_timeout(ec, ctx); });
             }
         }
 
@@ -2035,20 +2016,21 @@ static bool is_retrieval_redirection(status_code code)
 
     switch (code)
     {
-        case status_codes::MovedPermanently:
-            // "For historical reasons, a user agent MAY change the request method
-            // from POST to GET for the subsequent request."
-            return true;
-        case status_codes::Found:
-            // "For historical reasons, a user agent MAY change the request method
-            // from POST to GET for the subsequent request."
-            return true;
-        case status_codes::SeeOther:
-            // "A user agent can perform a [GET or HEAD] request. It is primarily
-            // used to allow the output of a POST action to redirect the user agent
-            // to a selected resource."
-            return true;
-        default: return false;
+    case status_codes::MovedPermanently:
+        // "For historical reasons, a user agent MAY change the request method
+        // from POST to GET for the subsequent request."
+        return true;
+    case status_codes::Found:
+        // "For historical reasons, a user agent MAY change the request method
+        // from POST to GET for the subsequent request."
+        return true;
+    case status_codes::SeeOther:
+        // "A user agent can perform a [GET or HEAD] request. It is primarily
+        // used to allow the output of a POST action to redirect the user agent
+        // to a selected resource."
+        return true;
+    default:
+        return false;
     }
 }
 
@@ -2059,15 +2041,16 @@ static bool is_unchanged_redirection(status_code code)
 
     switch (code)
     {
-        case status_codes::TemporaryRedirect:
-            // "The user agent MUST NOT change the request method if it performs an
-            // automatic redirection to that URI."
-            return true;
-        case status_codes::PermanentRedirect:
-            // This status code "does not allow changing the request method from POST
-            // to GET."
-            return true;
-        default: return false;
+    case status_codes::TemporaryRedirect:
+        // "The user agent MUST NOT change the request method if it performs an
+        // automatic redirection to that URI."
+        return true;
+    case status_codes::PermanentRedirect:
+        // This status code "does not allow changing the request method from POST
+        // to GET."
+        return true;
+    default:
+        return false;
     }
 }
 
@@ -2078,13 +2061,19 @@ static bool is_recognized_redirection(status_code code)
     return is_retrieval_redirection(code) || is_unchanged_redirection(code);
 }
 
-static bool is_retrieval_request(method method) { return methods::GET == method || methods::HEAD == method; }
+static bool is_retrieval_request(method method) 
+{ 
+    return methods::GET == method || methods::HEAD == method;
+}
 
-static const std::vector<utility::string_t> request_body_header_names = {header_names::content_encoding,
-                                                                         header_names::content_language,
-                                                                         header_names::content_length,
-                                                                         header_names::content_location,
-                                                                         header_names::content_type};
+static const std::vector<utility::string_t> request_body_header_names = 
+{
+    header_names::content_encoding,
+    header_names::content_language,
+    header_names::content_length,
+    header_names::content_location,
+    header_names::content_type
+};
 
 // A request continuation that follows redirects according to the specified configuration.
 // This implementation only supports retrieval redirects, as it cannot redirect e.g. a POST request
@@ -2103,7 +2092,9 @@ struct http_redirect_follower
 };
 
 http_redirect_follower::http_redirect_follower(http_client_config config, const http_request& request)
-    : config(std::move(config)), followed_urls(1, request.absolute_uri()), redirect(request.method())
+    : config(std::move(config))
+    , followed_urls(1, request.absolute_uri())
+    , redirect(request.method())
 {
     // Stash the original request URL, etc. to be prepared for an automatic redirect
 
@@ -2122,25 +2113,29 @@ http_redirect_follower::http_redirect_follower(http_client_config config, const 
 uri http_redirect_follower::url_to_follow(const http_response& response) const
 {
     // Return immediately if the response is not a supported redirection
-    if (!is_recognized_redirection(response.status_code())) return {};
+    if (!is_recognized_redirection(response.status_code()))
+        return {};
 
     // Although not required by RFC 7231, config may limit the number of automatic redirects
     // (followed_urls includes the initial request URL, hence '<' here)
-    if (config.max_redirects() < followed_urls.size()) return {};
+    if (config.max_redirects() < followed_urls.size())
+        return {};
 
     // Can't very well automatically redirect if the server hasn't provided a Location
     const auto location = response.headers().find(header_names::location);
-    if (response.headers().end() == location) return {};
+    if (response.headers().end() == location)
+        return {};
 
     uri to_follow(followed_urls.back().resolve_uri(location->second));
 
     // Config may prohibit automatic redirects from HTTPS to HTTP
-    if (!config.https_to_http_redirects() && followed_urls.back().scheme() == _XPLATSTR("https") &&
-        to_follow.scheme() != _XPLATSTR("https"))
+    if (!config.https_to_http_redirects() && followed_urls.back().scheme() == _XPLATSTR("https")
+        && to_follow.scheme() != _XPLATSTR("https"))
         return {};
 
     // "A client SHOULD detect and intervene in cyclical redirections."
-    if (followed_urls.end() != std::find(followed_urls.begin(), followed_urls.end(), to_follow)) return {};
+    if (followed_urls.end() != std::find(followed_urls.begin(), followed_urls.end(), to_follow))
+        return {};
 
     return to_follow;
 }
@@ -2149,14 +2144,16 @@ pplx::task<http_response> http_redirect_follower::operator()(http_response respo
 {
     // Return immediately if the response doesn't indicate a valid automatic redirect
     uri to_follow = url_to_follow(response);
-    if (to_follow.is_empty()) return pplx::task_from_result(response);
+    if (to_follow.is_empty()) 
+        return pplx::task_from_result(response);
 
     // This implementation only supports retrieval redirects, as it cannot redirect e.g. a POST request
     // using the same method since the request body may have been consumed.
     if (!is_retrieval_request(redirect.method()) && !is_retrieval_redirection(response.status_code()))
         return pplx::task_from_result(response);
 
-    if (!is_retrieval_request(redirect.method())) redirect.set_method(methods::GET);
+    if (!is_retrieval_request(redirect.method())) 
+        redirect.set_method(methods::GET);
 
     // If the reply to this request is also a redirect, we want visibility of that
     auto config_no_redirects = config;
@@ -2188,8 +2185,9 @@ pplx::task<http_response> asio_client::propagate(http_request request)
     // Asynchronously send the response with the HTTP client implementation.
     this->async_send_request(context);
 
-    return client_config().max_redirects() > 0 ? result_task.then(http_redirect_follower(client_config(), request))
-                                               : result_task;
+    return client_config().max_redirects() > 0 
+    ? result_task.then(http_redirect_follower(client_config(), request))
+    : result_task;
 }
 } // namespace details
 } // namespace client

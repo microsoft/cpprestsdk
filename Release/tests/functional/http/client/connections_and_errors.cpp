@@ -276,14 +276,12 @@ SUITE(connections_and_errors)
 
         streams::producer_consumer_buffer<uint8_t> buf;
 
-        listener.support(
-            [buf](http_request request)
-            {
-                http_response response(200);
-                response.set_body(streams::istream(buf), U("text/plain"));
-                response.headers().add(header_names::connection, U("close"));
-                request.reply(response);
-            });
+        listener.support([buf](http_request request) {
+            http_response response(200);
+            response.set_body(streams::istream(buf), U("text/plain"));
+            response.headers().add(header_names::connection, U("close"));
+            request.reply(response);
+        });
 
         {
             http_client_config config;
@@ -307,14 +305,12 @@ SUITE(connections_and_errors)
 
         streams::producer_consumer_buffer<uint8_t> buf;
 
-        listener.support(
-            [buf](http_request request)
-            {
-                http_response response(200);
-                response.set_body(streams::istream(buf), U("text/plain"));
-                response.headers().add(header_names::connection, U("close"));
-                request.reply(response);
-            });
+        listener.support([buf](http_request request) {
+            http_response response(200);
+            response.set_body(streams::istream(buf), U("text/plain"));
+            response.headers().add(header_names::connection, U("close"));
+            request.reply(response);
+        });
 
         {
             http_client_config config;
@@ -354,20 +350,18 @@ SUITE(connections_and_errors)
         pplx::cancellation_token_source source;
         pplx::extensibility::event_t ev;
 
-        listener.support(
-            [&](http_request request)
-            {
-                streams::producer_consumer_buffer<uint8_t> buf;
-                http_response response(200);
-                response.set_body(streams::istream(buf), U("text/plain"));
-                request.reply(response);
-                ev.wait();
-                buf.putc('a').wait();
-                buf.putc('b').wait();
-                buf.putc('c').wait();
-                buf.putc('d').wait();
-                buf.close(std::ios::out).wait();
-            });
+        listener.support([&](http_request request) {
+            streams::producer_consumer_buffer<uint8_t> buf;
+            http_response response(200);
+            response.set_body(streams::istream(buf), U("text/plain"));
+            request.reply(response);
+            ev.wait();
+            buf.putc('a').wait();
+            buf.putc('b').wait();
+            buf.putc('c').wait();
+            buf.putc('d').wait();
+            buf.close(std::ios::out).wait();
+        });
 
         auto responseTask = c.request(methods::GET, source.get_token());
         http_response response = responseTask.get();
@@ -449,21 +443,19 @@ SUITE(connections_and_errors)
         pplx::extensibility::event_t ev;
         pplx::extensibility::event_t ev2;
 
-        listener.support(
-            [&](http_request request)
-            {
-                streams::producer_consumer_buffer<uint8_t> buf;
-                http_response response(200);
-                response.set_body(streams::istream(buf), U("text/plain"));
-                request.reply(response);
-                buf.putc('a').wait();
-                buf.putc('b').wait();
-                ev.set();
-                ev2.wait();
-                buf.putc('c').wait();
-                buf.putc('d').wait();
-                buf.close(std::ios::out).wait();
-            });
+        listener.support([&](http_request request) {
+            streams::producer_consumer_buffer<uint8_t> buf;
+            http_response response(200);
+            response.set_body(streams::istream(buf), U("text/plain"));
+            request.reply(response);
+            buf.putc('a').wait();
+            buf.putc('b').wait();
+            ev.set();
+            ev2.wait();
+            buf.putc('c').wait();
+            buf.putc('d').wait();
+            buf.close(std::ios::out).wait();
+        });
 
         auto response = c.request(methods::GET, source.get_token()).get();
         ev.wait();

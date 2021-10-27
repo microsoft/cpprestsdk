@@ -318,7 +318,7 @@ public:
     {
         static_assert(sizeof(cf_ref<T>) == sizeof(T), "Code assumes just a wrapper, see usage in CFArrayCreate below.");
     }
-    cf_ref() : value(nullptr) { }
+    cf_ref() : value(nullptr) {}
     cf_ref(cf_ref&& other) : value(other.value) { other.value = nullptr; }
 
     ~cf_ref()
