@@ -41,9 +41,11 @@ namespace client
 {
 namespace details
 {
-static bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std::string& hostName);
+static bool verify_X509_cert_chain(
+    const std::vector<std::string>& certChain, 
+    const std::string& hostName,
+    const CertificateChainFunction& certInfoFunc);
 
-bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verifyCtx, const std::string& hostName)
 #if defined(_WIN32)
 #include <type_traits>
 #include <wincrypt.h>
@@ -51,7 +53,7 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verif
 
 #include <iomanip>
 
-    bool is_end_certificate_in_chain(boost::asio::ssl::verify_context& verifyCtx)
+bool is_end_certificate_in_chain(boost::asio::ssl::verify_context& verifyCtx)
 {
     X509_STORE_CTX* storeContext = verifyCtx.native_handle();
     int currentDepth = X509_STORE_CTX_get_error_depth(storeContext);
@@ -480,21 +482,6 @@ std::vector<std::vector<unsigned char>> get_X509_cert_chain_encoded_data(boost::
 }
 
 #if defined(_WIN32)
-namespace
-{
-// Helper RAII unique_ptrs to free Windows structures.
-struct cert_free_certificate_context
-{
-    void operator()(const CERT_CONTEXT* ctx) const { CertFreeCertificateContext(ctx); }
-};
-typedef std::unique_ptr<const CERT_CONTEXT, cert_free_certificate_context> cert_context;
-struct cert_free_certificate_chain
-{
-    void operator()(const CERT_CHAIN_CONTEXT* chain) const { CertFreeCertificateChain(chain); }
-};
-typedef std::unique_ptr<const CERT_CHAIN_CONTEXT, cert_free_certificate_chain> chain_context;
-} // namespace
-
 static std::shared_ptr<certificate_info> build_certificate_info_ptr(const chain_context& chain,
                                                                     const std::string& hostName,
                                                                     bool isVerified)

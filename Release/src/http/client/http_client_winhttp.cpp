@@ -2010,6 +2010,9 @@ private:
             }
             case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST:
             {
+                // Todo Check where to put this. atbagga
+                p_request_context->on_send_request_validate_cn();
+
                 // get actual URL which might be different from the original one due to redirection etc.
                 DWORD urlSize {0};
                 WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, NULL, &urlSize);
@@ -2161,11 +2164,6 @@ private:
                                                         build_error_msg(errorCode, "WinHttpReceiveResponse"));
                     }
                 }
-                return;
-            }
-            case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST:
-            {
-                p_request_context->on_send_request_validate_cn();
                 return;
             }
             case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
