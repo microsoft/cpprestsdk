@@ -551,60 +551,6 @@ public:
     http_response(http::status_code code) : _m_impl(std::make_shared<details::_http_response>(code)) {}
 
     /// <summary>
-    /// Constructs a response object
-    /// </summary>
-    /// <returns>A new HTTP response.</returns>
-    http_response(const http_response& _Other) : _m_impl(_Other._m_impl) {}
-
-    /// <summary>
-    /// Constructs a response object
-    /// </summary>
-    /// <returns>A new HTTP response.</returns>
-    http_response(http_response&& _Other) : _m_impl(std::move(_Other._m_impl)) {}
-
-    /// <summary>Replaces the contents of one <c>http_request</c> object with another.</summary>
-    /// <param name="_Other">The source <c>http_request</c> object.</param>
-    /// <remarks>
-    /// As <c>http_request</c> behaves like a smart pointer, after a copy assignment, this <c>http_request</c>
-    /// objects represents the same actual http_request as <paramref name="_Other"/> does.
-    /// </remarks>
-    /// <returns>A new HTTP response.</returns>
-    http_response& operator=(const http_response& _Other)
-    {
-        if (this != &_Other)
-        {
-            _m_impl = _Other._m_impl;
-        }
-        return *this;
-    }
-
-    /// <summary>
-    /// Destructor frees any held resources.
-    /// </summary>
-    ~http_response() = default;
-
-    /// <summary>Replaces the contents of one <c>http_request</c> object with another.</summary>
-    /// <param name="_Other">The source <c>http_request</c> object.</param>
-    /// <remarks>
-    /// As <c>http_request</c> behaves like a smart pointer, after a copy assignment, this <c>http_request</c>
-    /// objects represents the same actual http_request as <paramref name="_Other"/> does.
-    /// </remarks>
-    /// <returns>A new HTTP response.</returns>
-    http_response& operator=(http_response&& _Other)
-    {
-        if (this != &_Other)
-        {
-            _m_impl = std::move(_Other._m_impl);
-        }
-        return *this;
-    }
-
-    /// <summary>
-    /// Destructor frees any held resources.
-    /// </summary>
-    ~http_response() = default;
-
-    /// <summary>
     /// Gets the status code of the response message.
     /// </summary>
     /// <returns>status code.</returns>
@@ -1006,68 +952,6 @@ public:
     /// </summary>
     /// <param name="mtd">Request method.</param>
     http_request(http::method mtd) : _m_impl(std::make_shared<http::details::_http_request>(std::move(mtd))) {}
-
-    /// <summary>
-    ///     Constructs a <c>http_request</c> object.
-    /// </summary>
-    /// <param name="_Other">
-    ///     The source <c>http_request</c> object.
-    /// </param>
-    http_request(const http_request& _Other) : _m_impl(_Other._m_impl) {}
-
-    /// <summary>
-    ///     Constructs a <c>http_request</c> object.
-    /// </summary>
-    /// <param name="_Other">
-    ///     The source <c>http_request</c> object.
-    /// </param>
-    http_request(http_request&& _Other) : _m_impl(_Other._m_impl) {}
-
-
-    /// <summary>
-    ///     Replaces the contents of one <c>http_request</c> object with another.
-    /// </summary>
-    /// <param name="_Other">
-    ///     The source <c>http_request</c> object.
-    /// </param>
-    /// <remarks>
-    ///     As <c>http_request</c> behaves like a smart pointer, after a copy assignment, this <c>http_request</c>
-    ///     objects represents the same actual http_request as <paramref name="_Other"/> does.
-    /// </remarks>
-    /**/
-    http_request& operator=(const http_request& _Other)
-    {
-        if (this != &_Other)
-        {
-            _m_impl = _Other._m_impl;
-        }
-        return *this;
-    }
-
-    /// <summary>
-    ///     Replaces the contents of one <c>http_request</c> object with another.
-    /// </summary>
-    /// <param name="_Other">
-    ///     The source <c>http_request</c> object.
-    /// </param>
-    /// <remarks>
-    ///     As <c>http_request</c> behaves like a smart pointer, after a copy assignment, this <c>http_request</c>
-    ///     objects represents the same actual http_request as <paramref name="_Other"/> does.
-    /// </remarks>
-    /**/
-    http_request& operator=(http_request&& _Other)
-    {
-        if (this != &_Other)
-        {
-            _m_impl = std::move(_Other._m_impl);
-        }
-        return *this;
-    }
-
-    /// <summary>
-    /// Destructor frees any held resources.
-    /// </summary>
-    ~http_request() = default;
 
     /// <summary>
     /// Get the method (GET/PUT/POST/DELETE) of the request message.
