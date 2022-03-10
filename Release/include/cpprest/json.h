@@ -1248,8 +1248,8 @@ class number
     number(unsigned value) : m_intval(value), m_type(unsigned_type) {}
     number(long value) : m_intval(value), m_type(value < 0 ? signed_type : unsigned_type) {}
     number(unsigned long value) : m_uintval(value), m_type(unsigned_type) {}
-    number(long long value) : m_intval(value), m_type(value < 0 ? signed_type : unsigned_type) { }
-    number(unsigned long long value) : m_uintval(value), m_type(unsigned_type) { }
+    number(long long value) : m_intval(value), m_type(value < 0 ? signed_type : unsigned_type) {}
+    number(unsigned long long value) : m_uintval(value), m_type(unsigned_type) {}
 
 public:
     /// <summary>
