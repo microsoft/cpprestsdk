@@ -1470,8 +1470,8 @@ public:
     _Number(unsigned value) : m_number(value) {}
     _Number(long value) : m_number(value) {}
     _Number(unsigned long value) : m_number(value) {}
-    _Number(long long value) : m_number(value) { }
-    _Number(unsigned long long value) : m_number(value) { }
+    _Number(long long value) : m_number(value) {}
+    _Number(unsigned long long value) : m_number(value) {}
 
     virtual std::unique_ptr<_Value> _copy_value() { return utility::details::make_unique<_Number>(*this); }
 
