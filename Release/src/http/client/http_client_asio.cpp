@@ -30,7 +30,7 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
