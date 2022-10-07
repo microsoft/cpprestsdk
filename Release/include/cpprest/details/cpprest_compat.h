@@ -29,7 +29,7 @@
 #else // ^^^ _WIN32 ^^^ // vvv !_WIN32 vvv
 
 #define __declspec(x) __attribute__((x))
-#define dllimport
+#define dllimport   x
 #define novtable /* no novtable equivalent */
 #define __assume(x)                                                                                                    \
     do                                                                                                                 \
