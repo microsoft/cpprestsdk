@@ -94,7 +94,7 @@
 #error UnitTest++ redefines VERIFY_IS_NULL
 #endif
 
-#if defined(WIN32) && defined(_MSC_VER) && (_MSC_VER < 1926)
+#if !defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL
 #define VERIFY_IS_TRUE(expression, ...) CHECK_EQUAL(true, expression, __VA_ARGS__)
 #define VERIFY_IS_FALSE(expression, ...) CHECK_EQUAL(false, expression, __VA_ARGS__)
 #define VERIFY_ARE_NOT_EQUAL(expected, actual, ...) CHECK_NOT_EQUAL(expected, actual, __VA_ARGS__)
@@ -118,7 +118,7 @@
             UnitTest::TestDetails(*UnitTest::CurrentTest::Details(), __LINE__), #value);                               \
     UNITTEST_MULTILINE_MACRO_END
 
-#if defined(WIN32) && defined(_MSC_VER) && (_MSC_VER < 1926)
+#if !defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL
 
 #define CHECK_EQUAL(expected, actual, ...)                                                                             \
     do                                                                                                                 \

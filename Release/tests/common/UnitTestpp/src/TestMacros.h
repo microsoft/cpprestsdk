@@ -93,7 +93,7 @@ extern "C" _DLL_EXPORT TestList& __cdecl GetTestList();
     }                                                                                                                  \
     namespace Suite##Name
 
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1926)
+#if !defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL
 #define TEST_EX(Name, List, ...)                                                                                       \
     class Test##Name : public UnitTest::Test                                                                           \
     {                                                                                                                  \
@@ -124,13 +124,13 @@ extern "C" _DLL_EXPORT TestList& __cdecl GetTestList();
     void Test##Name::RunImpl() const
 #endif
 
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1926)
+#if !defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL
 #define TEST(Name, ...) TEST_EX(Name, UnitTest::GetTestList(), __VA_ARGS__)
 #else
 #define TEST(Name, ...) TEST_EX(Name, UnitTest::GetTestList(), ##__VA_ARGS__)
 #endif
 
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1926)
+#if !defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL
 #define TEST_FIXTURE_EX(Fixture, Name, List, ...)                                                                      \
     class Fixture##Name##Helper : public Fixture                                                                       \
     {                                                                                                                  \
@@ -242,7 +242,7 @@ extern "C" _DLL_EXPORT TestList& __cdecl GetTestList();
     void Fixture##Name##Helper::RunImpl()
 #endif
 
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1926)
+#if !defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL
 #define TEST_FIXTURE(Fixture, Name, ...) TEST_FIXTURE_EX(Fixture, Name, UnitTest::GetTestList(), __VA_ARGS__)
 #else
 #define TEST_FIXTURE(Fixture, Name, ...) TEST_FIXTURE_EX(Fixture, Name, UnitTest::GetTestList(), ##__VA_ARGS__)
