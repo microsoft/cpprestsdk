@@ -84,11 +84,11 @@ size_t chunked_encoding::add_chunked_delimiters(_Out_writes_(buffer_size) uint8_
     }
     else
     {
-        char buffer[9];
+        char buffer[17];
 #ifdef _WIN32
         sprintf_s(buffer, sizeof(buffer), "%8IX", bytes_read);
 #else
-        snprintf(buffer, sizeof(buffer), "%8zX", bytes_read);
+        snprintf(buffer, sizeof(buffer), "%08zx", bytes_read);
 #endif
         memcpy(&data[0], buffer, 8);
         while (data[offset] == ' ')
