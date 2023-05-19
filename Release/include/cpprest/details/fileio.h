@@ -202,7 +202,7 @@ extern "C"
     /// Adjust the internal buffers and pointers when the application seeks to a new read location in the stream.
     /// </summary>
     /// <param name="info">The file info record of the file</param>
-    /// <param name="pos">The new position (offset from the start) in the file stream</param>
+    /// <param name="pos">The new position (offset from the end) in the file stream</param>
     /// <returns><c>true</c> if the request was initiated</returns>
     _ASYNCRTIMP size_t __cdecl _seekrdtoend_fsb(_In_ concurrency::streams::details::_file_info* info,
                                                 int64_t offset,
