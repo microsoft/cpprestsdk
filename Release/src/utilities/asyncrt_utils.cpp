@@ -117,6 +117,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
         *clocale = _create_locale(LC_ALL, "C");
         if (clocale == nullptr || *clocale == nullptr)
         {
+            delete clocale;
             throw std::runtime_error("Unable to create 'C' locale.");
         }
         auto deleter = [](scoped_c_thread_locale::xplat_locale* clocale) {
@@ -127,6 +128,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
         *clocale = newlocale(LC_ALL_MASK, "C", nullptr);
         if (clocale == nullptr || *clocale == nullptr)
         {
+            delete clocale;
             throw std::runtime_error("Unable to create 'C' locale.");
         }
         auto deleter = [](scoped_c_thread_locale::xplat_locale *clocale)
