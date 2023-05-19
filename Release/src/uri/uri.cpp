@@ -547,7 +547,7 @@ uri::uri(const details::uri_components& components) : m_components(components)
 {
     m_uri = m_components.join();
 
-    if (!uri::validate(m_uri.c_str()))
+    if (!uri::validate(m_uri))
     {
         throw uri_exception("provided uri is invalid: " + utility::conversions::to_utf8string(m_uri));
     }
