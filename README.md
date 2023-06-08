@@ -61,7 +61,7 @@ target_link_libraries(main PRIVATE cpprestsdk::cpprest)
 
 Is there a feature missing that you'd like to see, or found a bug that you have a fix for? Or do you have an idea or just interest in helping out in building the library? Let us know and we'd love to work with you. For a good starting point on where we are headed and feature ideas, take a look at our [requested features and bugs](https://github.com/Microsoft/cpprestsdk/issues).  
 
-Big or small we'd like to take your [contributions](https://github.com/Microsoft/cpprestsdk/wiki/Make-a-contribution-and-report-issues) back to help improve the C++ Rest SDK for everyone. If interested contact us askcasablanca at Microsoft dot com.  
+Big or small we'd like to take your [contributions](https://github.com/Microsoft/cpprestsdk/wiki/Make-a-contribution-and-report-issues) back to help improve the C++ Rest SDK for everyone.
 
 ## Having Trouble?
 
