@@ -37,6 +37,7 @@ set(SOURCES
   utilities/asyncrt_utils.cpp
   utilities/base64.cpp
   utilities/web_utilities.cpp
+  utilities/Resource.rc
 )
 
 add_library(cpprest ${SOURCES})
