@@ -18,7 +18,6 @@
 #include "cpprest/streams.h"
 #include "pplx/pplxtasks.h"
 #include <algorithm>
-#include <iterator>
 #include <queue>
 #include <vector>
 
