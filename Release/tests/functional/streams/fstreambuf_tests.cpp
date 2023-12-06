@@ -788,6 +788,28 @@ SUITE(file_buffer_tests)
         VERIFY_ARE_EQUAL(30 * 26, pos);
     }
 
+    TEST(SeekEnd2)
+    {
+        utility::string_t fname = U("SeekEnd2.txt");
+        fill_file(fname, 30);
+
+        // In order to get the implementation to buffer reads, we have to open the file
+        // with protection against sharing.
+        auto stream = OPEN_R<char>(fname).get();
+
+        auto underflow_pos = stream.seekoff(-30 * 26 - 1, std::ios_base::end, std::ios_base::in);
+
+        VERIFY_ARE_EQUAL(-1, underflow_pos);
+
+        auto overflow_pos = stream.seekoff(1, std::ios_base::end, std::ios_base::in);
+
+        VERIFY_ARE_EQUAL(-1, overflow_pos);
+
+        auto pos = stream.seekoff(-2, std::ios_base::end, std::ios_base::in);
+
+        VERIFY_ARE_EQUAL(30 * 26 - 2, pos);
+    }
+
     TEST(IsEOFTest)
     {
         utility::string_t fname = U("IsEOFTest.txt");

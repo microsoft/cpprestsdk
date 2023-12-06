@@ -916,7 +916,15 @@ size_t __cdecl _seekrdtoend_fsb(_In_ streams::details::_file_info* info, int64_t
     }
     else
     {
-        fInfo->m_rdpos = static_cast<size_t>(filesize.QuadPart) / char_size;
+        int64_t offset_from_end = offset * static_cast<int64_t>(char_size);
+        if (offset_from_end > 0 ||
+            static_cast<size_t>(-offset_from_end) > static_cast<size_t>(filesize.QuadPart))
+        {
+            // Overflow or underflow.
+            return static_cast<size_t>(-1);
+        }
+
+        fInfo->m_rdpos = static_cast<size_t>(filesize.QuadPart + offset_from_end) / char_size;
     }
 #else
     auto newpos = SetFilePointer(fInfo->m_handle, (LONG)(offset * char_size), nullptr, FILE_END);
