@@ -502,7 +502,7 @@ inline size_t count_utf16_to_utf8(const utf16string& w)
                 throw std::range_error("UTF-16 string is missing low surrogate");
             }
 
-            const auto lowSurrogate = srcData[index];
+            const auto lowSurrogate = static_cast<int>(srcData[index]);
             if (lowSurrogate < L_SURROGATE_START || lowSurrogate > L_SURROGATE_END)
             {
                 throw std::range_error("UTF-16 string has invalid low surrogate");
