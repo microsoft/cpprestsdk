@@ -1091,16 +1091,19 @@ protected:
         DWORD ignoredCertificateValidationSteps = 0;
         if (client_config().validate_certificates())
         {
-            // if we are validating certificates, also turn on revocation checking
-            DWORD dwEnableSSLRevocationOpt = WINHTTP_ENABLE_SSL_REVOCATION;
-            if (!WinHttpSetOption(winhttp_context->m_request_handle,
-                                  WINHTTP_OPTION_ENABLE_FEATURE,
-                                  &dwEnableSSLRevocationOpt,
-                                  sizeof(dwEnableSSLRevocationOpt)))
+            // Check to see if we are checking certificate revocation as well
+            if (client_config().check_ssl_certificate_revocation())
             {
-                auto errorCode = GetLastError();
-                request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
-                return;
+	            DWORD dwEnableSSLRevocationOpt = WINHTTP_ENABLE_SSL_REVOCATION;
+	            if (!WinHttpSetOption(winhttp_context->m_request_handle,
+	                                  WINHTTP_OPTION_ENABLE_FEATURE,
+	                                  &dwEnableSSLRevocationOpt,
+	                                  sizeof(dwEnableSSLRevocationOpt)))
+	            {
+	                auto errorCode = GetLastError();
+	                request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
+	                return;
+	            }
             }
 
             // check if the user has overridden the desired Common Name with the host header

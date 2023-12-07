@@ -99,7 +99,8 @@ public:
         , m_chunksize(0)
         , m_request_compressed(false)
 #if !defined(__cplusplus_winrt)
-        , m_validate_certificates(true)
+        , m_validate_certificates(true),
+        , m_check_ssl_certificate_revocation(true)
 #endif
 #if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
         , m_tlsext_sni_enabled(true)
@@ -262,6 +263,19 @@ public:
     /// otherwise.</param> <remarks>Note ignoring certificate errors can be dangerous and should be done with
     /// caution.</remarks>
     void set_validate_certificates(bool validate_certs) { m_validate_certificates = validate_certs; }
+
+    /// <summary>
+    /// Gets the enable SSL revocation property.
+    /// </summary>
+    /// <returns>True if certificates revocation is to be checked, false otherwise.</returns>
+    bool check_ssl_certificate_revocation() const { return m_check_ssl_certificate_revocation; }
+
+    /// <summary>
+    /// Sets the enable SSL revocation property.
+    /// </summary>
+    /// <param name="check_ssl_certificate_revocation">True to check certificate validation, false to skip these checks.</param>
+    /// <remarks>Note ignoring certificate revocation can be dangerous and should be done with caution.</remarks>
+    void set_check_ssl_certificate_revocation(bool check_ssl_certificate_revocation) { m_check_ssl_certificate_revocation = check_ssl_certificate_revocation; }
 #endif
 
 #if (defined(_WIN32) && !defined(__cplusplus_winrt)) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
@@ -414,6 +428,7 @@ private:
 #if !defined(__cplusplus_winrt)
     // IXmlHttpRequest2 doesn't allow configuration of certificate verification.
     bool m_validate_certificates;
+    bool m_check_ssl_certificate_revocation;
 #endif
 
     std::function<void(native_handle)> m_set_user_nativehandle_options;
