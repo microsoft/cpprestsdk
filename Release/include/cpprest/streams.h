@@ -140,20 +140,22 @@ public:
     }
 
     /// <summary>
-    /// Close the stream, preventing further write operations.
+    /// Close the stream, preventing further write [or read] operations.
     /// </summary>
-    pplx::task<void> close() const
+    /// <param name="mode">The opening mode of the file</param>
+    pplx::task<void> close(std::ios_base::openmode mode = std::ios_base::out) const
     {
-        return is_valid() ? helper()->m_buffer.close(std::ios_base::out) : pplx::task_from_result();
+        return is_valid() ? helper()->m_buffer.close(mode) : pplx::task_from_result();
     }
 
     /// <summary>
-    /// Close the stream with exception, preventing further write operations.
+    /// Close the stream with exception, preventing further write [or read] operations.
     /// </summary>
     /// <param name="eptr">Pointer to the exception.</param>
-    pplx::task<void> close(std::exception_ptr eptr) const
+    /// <param name="mode">The opening mode of the file</param>
+    pplx::task<void> close(std::exception_ptr eptr, std::ios_base::openmode mode = std::ios_base::out) const
     {
-        return is_valid() ? helper()->m_buffer.close(std::ios_base::out, eptr) : pplx::task_from_result();
+        return is_valid() ? helper()->m_buffer.close(mode, eptr) : pplx::task_from_result();
     }
 
     /// <summary>
@@ -325,36 +327,39 @@ public:
     }
 
     /// <summary>
-    /// Seeks to the specified write position.
+    /// Seeks to the specified write[or read] position.
     /// </summary>
     /// <param name="pos">An offset relative to the beginning of the stream.</param>
+    /// <param name="mode">The opening mode of the file</param>
     /// <returns>The new position in the stream.</returns>
-    pos_type seek(pos_type pos) const
+    pos_type seek(pos_type pos, std::ios_base::openmode mode = std::ios_base::out) const
     {
         _verify_and_throw(details::_out_stream_msg);
-        return helper()->m_buffer.seekpos(pos, std::ios_base::out);
+        return helper()->m_buffer.seekpos(pos, mode);
     }
 
     /// <summary>
-    /// Seeks to the specified write position.
+    /// Seeks to the specified write[or read] position.
     /// </summary>
-    /// <param name="off">An offset relative to the beginning, current write position, or the end of the stream.</param>
+    /// <param name="off">An offset relative to the beginning, current write[or read] position, or the end of the stream.</param>
     /// <param name="way">The starting point (beginning, current, end) for the seek.</param>
+    /// <param name="mode">The opening mode of the file</param>
     /// <returns>The new position in the stream.</returns>
-    pos_type seek(off_type off, std::ios_base::seekdir way) const
+    pos_type seek(off_type off, std::ios_base::seekdir way, std::ios_base::openmode mode = std::ios_base::out) const
     {
         _verify_and_throw(details::_out_stream_msg);
-        return helper()->m_buffer.seekoff(off, way, std::ios_base::out);
+        return helper()->m_buffer.seekoff(off, way, mode);
     }
 
     /// <summary>
-    /// Get the current write position, i.e. the offset from the beginning of the stream.
+    /// Get the current write[or read] position, i.e. the offset from the beginning of the stream.
     /// </summary>
-    /// <returns>The current write position.</returns>
-    pos_type tell() const
+    /// <param name="mode">The opening mode of the file</param>
+    /// <returns>The current write[or read] position.</returns>
+    pos_type tell(std::ios_base::openmode mode = std::ios_base::out) const
     {
         _verify_and_throw(details::_out_stream_msg);
-        return helper()->m_buffer.getpos(std::ios_base::out);
+        return helper()->m_buffer.getpos(mode);
     }
 
     /// <summary>
@@ -379,7 +384,18 @@ public:
     /// Test whether the stream is open for writing.
     /// </summary>
     /// <returns><c>true</c> if the stream is open for writing, <c>false</c> otherwise.</returns>
-    bool is_open() const { return is_valid() && m_helper->m_buffer.can_write(); }
+    bool is_open(std::ios_base::openmode mode = std::ios_base::out) const 
+    { 
+        bool is_able = false;
+        if (mode == std::ios_base::out)
+            is_able = m_helper->m_buffer.can_write();
+        else if (mode == std::ios_base::in)
+            is_able = m_helper->m_buffer.can_read();
+        else
+            is_able = m_helper->m_buffer.can_read() && m_helper->m_buffer.can_write();
+        
+        return is_valid() && is_able;
+    }
 
     /// <summary>
     /// Get the underlying stream buffer.
