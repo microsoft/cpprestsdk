@@ -219,7 +219,7 @@ public:
 
         // These errors tell if connection was closed.
         if ((boost::asio::error::eof == ec) || (boost::asio::error::connection_reset == ec) ||
-            (boost::asio::error::connection_aborted == ec))
+            (boost::asio::error::connection_aborted == ec) || (boost::asio::error::broken_pipe == ec))
         {
             return true;
         }
@@ -710,7 +710,7 @@ public:
             }
             else
             {
-                m_context->handle_failed_read_status_line(ec, "Failed to read HTTP status line from proxy");
+                m_context->restore_closed_connection(ec, "Failed to read HTTP status line from proxy", httpclient_errorcode_context::readheader);
             }
         }
 
@@ -1300,7 +1300,7 @@ private:
         }
         else
         {
-            report_error("Failed to write request body", ec, httpclient_errorcode_context::writebody);
+            restore_closed_connection(ec, "Failed to write request body", httpclient_errorcode_context::writebody);
         }
     }
 
@@ -1344,11 +1344,12 @@ private:
         }
         else
         {
-            handle_failed_read_status_line(ec, "Failed to read HTTP status line");
+            restore_closed_connection(ec, "Failed to read HTTP status line", httpclient_errorcode_context::readheader);
         }
     }
 
-    void handle_failed_read_status_line(const boost::system::error_code& ec, const char* generic_error_message)
+    void restore_closed_connection(
+        const boost::system::error_code& ec, const char* generic_error_message, httpclient_errorcode_context error_context)
     {
         if (m_connection->was_reused_and_closed_by_server(ec))
         {
@@ -1385,7 +1386,7 @@ private:
                 {
                     report_error("cannot rewind input stream for connection re-establishment",
                                  ec,
-                                 httpclient_errorcode_context::readheader);
+                                 error_context);
                     return;
                 }
 
@@ -1402,7 +1403,6 @@ private:
                     return;
                 }
             }
-
             new_ctx->m_request_completion = m_request_completion;
             new_ctx->m_cancellationRegistration = m_cancellationRegistration;
 
@@ -1412,7 +1412,7 @@ private:
         }
         else
         {
-            report_error(generic_error_message, ec, httpclient_errorcode_context::readheader);
+            report_error(generic_error_message, ec, error_context);
         }
     }
 

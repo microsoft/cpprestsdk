@@ -130,6 +130,58 @@ SUITE(connections_and_errors)
         VERIFY_THROWS(client.request(methods::GET).wait(), web::http::http_exception);
     }
 
+    TEST_FIXTURE(uri_address, send_request_to_reopened_connection)
+    {
+        http_client_config config;
+        config.set_timeout(utility::seconds(1));
+
+        http_client client(m_uri, config);
+        {
+            // 1st request.
+            test_http_server::scoped_server server(m_uri);
+            auto t = server.server()->next_request().then([](test_request* p_request) {
+                p_request->reply(200);
+            });
+
+            // Send request.
+            auto response = client.request(methods::PUT);
+
+            // Wait for request
+            VERIFY_NO_THROWS(t.get());
+
+            // Wait for reply.
+            VERIFY_NO_THROWS(response.wait());
+
+            // Close server connection. For example, keep-alive timeout reason.
+            server.server()->close();
+        }
+
+        {
+            // 2nd. Send request to connection has been closed.
+
+            utility::string_t str_body(U("Hi, I'm reused connection"));
+            std::vector<unsigned char> raw_body(str_body.size() * sizeof(utility::char_t));
+            memcpy(&raw_body[0], &str_body[0], str_body.size() * sizeof(utility::char_t));
+
+            // Reopen connection.
+            test_http_server::scoped_server server(m_uri);
+            auto t = server.server()->next_request().then([&](test_request* p_request) {
+                VERIFY_ARE_EQUAL(p_request->m_body, raw_body);
+                p_request->reply(200);
+            });
+
+            // Try to send request with payload.
+            auto msg = http_request(methods::POST);
+            msg.set_body(str_body);
+            auto response = client.request(msg);
+
+            // Wait for request
+            VERIFY_NO_THROWS(t.get());
+
+            http_asserts::assert_response_equals(response.get(), status_codes::OK);
+        }
+    }
+
     TEST_FIXTURE(uri_address, request_timeout)
     {
         test_http_server::scoped_server scoped(m_uri);
