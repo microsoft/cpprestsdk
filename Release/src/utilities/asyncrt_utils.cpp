@@ -722,6 +722,12 @@ static compute_year_result compute_year_1601(int64_t secondsSince1601)
     secondsSince1601 -= year400 * SecondsIn400Years;
 
     int year100 = static_cast<int>(secondsSince1601 / SecondsIn100Years);
+    if (year100 == 4)
+    {
+        // this is the last day in a 400 year cycle
+        year100 = 3;
+    }
+
     secondsSince1601 -= year100 * SecondsIn100Years;
 
     int year4 = static_cast<int>(secondsSince1601 / SecondsIn4Years);

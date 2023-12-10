@@ -146,6 +146,10 @@ SUITE(datetime)
 
     TEST(parsing_time_roundtrip_year_1604) { TestDateTimeRoundtrip(_XPLATSTR("1604-01-01T00:00:00Z")); }
 
+    TEST(parsing_time_roundtrip_year_2000_not_last_day) { TestDateTimeRoundtrip(_XPLATSTR("2000-12-30T00:00:00Z")); }
+
+    TEST(parsing_time_roundtrip_year_2000_last_day) { TestDateTimeRoundtrip(_XPLATSTR("2000-12-31T00:00:00Z")); }
+
     TEST(emitting_time_correct_day)
     {
         const auto test = utility::datetime() + UINT64_C(132004507640000000); // 2019-04-22T23:52:44 is a Monday
