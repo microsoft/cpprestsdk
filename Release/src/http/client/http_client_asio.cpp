@@ -2149,12 +2149,13 @@ pplx::task<http_response> asio_client::propagate(http_request request)
     // Use a task to externally signal the final result and completion of the task.
     auto result_task = pplx::create_task(context->m_request_completion);
 
+    if (client_config().max_redirects() > 0)
+        result_task = result_task.then(http_redirect_follower(client_config(), request));
+
     // Asynchronously send the response with the HTTP client implementation.
     this->async_send_request(context);
 
-    return client_config().max_redirects() > 0
-        ? result_task.then(http_redirect_follower(client_config(), request))
-        : result_task;
+    return result_task;
 }
 } // namespace details
 } // namespace client
