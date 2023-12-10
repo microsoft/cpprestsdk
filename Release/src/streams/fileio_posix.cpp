@@ -94,7 +94,7 @@ bool _finish_create(int fh, _filestream_callback* callback, std::ios_base::openm
 
         if (mode & std::ios_base::app || mode & std::ios_base::ate)
         {
-            info->m_wrpos = static_cast<size_t>(-1); // Start at the end of the file.
+            info->m_wrpos = static_cast<utility::size64_t>(-1); // Start at the end of the file.
         }
 
         callback->on_opened(info);
@@ -248,7 +248,7 @@ size_t _write_file_async(Concurrency::streams::details::_file_info_impl* fInfo,
                          Concurrency::streams::details::_filestream_callback* callback,
                          const void* ptr,
                          size_t count,
-                         size_t position)
+                         utility::size64_t position)
 {
     ++fInfo->m_outstanding_writes;
 
@@ -256,7 +256,7 @@ size_t _write_file_async(Concurrency::streams::details::_file_info_impl* fInfo,
         off_t abs_position;
         bool must_restore_pos;
         off_t orig_pos;
-        if (position == static_cast<size_t>(-1))
+        if (position == static_cast<utility::size64_t>(-1))
         {
             orig_pos = lseek(fInfo->m_handle, 0, SEEK_CUR);
             abs_position = lseek(fInfo->m_handle, 0, SEEK_END);
@@ -264,7 +264,7 @@ size_t _write_file_async(Concurrency::streams::details::_file_info_impl* fInfo,
         }
         else
         {
-            abs_position = position;
+            abs_position = static_cast<off_t>(position);
             orig_pos = 0;
             must_restore_pos = false;
         }
@@ -316,10 +316,10 @@ size_t _read_file_async(Concurrency::streams::details::_file_info_impl* fInfo,
                         Concurrency::streams::details::_filestream_callback* callback,
                         void* ptr,
                         size_t count,
-                        size_t offset)
+                        utility::size64_t offset)
 {
     pplx::create_task([=]() -> void {
-        auto bytes_read = pread(fInfo->m_handle, ptr, count, offset);
+        auto bytes_read = pread(fInfo->m_handle, ptr, count, static_cast<off_t>(offset));
         if (bytes_read < 0)
         {
             callback->on_error(std::make_exception_ptr(utility::details::create_system_error(errno)));
@@ -391,8 +391,8 @@ size_t _fill_buffer_fsb(_file_info_impl* fInfo, _filestream_callback* callback, 
     // First, we need to understand how far into the buffer we have already read
     // and how much remains.
 
-    size_t bufpos = fInfo->m_rdpos - fInfo->m_bufoff;
-    size_t bufrem = fInfo->m_buffill - bufpos;
+    auto bufpos = fInfo->m_rdpos - fInfo->m_bufoff;
+    auto bufrem = static_cast<size_t>(fInfo->m_buffill - bufpos);
 
     if (bufrem < count)
     {
@@ -457,7 +457,7 @@ size_t _getn_fsb(Concurrency::streams::details::_file_info* info,
     {
         auto cb = create_callback(fInfo, callback, [=](size_t read) {
             auto copy = (std::min)(read, byteCount);
-            auto bufoff = fInfo->m_rdpos - fInfo->m_bufoff;
+            auto bufoff = static_cast<size_t>(fInfo->m_rdpos - fInfo->m_bufoff);
             memcpy(ptr, fInfo->m_buffer + bufoff * charSize, copy);
             fInfo->m_atend = copy < byteCount;
             callback->on_completed(copy);
@@ -468,7 +468,7 @@ size_t _getn_fsb(Concurrency::streams::details::_file_info* info,
         if (static_cast<int>(read) > 0)
         {
             auto copy = (std::min)(read, byteCount);
-            auto bufoff = fInfo->m_rdpos - fInfo->m_bufoff;
+            auto bufoff = static_cast<size_t>(fInfo->m_rdpos - fInfo->m_bufoff);
             memcpy(ptr, fInfo->m_buffer + bufoff * charSize, copy);
             fInfo->m_atend = copy < byteCount;
             return copy;
@@ -509,7 +509,7 @@ size_t _putn_fsb(Concurrency::streams::details::_file_info* info,
 
     // To preserve the async write order, we have to move the write head before read.
     auto lastPos = fInfo->m_wrpos;
-    if (fInfo->m_wrpos != static_cast<size_t>(-1))
+    if (fInfo->m_wrpos != static_cast<utility::size64_t>(-1))
     {
         fInfo->m_wrpos += count;
         lastPos *= charSize;
@@ -550,15 +550,15 @@ bool _sync_fsb(Concurrency::streams::details::_file_info* info,
 /// <param name="info">The file info record of the file</param>
 /// <param name="pos">The new position (offset from the start) in the file stream</param>
 /// <returns>New file position or -1 if error</returns>
-size_t _seekrdtoend_fsb(Concurrency::streams::details::_file_info* info, int64_t offset, size_t char_size)
+utility::size64_t _seekrdtoend_fsb(Concurrency::streams::details::_file_info* info, int64_t offset, size_t char_size)
 {
-    if (info == nullptr) return static_cast<size_t>(-1);
+    if (info == nullptr) return static_cast<utility::size64_t>(-1);
 
     _file_info_impl* fInfo = static_cast<_file_info_impl*>(info);
 
     pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
 
-    if (fInfo->m_handle == -1) return static_cast<size_t>(-1);
+    if (fInfo->m_handle == -1) return static_cast<utility::size64_t>(-1);
 
     if (fInfo->m_buffer != nullptr)
     {
@@ -569,21 +569,21 @@ size_t _seekrdtoend_fsb(Concurrency::streams::details::_file_info* info, int64_t
 
     auto newpos = lseek(fInfo->m_handle, static_cast<off_t>(offset * char_size), SEEK_END);
 
-    if (newpos == -1) return static_cast<size_t>(-1);
+    if (newpos == -1) return static_cast<utility::size64_t>(-1);
 
-    fInfo->m_rdpos = static_cast<size_t>(newpos) / char_size;
+    fInfo->m_rdpos = newpos / char_size;
     return fInfo->m_rdpos;
 }
 
 utility::size64_t _get_size(_In_ concurrency::streams::details::_file_info* info, size_t char_size)
 {
-    if (info == nullptr) return static_cast<size_t>(-1);
+    if (info == nullptr) return static_cast<utility::size64_t>(-1);
 
     _file_info_impl* fInfo = static_cast<_file_info_impl*>(info);
 
     pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
 
-    if (fInfo->m_handle == -1) return static_cast<size_t>(-1);
+    if (fInfo->m_handle == -1) return static_cast<utility::size64_t>(-1);
 
     if (fInfo->m_buffer != nullptr)
     {
@@ -611,15 +611,15 @@ utility::size64_t _get_size(_In_ concurrency::streams::details::_file_info* info
 /// <param name="info">The file info record of the file</param>
 /// <param name="pos">The new position (offset from the start) in the file stream</param>
 /// <returns>New file position or -1 if error</returns>
-size_t _seekrdpos_fsb(Concurrency::streams::details::_file_info* info, size_t pos, size_t)
+utility::size64_t _seekrdpos_fsb(Concurrency::streams::details::_file_info* info, utility::size64_t pos, size_t)
 {
-    if (info == nullptr) return static_cast<size_t>(-1);
+    if (info == nullptr) return static_cast<utility::size64_t>(-1);
 
     _file_info_impl* fInfo = static_cast<_file_info_impl*>(info);
 
     pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
 
-    if (fInfo->m_handle == -1) return static_cast<size_t>(-1);
+    if (fInfo->m_handle == -1) return static_cast<utility::size64_t>(-1);
 
     if (pos < fInfo->m_bufoff || pos > (fInfo->m_bufoff + fInfo->m_buffill))
     {
@@ -638,15 +638,15 @@ size_t _seekrdpos_fsb(Concurrency::streams::details::_file_info* info, size_t po
 /// <param name="info">The file info record of the file</param>
 /// <param name="pos">The new position (offset from the start) in the file stream</param>
 /// <returns>New file position or -1 if error</returns>
-size_t _seekwrpos_fsb(Concurrency::streams::details::_file_info* info, size_t pos, size_t)
+utility::size64_t _seekwrpos_fsb(Concurrency::streams::details::_file_info* info, utility::size64_t pos, size_t)
 {
-    if (info == nullptr) return static_cast<size_t>(-1);
+    if (info == nullptr) return static_cast<utility::size64_t>(-1);
 
     _file_info_impl* fInfo = static_cast<_file_info_impl*>(info);
 
     pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
 
-    if (fInfo->m_handle == -1) return static_cast<size_t>(-1);
+    if (fInfo->m_handle == -1) return static_cast<utility::size64_t>(-1);
 
     fInfo->m_wrpos = pos;
     return fInfo->m_wrpos;

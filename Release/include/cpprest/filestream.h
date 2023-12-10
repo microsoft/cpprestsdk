@@ -383,7 +383,7 @@ protected:
 
                 if (_in_avail_unprot() > 0)
                 {
-                    auto bufoff = m_info->m_rdpos - m_info->m_bufoff;
+                    auto bufoff = static_cast<size_t>(m_info->m_rdpos - m_info->m_bufoff);
                     _CharType ch = m_info->m_buffer[bufoff * sizeof(_CharType)];
                     m_info->m_rdpos += 1;
                     return pplx::task_from_result<int_type>(ch);
@@ -423,7 +423,7 @@ protected:
 
         if (_in_avail_unprot() == 0) return traits::requires_async();
 
-        auto bufoff = m_info->m_rdpos - m_info->m_bufoff;
+        auto bufoff = static_cast<size_t>(m_info->m_rdpos - m_info->m_bufoff);
         _CharType ch = m_info->m_buffer[bufoff * sizeof(_CharType)];
         m_info->m_rdpos += 1;
         return (int_type)ch;
@@ -439,7 +439,7 @@ protected:
 
             if (_in_avail_unprot() > 0)
             {
-                auto bufoff = m_info->m_rdpos - m_info->m_bufoff;
+                auto bufoff = static_cast<size_t>(m_info->m_rdpos - m_info->m_bufoff);
                 _CharType ch = m_info->m_buffer[bufoff * sizeof(_CharType)];
                 return pplx::task_from_result<int_type>(ch);
             }
@@ -485,7 +485,7 @@ protected:
 
         if (_in_avail_unprot() == 0) return traits::requires_async();
 
-        auto bufoff = m_info->m_rdpos - m_info->m_bufoff;
+        auto bufoff = static_cast<size_t>(m_info->m_rdpos - m_info->m_bufoff);
         _CharType ch = m_info->m_buffer[bufoff * sizeof(_CharType)];
         return (int_type)ch;
     }
@@ -538,7 +538,7 @@ protected:
 
                 if (_in_avail_unprot() >= count)
                 {
-                    auto bufoff = m_info->m_rdpos - m_info->m_bufoff;
+                    auto bufoff = static_cast<size_t>(m_info->m_rdpos - m_info->m_bufoff);
                     std::memcpy(
                         (void*)ptr, this->m_info->m_buffer + bufoff * sizeof(_CharType), count * sizeof(_CharType));
 
@@ -582,7 +582,7 @@ protected:
         size_t available = _in_avail_unprot();
         size_t copy = (count < available) ? count : available;
 
-        auto bufoff = m_info->m_rdpos - m_info->m_bufoff;
+        auto bufoff = static_cast<size_t>(m_info->m_rdpos - m_info->m_bufoff);
         std::memcpy((void*)ptr, this->m_info->m_buffer + bufoff * sizeof(_CharType), copy * sizeof(_CharType));
 
         m_info->m_rdpos += copy;
@@ -626,11 +626,11 @@ protected:
         if (mode == std::ios_base::in)
         {
             m_readOps.wait();
-            return (pos_type)_seekrdpos_fsb(m_info, size_t(pos), sizeof(_CharType));
+            return (pos_type)_seekrdpos_fsb(m_info, pos, sizeof(_CharType));
         }
         else if ((m_info->m_mode & std::ios::ios_base::app) == 0)
         {
-            return (pos_type)_seekwrpos_fsb(m_info, size_t(pos), sizeof(_CharType));
+            return (pos_type)_seekwrpos_fsb(m_info, pos, sizeof(_CharType));
         }
         return (pos_type)Concurrency::streams::char_traits<_CharType>::eof();
     }
@@ -649,15 +649,15 @@ protected:
         if (mode == std::ios_base::in)
         {
             m_readOps.wait();
-            size_t current_pos = static_cast<size_t>(-1);
+            auto current_pos = static_cast<utility::size64_t>(-1);
             switch (way)
             {
-                case std::ios_base::beg: return (pos_type)_seekrdpos_fsb(m_info, size_t(offset), sizeof(_CharType));
+                case std::ios_base::beg: return (pos_type)_seekrdpos_fsb(m_info, offset, sizeof(_CharType));
                 case std::ios_base::cur:
-                    return (pos_type)_seekrdpos_fsb(m_info, size_t(m_info->m_rdpos + offset), sizeof(_CharType));
+                    return (pos_type)_seekrdpos_fsb(m_info, m_info->m_rdpos + offset, sizeof(_CharType));
                 case std::ios_base::end:
-                    current_pos = _seekrdtoend_fsb(m_info, int64_t(offset), sizeof(_CharType));
-                    if (current_pos == static_cast<size_t>(-1))
+                    current_pos = _seekrdtoend_fsb(m_info, offset, sizeof(_CharType));
+                    if (current_pos == static_cast<utility::size64_t>(-1))
                     {
                         return -1;
                     }
@@ -671,10 +671,10 @@ protected:
         {
             switch (way)
             {
-                case std::ios_base::beg: return (pos_type)_seekwrpos_fsb(m_info, size_t(offset), sizeof(_CharType));
+                case std::ios_base::beg: return (pos_type)_seekwrpos_fsb(m_info, offset, sizeof(_CharType));
                 case std::ios_base::cur:
-                    return (pos_type)_seekwrpos_fsb(m_info, size_t(m_info->m_wrpos + offset), sizeof(_CharType));
-                case std::ios_base::end: return (pos_type)_seekwrpos_fsb(m_info, size_t(-1), sizeof(_CharType));
+                    return (pos_type)_seekwrpos_fsb(m_info, m_info->m_wrpos + offset, sizeof(_CharType));
+                case std::ios_base::end: return (pos_type)_seekwrpos_fsb(m_info, utility::size64_t(-1), sizeof(_CharType));
                 default:
                     // Fail on invalid input (_S_ios_seekdir_end)
                     assert(false);
