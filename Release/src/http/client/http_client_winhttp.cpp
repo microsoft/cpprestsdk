@@ -25,6 +25,8 @@
 #include "winhttppal.h"
 #endif
 #include <atomic>
+#include <iomanip>    // for certificate pinning logic
+#include <wincrypt.h> // for certificate pinning logic
 
 #if _WIN32_WINNT && (_WIN32_WINNT >= _WIN32_WINNT_VISTA)
 #include <VersionHelpers.h>
@@ -1513,7 +1515,7 @@ private:
                 {
                     // An actual read always resets compression state for the next chunk
                     _ASSERTE(p_request_context->m_compression_state.m_bytes_processed ==
-                             p_request_context->m_compression_state.m_bytes_read);
+                            p_request_context->m_compression_state.m_bytes_read);
                     _ASSERTE(!p_request_context->m_compression_state.m_needs_flush);
                     p_request_context->m_compression_state.m_bytes_read = bytes_read;
                     p_request_context->m_compression_state.m_bytes_processed = 0;
@@ -1536,7 +1538,7 @@ private:
                     hint = web::http::compression::operation_hint::is_last;
                 }
                 else if (p_request_context->m_compression_state.m_bytes_processed ==
-                         p_request_context->m_compression_state.m_bytes_read)
+                        p_request_context->m_compression_state.m_bytes_read)
                 {
                     if (p_request_context->m_remaining_to_write &&
                         p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
@@ -1554,63 +1556,65 @@ private:
                 // else we're still compressing bytes from the previous read
 
                 _ASSERTE(p_request_context->m_compression_state.m_bytes_processed <=
-                         p_request_context->m_compression_state.m_bytes_read);
+                        p_request_context->m_compression_state.m_bytes_read);
 
                 uint8_t* in = buffer + p_request_context->m_compression_state.m_bytes_processed;
                 size_t inbytes = p_request_context->m_compression_state.m_bytes_read -
-                                 p_request_context->m_compression_state.m_bytes_processed;
+                                p_request_context->m_compression_state.m_bytes_processed;
                 return compressor
                     ->compress(in,
-                               inbytes,
-                               &p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset],
-                               chunk_size,
-                               hint)
-                    .then([p_request_context, bytes_read, hint, chunk_size](
-                              pplx::task<http::compression::operation_result> op) -> pplx::task<size_t> {
-                        http::compression::operation_result r;
-
-                        try
+                            inbytes,
+                            &p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset],
+                            chunk_size,
+                            hint)
+                    .then(
+                        [p_request_context, bytes_read, hint, chunk_size](
+                            pplx::task<http::compression::operation_result> op) -> pplx::task<size_t>
                         {
-                            r = op.get();
-                        }
-                        catch (...)
-                        {
-                            return pplx::task_from_exception<size_t>(std::current_exception());
-                        }
+                            http::compression::operation_result r;
 
-                        if (hint == web::http::compression::operation_hint::is_last)
-                        {
-                            // We're done reading all chunks, but the compressor may still have compressed bytes to
-                            // drain from previous reads
-                            _ASSERTE(r.done || r.output_bytes_produced == chunk_size);
-                            p_request_context->m_compression_state.m_needs_flush = !r.done;
-                            p_request_context->m_compression_state.m_done = r.done;
-                        }
+                            try
+                            {
+                                r = op.get();
+                            }
+                            catch (...)
+                            {
+                                return pplx::task_from_exception<size_t>(std::current_exception());
+                            }
 
-                        // Update the number of bytes compressed in this read chunk; if it's been fully compressed,
-                        // we'll reset m_bytes_processed and m_bytes_read after reading the next chunk
-                        p_request_context->m_compression_state.m_bytes_processed += r.input_bytes_processed;
-                        _ASSERTE(p_request_context->m_compression_state.m_bytes_processed <=
-                                 p_request_context->m_compression_state.m_bytes_read);
-                        if (p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
-                        {
-                            _ASSERTE(p_request_context->m_remaining_to_write >= r.input_bytes_processed);
-                            p_request_context->m_remaining_to_write -= r.input_bytes_processed;
-                        }
+                            if (hint == web::http::compression::operation_hint::is_last)
+                            {
+                                // We're done reading all chunks, but the compressor may still have compressed bytes to
+                                // drain from previous reads
+                                _ASSERTE(r.done || r.output_bytes_produced == chunk_size);
+                                p_request_context->m_compression_state.m_needs_flush = !r.done;
+                                p_request_context->m_compression_state.m_done = r.done;
+                            }
 
-                        if (p_request_context->m_compression_state.m_acquired != nullptr &&
-                            p_request_context->m_compression_state.m_bytes_processed ==
-                                p_request_context->m_compression_state.m_bytes_read)
-                        {
-                            // Release the acquired buffer back to the streambuf at the earliest possible point
-                            p_request_context->_get_readbuffer().release(
-                                p_request_context->m_compression_state.m_acquired,
-                                p_request_context->m_compression_state.m_bytes_processed);
-                            p_request_context->m_compression_state.m_acquired = nullptr;
-                        }
+                            // Update the number of bytes compressed in this read chunk; if it's been fully compressed,
+                            // we'll reset m_bytes_processed and m_bytes_read after reading the next chunk
+                            p_request_context->m_compression_state.m_bytes_processed += r.input_bytes_processed;
+                            _ASSERTE(p_request_context->m_compression_state.m_bytes_processed <=
+                                    p_request_context->m_compression_state.m_bytes_read);
+                            if (p_request_context->m_remaining_to_write != (std::numeric_limits<size_t>::max)())
+                            {
+                                _ASSERTE(p_request_context->m_remaining_to_write >= r.input_bytes_processed);
+                                p_request_context->m_remaining_to_write -= r.input_bytes_processed;
+                            }
 
-                        return pplx::task_from_result<size_t>(r.output_bytes_produced);
-                    });
+                            if (p_request_context->m_compression_state.m_acquired != nullptr &&
+                                p_request_context->m_compression_state.m_bytes_processed ==
+                                    p_request_context->m_compression_state.m_bytes_read)
+                            {
+                                // Release the acquired buffer back to the streambuf at the earliest possible point
+                                p_request_context->_get_readbuffer().release(
+                                    p_request_context->m_compression_state.m_acquired,
+                                    p_request_context->m_compression_state.m_bytes_processed);
+                                p_request_context->m_compression_state.m_acquired = nullptr;
+                            }
+
+                            return pplx::task_from_result<size_t>(r.output_bytes_produced);
+                        });
             };
 
             if (p_request_context->m_compression_state.m_bytes_processed <
@@ -1993,9 +1997,135 @@ private:
                         return;
                     }
                 }
-
+                // Check if connection rejected the certificate.
+                if (p_request_context->m_certificate_chain_verification_failed)
+                {
+                    p_request_context->report_error(
+                        ERROR_WINHTTP_SECURE_FAILURE,
+                        build_error_msg(ERROR_WINHTTP_SECURE_FAILURE, "WinHttpVerificationFailed"));
+                    break;
+                }
                 p_request_context->report_error(errorCode, build_error_msg(error_result));
                 return;
+            }
+            case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST:
+            {
+                // Todo Check where to put this. atbagga
+                p_request_context->on_send_request_validate_cn();
+
+                // get actual URL which might be different from the original one due to redirection etc.
+                DWORD urlSize {0};
+                WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, NULL, &urlSize);
+                auto urlwchar = new WCHAR[urlSize / sizeof(WCHAR)];
+
+                WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, (void*)urlwchar, &urlSize);
+                utility::string_t url(urlwchar);
+
+                delete[] urlwchar;
+
+                // obtain leaf cert based on which we will be able to build the certificate chain
+                PCCERT_CONTEXT pCert {nullptr};
+                DWORD dwSize = sizeof(pCert);
+
+                WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_SERVER_CERT_CONTEXT, &pCert, &dwSize);
+
+                std::vector<std::vector<unsigned char>> cert_chain;
+                DWORD dwErrorStatus = 0;
+
+                if (pCert)
+                {
+                    CERT_ENHKEY_USAGE keyUsage = {};
+                    keyUsage.cUsageIdentifier = 0;
+                    keyUsage.rgpszUsageIdentifier = NULL;
+
+                    CERT_USAGE_MATCH certUsage = {};
+                    certUsage.dwType = USAGE_MATCH_TYPE_AND;
+                    certUsage.Usage = keyUsage;
+
+                    CERT_CHAIN_PARA chainPara = {};
+                    chainPara.cbSize = sizeof(CERT_CHAIN_PARA);
+                    chainPara.RequestedUsage = certUsage;
+
+                    PCCERT_CHAIN_CONTEXT pChainContext = {};
+
+                    // build the certificate chain relying on the actual intermediate certs returned as part of the TLS
+                    // session disable any network operations to fetch certificates
+                    auto validChain = CertGetCertificateChain(
+                        NULL,
+                        pCert,
+                        NULL,
+                        pCert->hCertStore,
+                        &chainPara,
+                        CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL | CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY |
+                            CERT_CHAIN_REVOCATION_CHECK_CHAIN | CERT_CHAIN_CACHE_END_CERT |
+                            CERT_CHAIN_DISABLE_AUTH_ROOT_AUTO_UPDATE,
+                        NULL,
+                        &pChainContext);
+
+                    if (validChain && pChainContext)
+                    {
+                        dwErrorStatus = pChainContext->TrustStatus.dwErrorStatus;
+                        cert_chain.reserve((int)pChainContext->cChain);
+                        for (size_t i = 0; i < pChainContext->cChain; ++i)
+                        {
+                            auto chain = pChainContext->rgpChain[i];
+                            for (size_t j = 0; j < chain->cElement; ++j)
+                            {
+                                auto chainElement = chain->rgpElement[j];
+                                auto cert = chainElement->pCertContext;
+                                if (cert)
+                                {
+                                    cert_chain.emplace_back(std::vector<unsigned char>(
+                                        cert->pbCertEncoded, cert->pbCertEncoded + (int)cert->cbCertEncoded));
+                                }
+                            }
+                        }
+                        CertFreeCertificateChain(pChainContext);
+                    }
+                    CertFreeCertificateContext(pCert);
+                }
+
+                utility::string_t host;
+
+                try
+                {
+                    host = web::uri(url).host();
+                }
+                catch (std::exception e)
+                {
+                    host = url;
+                }
+
+                if (host.empty())
+                {
+                    host = url;
+                }
+
+                auto info = std::make_shared<certificate_info>(
+                    utility::conversions::to_utf8string(host), cert_chain, dwErrorStatus);
+
+                if (dwErrorStatus == CERT_TRUST_NO_ERROR || dwErrorStatus == CERT_TRUST_REVOCATION_STATUS_UNKNOWN ||
+                    dwErrorStatus == (CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN))
+                {
+                    info->verified = true;
+                }
+
+                if (p_request_context->m_http_client->client_config().invoke_certificate_chain_callback(info))
+                {
+                    if (!info->verified && p_request_context->m_http_client->client_config().validate_certificates())
+                    {
+                        p_request_context->m_certificate_chain_verification_failed = true;
+                    }
+                    else
+                    {
+                        p_request_context->m_certificate_chain_verification_failed = false;
+                    }
+                }
+                else
+                {
+                    p_request_context->m_certificate_chain_verification_failed = true;
+                }
+                break;
             }
             case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE:
             {
@@ -2034,11 +2164,6 @@ private:
                                                         build_error_msg(errorCode, "WinHttpReceiveResponse"));
                     }
                 }
-                return;
-            }
-            case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST:
-            {
-                p_request_context->on_send_request_validate_cn();
                 return;
             }
             case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
@@ -2170,6 +2295,17 @@ private:
                     {
                         // The request was not completed but resent with credentials. Wait until we get a new response
                         return;
+                    }
+                }
+                else
+                {
+                    // The connection is allowed, but did the client allow the connection.
+                    if (p_request_context->m_certificate_chain_verification_failed)
+                    {
+                        p_request_context->report_error(
+                            ERROR_WINHTTP_SECURE_FAILURE,
+                            build_error_msg(ERROR_WINHTTP_SECURE_FAILURE, "WinHttpVerificationFailed"));
+                        break;
                     }
                 }
 
@@ -2472,9 +2608,11 @@ private:
                             ->decompress(
                                 in, inbytes, buffer, chunk_size, web::http::compression::operation_hint::has_more)
                             .then([p_request_context, buffer, chunk_size, process_buffer](
-                                      pplx::task<web::http::compression::operation_result> op) {
+                                    pplx::task<web::http::compression::operation_result> op) {
                                 auto r = op.get();
-                                auto keep_going = [&r, process_buffer](winhttp_request_context* c) -> pplx::task<bool> {
+                                auto keep_going =
+                                    [&r, process_buffer](winhttp_request_context* c) -> pplx::task<bool>
+                                {
                                     _ASSERTE(r.input_bytes_processed <= c->m_compression_state.m_chunk_bytes);
                                     c->m_compression_state.m_chunk_bytes -= r.input_bytes_processed;
                                     c->m_compression_state.m_bytes_processed += r.input_bytes_processed;
@@ -2482,8 +2620,8 @@ private:
 
                                     try
                                     {
-                                        // See if we still have more work to do for this section and/or for the response
-                                        // in general
+                                        // See if we still have more work to do for this section and/or for the
+                                        // response in general
                                         return pplx::task_from_result<bool>(
                                             process_buffer(c, r.output_bytes_produced, false));
                                     }
@@ -2494,8 +2632,8 @@ private:
                                 };
 
                                 _ASSERTE(p_request_context->m_compression_state.m_bytes_processed +
-                                             r.input_bytes_processed <=
-                                         p_request_context->m_compression_state.m_bytes_read);
+                                                r.input_bytes_processed <=
+                                            p_request_context->m_compression_state.m_bytes_read);
 
                                 if (p_request_context->m_compression_state.m_acquired != nullptr)
                                 {
@@ -2508,15 +2646,17 @@ private:
                                 // We decompressed into our own buffer; let the stream copy the data
                                 return p_request_context->_get_writebuffer()
                                     .putn_nocopy(buffer, r.output_bytes_produced)
-                                    .then([p_request_context, r, keep_going](pplx::task<size_t> op) {
-                                        if (op.get() != r.output_bytes_produced)
+                                    .then(
+                                        [p_request_context, r, keep_going](pplx::task<size_t> op)
                                         {
-                                            return pplx::task_from_exception<bool>(
-                                                std::runtime_error("Response stream unexpectedly failed to write the "
-                                                                   "requested number of bytes"));
-                                        }
-                                        return keep_going(p_request_context.get());
-                                    });
+                                            if (op.get() != r.output_bytes_produced)
+                                            {
+                                                return pplx::task_from_exception<bool>(std::runtime_error(
+                                                    "Response stream unexpectedly failed to write the "
+                                                    "requested number of bytes"));
+                                            }
+                                            return keep_going(p_request_context.get());
+                                        });
                             });
                     }).then([p_request_context](pplx::task<bool> op) {
                         try
@@ -2525,8 +2665,8 @@ private:
                         }
                         catch (...)
                         {
-                            // We're only here to pick up any exception that may have been thrown, and to clean up
-                            // if needed
+                            // We're only here to pick up any exception that may have been thrown, and to clean
+                            // up if needed
                             if (p_request_context->m_compression_state.m_acquired)
                             {
                                 p_request_context->_get_writebuffer().commit(0);

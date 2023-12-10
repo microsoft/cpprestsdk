@@ -209,25 +209,49 @@ public:
 #ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
                 m_openssl_failed = false;
 #endif
-                sslContext->set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context& verifyCtx) {
+                sslContext->set_verify_callback(
+                    [this](bool preverified, boost::asio::ssl::verify_context& verifyCtx)
+                    {
 #ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
-                    // Attempt to use platform certificate validation when it is available:
-                    // If OpenSSL fails we will doing verification at the end using the whole certificate chain,
-                    // so wait until the 'leaf' cert. For now return true so OpenSSL continues down the certificate
-                    // chain.
-                    if (!preverified)
-                    {
-                        m_openssl_failed = true;
-                    }
-                    if (m_openssl_failed)
-                    {
-                        return http::client::details::verify_cert_chain_platform_specific(
-                            verifyCtx, utility::conversions::to_utf8string(m_uri.host()));
-                    }
+                        // Attempt to use platform certificate validation when it is available:
+                        // If OpenSSL fails we will doing verification at the end using the whole certificate chain,
+                        // so wait until the 'leaf' cert. For now return true so OpenSSL continues down the
+                        // certificate chain.
+                        using namespace web::http::client::details;
+                        if (!preverified)
+                        {
+                            m_openssl_failed = true;
+                        }
+                        if (m_openssl_failed)
+                        {
+                            if (!http::client::details::is_end_certificate_in_chain(verifyCtx))
+                            {
+                                // Continue until we get the end certificate.
+                                return true;
+                            }
+
+                            auto chainFunc =
+                                [this](const std::shared_ptr<http::client::certificate_info>& cert_info)
+                            { return m_config.invoke_certificate_chain_callback(cert_info); };
+
+                            return http::client::details::verify_cert_chain_platform_specific(
+                                verifyCtx, utility::conversions::to_utf8string(m_uri.host()), chainFunc);
+                        }
 #endif
-                    boost::asio::ssl::rfc2818_verification rfc2818(utility::conversions::to_utf8string(m_uri.host()));
-                    return rfc2818(preverified, verifyCtx);
-                });
+                        boost::asio::ssl::rfc2818_verification rfc2818(
+                            utility::conversions::to_utf8string(m_uri.host()));
+                        if (!rfc2818(preverified, verifyCtx))
+                        {
+                            return false;
+                        }
+
+                        auto info = std::make_shared<http::client::certificate_info>(
+                            utility::conversions::to_utf8string(m_uri.host()),
+                            get_X509_cert_chain_encoded_data(verifyCtx));
+                        info->verified = true;
+
+                        return m_config.invoke_certificate_chain_callback(info);
+                    });
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
                 // OpenSSL stores some per thread state that never will be cleaned up until
@@ -243,8 +267,7 @@ public:
             });
 
             // Options specific to underlying socket.
-            client.set_socket_init_handler([this](websocketpp::connection_hdl,
-                                                  boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& ssl_stream) {
+            client.set_socket_init_handler([this](websocketpp::connection_hdl, boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& ssl_stream) {
                 // Support for SNI.
                 if (m_config.is_sni_enabled())
                 {
@@ -254,12 +277,13 @@ public:
                         // OpenSSL runs the string parameter through a macro casting away const with a C style cast.
                         // Do a C++ cast ourselves to avoid warnings.
                         SSL_set_tlsext_host_name(ssl_stream.native_handle(),
-                                                 const_cast<char*>(m_config.server_name().c_str()));
+                                                    const_cast<char*>(m_config.server_name().c_str()));
                     }
                     else
                     {
                         const auto& server_name = utility::conversions::to_utf8string(m_uri.host());
-                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), const_cast<char*>(server_name.c_str()));
+                        SSL_set_tlsext_host_name(ssl_stream.native_handle(),
+                                                    const_cast<char*>(server_name.c_str()));
                     }
                 }
             });
@@ -295,35 +319,34 @@ public:
             this->shutdown_wspp_impl<WebsocketConfigType>(con_hdl, true);
         });
 
-        client.set_message_handler(
-            [this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr& msg) {
-                if (m_external_message_handler)
+        client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr& msg) {
+            if (m_external_message_handler)
+            {
+                _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
+                websocket_incoming_message incoming_msg;
+
+                switch (msg->get_opcode())
                 {
-                    _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
-                    websocket_incoming_message incoming_msg;
-
-                    switch (msg->get_opcode())
-                    {
-                        case websocketpp::frame::opcode::binary:
-                            incoming_msg.m_msg_type = websocket_message_type::binary_message;
-                            break;
-                        case websocketpp::frame::opcode::text:
-                            incoming_msg.m_msg_type = websocket_message_type::text_message;
-                            break;
-                        default:
-                            // Unknown message type. Since both websocketpp and our code use the RFC codes, we'll just
-                            // pass it on to the user.
-                            incoming_msg.m_msg_type = static_cast<websocket_message_type>(msg->get_opcode());
-                            break;
-                    }
-
-                    // 'move' the payload into a container buffer to avoid any copies.
-                    auto& payload = msg->get_raw_payload();
-                    incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
-
-                    m_external_message_handler(incoming_msg);
+                    case websocketpp::frame::opcode::binary:
+                        incoming_msg.m_msg_type = websocket_message_type::binary_message;
+                        break;
+                    case websocketpp::frame::opcode::text:
+                        incoming_msg.m_msg_type = websocket_message_type::text_message;
+                        break;
+                    default:
+                        // Unknown message type. Since both websocketpp and our code use the RFC codes, we'll just
+                        // pass it on to the user.
+                        incoming_msg.m_msg_type = static_cast<websocket_message_type>(msg->get_opcode());
+                        break;
                 }
-            });
+
+                // 'move' the payload into a container buffer to avoid any copies.
+                auto& payload = msg->get_raw_payload();
+                incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
+
+                m_external_message_handler(incoming_msg);
+            }
+        });
 
         client.set_ping_handler([this](websocketpp::connection_hdl, const std::string& msg) {
             if (m_external_message_handler)
@@ -593,8 +616,7 @@ public:
                 }
                 return ec;
             })
-            .then([this_client, msg, is_buf, acquired, sp_allocated, length](
-                      pplx::task<websocketpp::lib::error_code> previousTask) mutable {
+            .then([this_client, msg, is_buf, acquired, sp_allocated, length](pplx::task<websocketpp::lib::error_code> previousTask) mutable {
                 std::exception_ptr eptr;
                 try
                 {
@@ -602,7 +624,8 @@ public:
                     const auto& ec = previousTask.get();
                     if (ec.value() != 0)
                     {
-                        eptr = std::make_exception_ptr(websocket_exception(ec, build_error_msg(ec, "sending message")));
+                        eptr = std::make_exception_ptr(
+                            websocket_exception(ec, build_error_msg(ec, "sending message")));
                     }
                 }
                 catch (...)
