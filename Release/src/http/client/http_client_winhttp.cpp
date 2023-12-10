@@ -294,6 +294,7 @@ public:
             , m_started(false)
             , m_done(false)
             , m_chunked(false)
+            , m_chunk_bytes(0)
         {
         }
 
@@ -679,6 +680,7 @@ private:
     winhttp_request_context(const std::shared_ptr<_http_client_communicator>& client, const http_request& request)
         : request_context(client, request)
         , m_request_handle(nullptr)
+        , m_request_handle_context(nullptr)
         , m_proxy_authentication_tried(false)
         , m_server_authentication_tried(false)
         , m_remaining_redirects(0)
