@@ -20,6 +20,10 @@
 #include <boost/asio/ssl.hpp>
 #endif
 
+#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
+#include <http.h>
+#endif
+
 #if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt)) ||                         \
     defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 
@@ -33,6 +37,13 @@ namespace experimental
 /// HTTP server side library.
 namespace listener
 {
+
+#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
+typedef std::function<void(boost::asio::ssl::context&)> ssl_context_callback;
+#else
+typedef std::function<void(PHTTP_SSL_INFO, details::_http_server_context*)> ssl_context_callback;
+#endif
+
 /// <summary>
 /// Configuration class used to set various options when constructing and http_listener instance.
 /// </summary>
@@ -51,9 +62,7 @@ public:
     http_listener_config(const http_listener_config& other)
         : m_timeout(other.m_timeout)
         , m_backlog(other.m_backlog)
-#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
         , m_ssl_context_callback(other.m_ssl_context_callback)
-#endif
     {
     }
 
@@ -64,9 +73,7 @@ public:
     http_listener_config(http_listener_config&& other)
         : m_timeout(std::move(other.m_timeout))
         , m_backlog(std::move(other.m_backlog))
-#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
         , m_ssl_context_callback(std::move(other.m_ssl_context_callback))
-#endif
     {
     }
 
@@ -80,9 +87,7 @@ public:
         {
             m_timeout = rhs.m_timeout;
             m_backlog = rhs.m_backlog;
-#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
             m_ssl_context_callback = rhs.m_ssl_context_callback;
-#endif
         }
         return *this;
     }
@@ -97,9 +102,7 @@ public:
         {
             m_timeout = std::move(rhs.m_timeout);
             m_backlog = std::move(rhs.m_backlog);
-#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
             m_ssl_context_callback = std::move(rhs.m_ssl_context_callback);
-#endif
         }
         return *this;
     }
@@ -130,12 +133,11 @@ public:
     /// default.</param> <remarks>The implementation may not honour this value.</remarks>
     void set_backlog(int backlog) { m_backlog = backlog; }
 
-#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
     /// <summary>
     /// Get the callback of ssl context
     /// </summary>
     /// <returns>The function defined by the user of http_listener_config to configure a ssl context.</returns>
-    const std::function<void(boost::asio::ssl::context&)>& get_ssl_context_callback() const
+    const ssl_context_callback& get_ssl_context_callback() const
     {
         return m_ssl_context_callback;
     }
@@ -145,18 +147,15 @@ public:
     /// </summary>
     /// <param name="ssl_context_callback">The function to configure a ssl context which will setup https
     /// connections.</param>
-    void set_ssl_context_callback(const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback)
+    void set_ssl_context_callback(const ssl_context_callback& ssl_context_callback)
     {
         m_ssl_context_callback = ssl_context_callback;
     }
-#endif
 
 private:
     utility::seconds m_timeout;
     int m_backlog;
-#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
-    std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
-#endif
+    ssl_context_callback m_ssl_context_callback;
 };
 
 namespace details
