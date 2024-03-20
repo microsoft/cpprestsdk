@@ -147,13 +147,21 @@ void _get_create_flags(
     }
 
     // C++ specifies what permissions to deny, Windows which permissions to give,
-    dwShareMode = 0x3;
-    switch (prot)
-    {
-        case _SH_DENYRW: dwShareMode = 0x0; break;
-        case _SH_DENYWR: dwShareMode = 0x1; break;
-        case _SH_DENYRD: dwShareMode = 0x2; break;
+    dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
+    switch (prot) {
+    case _SH_DENYRW:
+        dwShareMode = 0x0;
+        break;
+    case _SH_DENYWR:
+        dwShareMode = FILE_SHARE_READ;
+        break;
+    case _SH_DENYRD:
+        dwShareMode = FILE_SHARE_WRITE;
+        break;
     }
+
+    // according to the post of: https://github.com/golang/go/issues/32088#issuecomment-502850674
+    dwShareMode |= FILE_SHARE_DELETE;
 }
 
 /// <summary>
