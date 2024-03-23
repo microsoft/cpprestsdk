@@ -57,3 +57,8 @@ René Meusel (reneme)
 
 Sony Corporation
 Gareth Sylvester-Bradley (garethsb-sony)
+
+Cubeware GmbH
+Peter Brockamp (pbrcw)
+
+Sebastian Krämer (sebkraemer)

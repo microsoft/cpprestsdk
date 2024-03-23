@@ -676,6 +676,12 @@ private:
     interval_type m_interval;
 };
 
+inline ::utility::ostream_t & operator<< (::utility::ostream_t & out, datetime const & data)
+{
+    out << data.to_string();
+    return out;
+}
+
 inline int operator-(datetime t1, datetime t2)
 {
     auto diff = (t1.m_interval - t2.m_interval);
