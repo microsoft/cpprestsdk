@@ -91,18 +91,15 @@ git submodule update --init
 
 ## Build Boost
 
-if [ ! -e $ABS_PATH/boost.framework ] && [ ! -d $ABS_PATH/boost ]; then
+if [ ! -e $ABS_PATH/boost.xcframework ] && [ ! -d $ABS_PATH/boost ]; then
     if [ ! -d "${ABS_PATH}/Apple-Boost-BuildScript" ]; then
         git clone https://github.com/faithfracture/Apple-Boost-BuildScript ${ABS_PATH}/Apple-Boost-BuildScript
     fi
     pushd ${ABS_PATH}/Apple-Boost-BuildScript
-    git checkout 8c42427b4ebc7865eb99b0a0b9607888af2c6abc
+    git checkout 27ca8978bf3ee029f699356a7d044a5a1fc0cd84
     BOOST_LIBS="thread chrono filesystem regex system random" ./boost.sh -ios -tvos --boost-version $BOOST_VERSION
     popd
-    mv ${ABS_PATH}/Apple-Boost-BuildScript/build/boost/${BOOST_VERSION}/ios/framework/boost.framework ${ABS_PATH}
-    mv ${ABS_PATH}/boost.framework/Versions/A/Headers ${ABS_PATH}/boost.headers
-    mkdir -p ${ABS_PATH}/boost.framework/Versions/A/Headers
-    mv ${ABS_PATH}/boost.headers ${ABS_PATH}/boost.framework/Versions/A/Headers/boost
+    mv ${ABS_PATH}/Apple-Boost-BuildScript/dist/boost.xcframework ${ABS_PATH}
 fi
 
 ## Build OpenSSL

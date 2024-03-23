@@ -1,0 +1,86 @@
+#
+# GitHub Actions workflow for building cpprestsdk on iOS and Android
+#
+# Note: Please do not include any non-mobile targets in this workflow because
+#       we don't want a failure in one of several dozens Linux distributions
+#       hide a problem in the only 2 targets our mobile developers care about!
+#
+name: Mobile
+
+on: [push]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest,macos-latest]
+        flavor: [Release] # Only use one of Debug/Release (capitalized) for now to save on minutes
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout Sources
+      uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+    - name: Update Submodules
+      run: git submodule update --init
+    - name: Build (iOS)
+      timeout-minutes: 30
+      run: |
+        set -x
+        mkdir -p bins/ios/cpprestsdk
+        pushd Build_iOS
+        BOOST_VERSION="1.71.0" OPENSSL_VERSION="1.1.1d" ./configure.sh -build_type ${{ matrix.flavor }}
+        ls -alFR .
+        if [ -f build.${{ matrix.flavor }}.ios/lib/libcpprest.a ]; then mv build.${{ matrix.flavor }}.ios/lib ${GITHUB_WORKSPACE}/bins/ios/cpprestsdk/; mv build.${{ matrix.flavor }}.ios/include ${GITHUB_WORKSPACE}/bins/ios/cpprestsdk/; fi
+        if [ -d openssl           ]; then mv openssl           ${GITHUB_WORKSPACE}/bins/ios/; fi
+        if [ -d boost.xcframework ]; then mv boost.xcframework ${GITHUB_WORKSPACE}/bins/ios/; fi
+      if: matrix.os == 'macos-latest'
+    - name: Build (Android)
+      timeout-minutes: 25
+      run: |
+        set -x
+        export NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
+        echo "::set-env name=NDK_ROOT::$NDK_ROOT"
+        mkdir -p bins/android/cpprestsdk
+        pushd Build_android
+        mkdir build
+        pushd build
+        ../configure.sh --boost 1.69.0 --openssl 1.1.0j --ndk ${NDK_ROOT}
+        ls -alFR .
+        mv ${GITHUB_WORKSPACE}/Release/include ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/ || true
+        if [ -f   build.armv7.debug/Release/Binaries/libcpprest.a ]; then mkdir -p ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/armeabi-v7a/Debug;   mv   build.armv7.debug/Release/Binaries/libcpprest.a ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/armeabi-v7a/Debug/;   fi
+        if [ -f build.armv7.release/Release/Binaries/libcpprest.a ]; then mkdir -p ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/armeabi-v7a/Release; mv build.armv7.release/Release/Binaries/libcpprest.a ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/armeabi-v7a/Release/; fi
+        if [ -f     build.x86.debug/Release/Binaries/libcpprest.a ]; then mkdir -p ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/x86/Debug;           mv     build.x86.debug/Release/Binaries/libcpprest.a ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/x86/Debug/;           fi
+        if [ -f   build.x86.release/Release/Binaries/libcpprest.a ]; then mkdir -p ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/x86/Release;         mv   build.x86.release/Release/Binaries/libcpprest.a ${GITHUB_WORKSPACE}/bins/android/cpprestsdk/libs/x86/Release/;         fi
+        if [ -d openssl                     ]; then mv openssl                     ${GITHUB_WORKSPACE}/bins/android/; fi
+        if [ -d Boost-for-Android/build/out ]; then mv Boost-for-Android/build/out ${GITHUB_WORKSPACE}/bins/android/boost; fi
+      if: matrix.os == 'ubuntu-latest'
+    - name: Prepare Binaries
+      timeout-minutes: 5
+      run: |
+        # It is about 30 times faster to zip artifacts first instead of letting
+        # upload artifact action send about 44K boost headers over the network.
+        # The artifact with binaries from both platforms takes about 345M, which
+        # is why we only create and upload them for tagged commits.
+        set -x
+        mkdir binaries
+        mkdir binaries/ios
+        mkdir binaries/android
+        if [ -d bins/android/cpprestsdk  ]; then (cd bins/android && zip -r ${GITHUB_WORKSPACE}/binaries/android/cpprestsdk.zip  cpprestsdk);      fi
+        if [ -d bins/android/openssl     ]; then (cd bins/android && zip -r ${GITHUB_WORKSPACE}/binaries/android/openssl.zip     openssl);         fi
+        if [ -d bins/android/boost       ]; then (cd bins/android && zip -r ${GITHUB_WORKSPACE}/binaries/android/boost.zip       boost);           fi
+        if [ -d bins/ios/cpprestsdk      ]; then (cd bins/ios     && zip -r ${GITHUB_WORKSPACE}/binaries/ios/cpprestsdk.zip      cpprestsdk);      fi
+        if [ -d bins/ios/openssl         ]; then (cd bins/ios     && zip -r ${GITHUB_WORKSPACE}/binaries/ios/openssl.zip         openssl);         fi
+        if [ -d bins/ios/boost.xcframework ]; then (cd bins/ios   && zip -r ${GITHUB_WORKSPACE}/binaries/ios/boost.xcframework.zip boost.xcframework); fi
+        ls -alFR binaries
+      if: contains(github.ref, 'tags')
+    - name: Upload Binaries
+      timeout-minutes: 2
+      uses: actions/upload-artifact@v2
+      with:
+        name: binaries
+        path: ./binaries
+      if: contains(github.ref, 'tags')
