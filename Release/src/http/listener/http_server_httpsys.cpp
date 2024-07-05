@@ -979,7 +979,7 @@ void windows_request_context::async_process_response()
     StartThreadpoolIo(pServer->m_threadpool_io);
     const unsigned long error_code = HttpSendHttpResponse(pServer->m_hRequestQueue,
                                                           m_request_id,
-                                                          HTTP_SEND_RESPONSE_FLAG_MORE_DATA,
+                                                          HTTP_SEND_RESPONSE_FLAG_MORE_DATA | HTTP_SEND_RESPONSE_FLAG_BUFFER_DATA,
                                                           &win_api_response,
                                                           NULL,
                                                           NULL,
@@ -1197,7 +1197,7 @@ void windows_request_context::send_entity_body(_In_reads_(data_length) unsigned 
     StartThreadpoolIo(pServer->m_threadpool_io);
     auto error_code = HttpSendResponseEntityBody(pServer->m_hRequestQueue,
                                                  m_request_id,
-                                                 this_is_the_last_chunk ? NULL : HTTP_SEND_RESPONSE_FLAG_MORE_DATA,
+                                                 (this_is_the_last_chunk ? NULL : HTTP_SEND_RESPONSE_FLAG_MORE_DATA) | HTTP_SEND_RESPONSE_FLAG_BUFFER_DATA,
                                                  1,
                                                  &dataChunk,
                                                  NULL,
