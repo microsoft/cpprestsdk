@@ -151,8 +151,8 @@ void zero_memory_deleter::operator()(::utility::string_t* data) const
     (void)data;
 #ifdef _WIN32
     SecureZeroMemory(&(*data)[0], data->size() * sizeof(::utility::string_t::value_type));
-    delete data;
 #endif
+    delete data;
 }
 } // namespace details
 
