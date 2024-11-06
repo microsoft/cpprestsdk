@@ -167,6 +167,7 @@ public:
 
     void add_listener(const std::string& path, http_listener_impl* listener);
     void remove_listener(const std::string& path, http_listener_impl* listener);
+    bool is_empty_listeners() { return m_listeners.empty(); }
 
     void internal_erase_connection(asio_server_connection*);
 
@@ -1392,6 +1393,10 @@ pplx::task<void> http_linux_server::unregister_listener(http_listener_impl* list
         }
 
         itr->second->remove_listener(path, listener);
+        if (itr->second->is_empty_listeners())
+        {
+           m_listeners.erase(hostport);
+        }
     }
 
     // Second remove the listener form listener collection
