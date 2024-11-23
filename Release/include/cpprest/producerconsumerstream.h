@@ -17,9 +17,9 @@
 #define CASA_PRODUCER_CONSUMER_STREAMS_H
 
 #include "cpprest/astreambuf.h"
+#include "cpprest/details/checked_array_iterator.h"
 #include "pplx/pplxtasks.h"
 #include <algorithm>
-#include <iterator>
 #include <queue>
 #include <vector>
 
@@ -441,7 +441,7 @@ private:
 
 #if defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL != 0
             // Avoid warning C4996: Use checked iterators under SECURE_SCL
-            std::copy(beg, end, stdext::checked_array_iterator<_CharType*>(dest, count));
+            std::copy(beg, end, ext::checked_array_iterator<_CharType*>(dest, count));
 #else
             std::copy(beg, end, dest);
 #endif // _WIN32
@@ -464,7 +464,7 @@ private:
 
 #if defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL != 0
             // Avoid warning C4996: Use checked iterators under SECURE_SCL
-            std::copy(src, srcEnd, stdext::checked_array_iterator<_CharType*>(wbegin(), static_cast<size_t>(avail)));
+            std::copy(src, srcEnd, ext::checked_array_iterator<_CharType*>(wbegin(), static_cast<size_t>(avail)));
 #else
             std::copy(src, srcEnd, wbegin());
 #endif // _WIN32
