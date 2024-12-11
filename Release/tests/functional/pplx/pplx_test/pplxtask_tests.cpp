@@ -353,7 +353,7 @@ SUITE(pplxtask_tests)
         // test create task
         task<int> t1 = create_task([]() -> int { return 4; });
         IsTrue(t1.get() == 4, L"create_task for simple task did not properly execute.");
-        IsTrue(create_task(t1).get() == 4, L"create_task from a task task did not properly execute.");
+        IsTrue(create_task(t1).get() == 4, L"create_task from a task did not properly execute.");
         task<void> t2 = create_task([]() {});
         task<int> t3 = create_task([]() -> task<int> { return create_task([]() -> int { return 4; }); });
         IsTrue(t3.get() == 4, L"create_task for task unwrapping did not properly execute.");
