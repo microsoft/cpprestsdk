@@ -400,10 +400,10 @@ void CasaLens::get_data(http_request message, const std::wstring& input_text)
             .then([=](http_response resp) { return resp.extract_json(); })
             .then([=](json::value maps_result) mutable {
                 auto coordinates = maps_result[U("resourceSets")][0][U("resources")][0][U("point")];
-                auto lattitude = coordinates[U("coordinates")][0].serialize();
+                auto latitude = coordinates[U("coordinates")][0].serialize();
                 auto longitude = coordinates[U("coordinates")][1].serialize();
                 uri_builder ub;
-                ub.append_path(lattitude + U(",") + longitude)
+                ub.append_path(latitude + U(",") + longitude)
                     .append_query(casalens_creds::bmaps_keyname, casalens_creds::bmaps_key);
                 auto s2 = ub.to_string();
                 return bing_client.request(methods::GET, s2);
