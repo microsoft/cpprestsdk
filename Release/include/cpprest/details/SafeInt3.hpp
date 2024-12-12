@@ -3759,7 +3759,7 @@ public:
         else // Corner case
             if (t == IntTraits<T>::minInt && u == (unsigned __int64)IntTraits<T>::minInt)
         {
-            // Min int divided by it's own magnitude is -1
+            // Min int divided by its own magnitude is -1
             result = -1;
         }
         else
@@ -3796,7 +3796,7 @@ public:
         else // Corner case
             if (t == IntTraits<T>::minInt && u == (unsigned __int64)IntTraits<T>::minInt)
         {
-            // Min int divided by it's own magnitude is -1
+            // Min int divided by its own magnitude is -1
             result = -1;
         }
         else
