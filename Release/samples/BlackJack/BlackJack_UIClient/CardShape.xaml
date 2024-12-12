@@ -17,7 +17,7 @@
                     <TranslateTransform/>
                 </TransformGroup>
             </Canvas.RenderTransform>
-            <Image HorizontalAlignment="Left" Source="Cards.PNG" Stretch="None" VerticalAlignment="Top" RenderTransformOrigin="0.05,0.08" x:Name="imgCard">
+            <Image HorizontalAlignment="Left" Source="cards.png" Stretch="None" VerticalAlignment="Top" RenderTransformOrigin="0.05,0.08" x:Name="imgCard">
                 <Image.RenderTransform> 
                           <TransformGroup>
                         <ScaleTransform/>

@@ -207,7 +207,7 @@ the type has. Enabling this option is not recommended.
 *
 *  One key operator that is missing is an implicit cast to type T. The reason for
 *  this is that if there is an implicit cast operator, then we end up with
-*  an ambiguous compile-time precedence. Because of this amiguity, there
+*  an ambiguous compile-time precedence. Because of this ambiguity, there
 *  are two methods that are provided:
 *
 *  Casting operators for every native integer type
@@ -3759,7 +3759,7 @@ public:
         else // Corner case
             if (t == IntTraits<T>::minInt && u == (unsigned __int64)IntTraits<T>::minInt)
         {
-            // Min int divided by it's own magnitude is -1
+            // Min int divided by its own magnitude is -1
             result = -1;
         }
         else
@@ -3796,7 +3796,7 @@ public:
         else // Corner case
             if (t == IntTraits<T>::minInt && u == (unsigned __int64)IntTraits<T>::minInt)
         {
-            // Min int divided by it's own magnitude is -1
+            // Min int divided by its own magnitude is -1
             result = -1;
         }
         else
@@ -7211,7 +7211,7 @@ public:
 template<typename T, typename U, typename E>
 SafeInt<T, E> operator/(U lhs, SafeInt<T, E> rhs) SAFEINT_CPP_THROW
 {
-    // Corner case - has to be handled seperately
+    // Corner case - has to be handled separately
     SafeInt<T, E> result;
     if (DivisionCornerCaseHelper<T, U, E, (int)DivisionMethod<U, T>::method == (int)DivisionState_UnsignedSigned>::
             DivisionCornerCase1(lhs, rhs, result))

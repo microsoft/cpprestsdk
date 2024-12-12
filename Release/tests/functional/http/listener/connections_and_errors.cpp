@@ -62,7 +62,7 @@ SUITE(connections_and_errors)
                 // exception will be caught and ignored below
                 auto rsp = client.request(methods::GET).get();
 
-                // The response body should timeout and we should recieve an exception
+                // The response body should timeout and we should receive an exception
                 rsp.content_ready().wait();
 
                 // If we reach here then it is an error
@@ -228,7 +228,7 @@ SUITE(connections_and_errors)
         listener.close().wait();
     }
 
-    // This test case is manual becuase it requires to be run under and account without admin access.
+    // This test case is manual because it requires to be run under and account without admin access.
     TEST(default_port_admin_access, "Ignore", "Manual")
     {
         uri address(U("http://localhost/"));

@@ -3,10 +3,10 @@ for Android using either Clang or GCC toolchains.
 
 An alias for the android-armv7 target, named android-armeabi, is added for
 compatability with the OpenSSL 1.1.0 configuration target names. Support for
-the AArch64 archicture is also added, as well as targets using the Clang
+the AArch64 architecture is also added, as well as targets using the Clang
 compiler.
 
-Clang does not recognize some of the ARM assembly nmenonics that are used in
+Clang does not recognize some of the ARM assembly mnemonics that are used in
 OpenSSL. In particular, the 'adrl' pseudo instruction is not supported. To
 further complicate matters, Clang doesn't support immediate fixup values so
 the alternative adr/sub sequence used for the Thumb2 code path cannot be

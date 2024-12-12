@@ -1417,7 +1417,7 @@ utility::string_t __cdecl timespan::seconds_to_xml_duration(utility::seconds dur
     }
 
     // The format is:
-    // PdaysDThoursHminutesMsecondsS
+    // "P"+(days+"D")?+"T"+(hours+"H")?+(minutes+"M")?+(seconds+"S")?
     utility::string_t result;
     // (approximate mins/hours/secs as 2 digits each + 1 prefix character) + 1 for P prefix + 1 for T
     size_t baseReserveSize = ((numHours > 0) + (numMins > 0) + (numSecs > 0)) * 3 + 1;

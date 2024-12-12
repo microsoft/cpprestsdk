@@ -110,7 +110,7 @@ protected:
     /// </summary>
     virtual size_t in_avail() const
     {
-        // See the comment in seek around the restiction that we do not allow read head to
+        // See the comment in seek around the restriction that we do not allow read head to
         // seek beyond the current size.
         _ASSERTE(m_current_position <= m_size);
 

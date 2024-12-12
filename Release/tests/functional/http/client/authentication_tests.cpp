@@ -550,7 +550,7 @@ SUITE(authentication_tests)
         VERIFY_NO_THROWS(t2.get());
     }
 
-    TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer_fail_no_cred)
+    TEST_FIXTURE(uri_address, auth_producer_consumer_buffer_fail_no_cred)
     {
         auto buf = streams::producer_consumer_buffer<unsigned char>();
         buf.putc('a').get();
@@ -580,7 +580,7 @@ SUITE(authentication_tests)
         t.get();
     }
 
-    TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer_fail)
+    TEST_FIXTURE(uri_address, auth_producer_consumer_buffer_fail)
     {
         auto buf = streams::producer_consumer_buffer<unsigned char>();
         buf.putc('a').get();

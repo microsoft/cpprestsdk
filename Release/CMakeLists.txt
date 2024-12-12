@@ -213,7 +213,7 @@ function(configure_pch target precompile_header precomile_source) # optional add
       set_property(SOURCE ${_srcs} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${target}.pch")
       set(pch_output_filepath_arg "/Fp${CMAKE_CURRENT_BINARY_DIR}/${target}.pch")
     else()
-      # Don't specify output file so that VS may choose a config spefic location.
+      # Don't specify output file so that VS may choose a config specific location.
 	  # Otherwise Debug/Release builds will interfere with one another.
     endif()
 

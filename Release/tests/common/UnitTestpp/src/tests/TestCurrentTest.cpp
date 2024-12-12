@@ -33,7 +33,7 @@
 
 namespace
 {
-TEST(CanSetandGetDetails)
+TEST(CanSetAndGetDetails)
 {
     bool ok = false;
     {

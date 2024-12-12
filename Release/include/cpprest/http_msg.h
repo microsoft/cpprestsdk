@@ -438,7 +438,7 @@ public:
     /// </returns>
     /// <remarks>
     /// This routine is like _get_content_length, except that it adds a compression algorithm to
-    /// the Trasfer-Length header if compression is configured.  It throws if a Transfer-Encoding
+    /// the Transfer-Length header if compression is configured.  It throws if a Transfer-Encoding
     /// header exists and does not match the one it generated.
     /// </remarks>
     _ASYNCRTIMP size_t _get_content_length_and_set_compression();
