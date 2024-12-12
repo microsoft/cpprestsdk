@@ -215,7 +215,7 @@ SUITE(pplx_task_options_tests)
 
     TEST(whenall_options_test2)
     {
-        // Same as the above test but use task<int> to instatinate those templates
+        // Same as the above test but use task<int> to instantiate those templates
         TaskOptionsTestScheduler sched1;
         TaskOptionsTestScheduler sched2;
 
