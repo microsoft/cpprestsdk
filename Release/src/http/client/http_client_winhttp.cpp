@@ -917,10 +917,11 @@ protected:
         }
 
         {
-            // Enable TLS 1.1 and 1.2
+            // Enable TLS 1.1 and 1.2, 1.3
 #if (_WIN32_WINNT >= _WIN32_WINNT_VISTA) || defined(CPPREST_FORCE_HTTP_CLIENT_WINHTTPPAL)
             DWORD secure_protocols(WINHTTP_FLAG_SECURE_PROTOCOL_SSL3 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 |
-                                   WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2);
+                                   WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2
+								   | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_3);
             if (!WinHttpSetOption(
                 m_hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols)))
             {
