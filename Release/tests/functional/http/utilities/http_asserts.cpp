@@ -233,7 +233,7 @@ void http_asserts::assert_test_request_equals(const test_request* const p_reques
                                               const utility::string_t& body)
 {
     assert_test_request_equals(p_request, mtd, path, content_type);
-    // Textual response is always sent as UTF-8, hence the converison to string_t
+    // Textual response is always sent as UTF-8, hence the conversion to string_t
     std::string s((char*)&p_request->m_body[0], p_request->m_body.size());
     utility::string_t extracted_body = to_string_t(s);
 
