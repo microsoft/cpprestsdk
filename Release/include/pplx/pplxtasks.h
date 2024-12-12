@@ -4267,7 +4267,7 @@ private:
 
         //
         // A **nullptr** token state indicates that it was not provided by the user. In this case, we inherit the
-        // antecedent's token UNLESS this is a an exception handling continuation. In that case, we break the chain with
+        // antecedent's token UNLESS this is an exception handling continuation. In that case, we break the chain with
         // a _None. That continuation is never canceled unless the user explicitly passes the same token.
         //
         if (_PTokenState == nullptr)
