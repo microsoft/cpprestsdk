@@ -5348,9 +5348,9 @@ struct _SelectorTaskGenerator
                                              cancellation_token_source _Cts,
                                              const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<_ReturnType>(_Func(), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<_ReturnType>(_Func(), _taskOptions);
     }
 
     template<typename _Function>
@@ -5358,9 +5358,9 @@ struct _SelectorTaskGenerator
                                               cancellation_token_source _Cts,
                                               const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<_ReturnType>(_Func(_Cts.get_token()), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<_ReturnType>(_Func(_Cts.get_token()), _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5369,9 +5369,9 @@ struct _SelectorTaskGenerator
                                               cancellation_token_source _Cts,
                                               const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<_ReturnType>(_Func(_Progress), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<_ReturnType>(_Func(_Progress), _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5380,9 +5380,9 @@ struct _SelectorTaskGenerator
                                                cancellation_token_source _Cts,
                                                const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<_ReturnType>(_Func(_Progress, _Cts.get_token()), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<_ReturnType>(_Func(_Progress, _Cts.get_token()), _taskOptions);
     }
 };
 
@@ -5394,9 +5394,9 @@ struct _SelectorTaskGenerator<_AsyncSelector, void>
                                       cancellation_token_source _Cts,
                                       const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<void>(_Func(), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<void>(_Func(), _taskOptions);
     }
 
     template<typename _Function>
@@ -5404,9 +5404,9 @@ struct _SelectorTaskGenerator<_AsyncSelector, void>
                                        cancellation_token_source _Cts,
                                        const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<void>(_Func(_Cts.get_token()), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<void>(_Func(_Cts.get_token()), _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5415,9 +5415,9 @@ struct _SelectorTaskGenerator<_AsyncSelector, void>
                                        cancellation_token_source _Cts,
                                        const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<void>(_Func(_Progress), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<void>(_Func(_Progress), _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5426,9 +5426,9 @@ struct _SelectorTaskGenerator<_AsyncSelector, void>
                                         cancellation_token_source _Cts,
                                         const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<void>(_Func(_Progress, _Cts.get_token()), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<void>(_Func(_Progress, _Cts.get_token()), _taskOptions);
     }
 };
 
@@ -5446,15 +5446,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, _ReturnType>
                                              cancellation_token_source _Cts,
                                              const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<_ReturnType>(
             [=]() -> _ReturnType {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 return _Func();
             },
-            _taskOptinos);
+            _taskOptions);
     }
 #pragma warning(pop)
 
@@ -5463,15 +5463,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, _ReturnType>
                                               cancellation_token_source _Cts,
                                               const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<_ReturnType>(
             [=]() -> _ReturnType {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 return _Func(_Cts.get_token());
             },
-            _taskOptinos);
+            _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5480,15 +5480,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, _ReturnType>
                                               cancellation_token_source _Cts,
                                               const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<_ReturnType>(
             [=]() -> _ReturnType {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 return _Func(_Progress);
             },
-            _taskOptinos);
+            _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5497,15 +5497,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, _ReturnType>
                                                cancellation_token_source _Cts,
                                                const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<_ReturnType>(
             [=]() -> _ReturnType {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 return _Func(_Progress, _Cts.get_token());
             },
-            _taskOptinos);
+            _taskOptions);
     }
 };
 
@@ -5517,15 +5517,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, void>
                                       cancellation_token_source _Cts,
                                       const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<void>(
             [=]() {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 _Func();
             },
-            _taskOptinos);
+            _taskOptions);
     }
 
     template<typename _Function>
@@ -5533,15 +5533,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, void>
                                        cancellation_token_source _Cts,
                                        const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<void>(
             [=]() {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 _Func(_Cts.get_token());
             },
-            _taskOptinos);
+            _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5550,15 +5550,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, void>
                                        cancellation_token_source _Cts,
                                        const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<void>(
             [=]() {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 _Func(_Progress);
             },
-            _taskOptinos);
+            _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5567,15 +5567,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, void>
                                         cancellation_token_source _Cts,
                                         const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<void>(
             [=]() {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 _Func(_Progress, _Cts.get_token());
             },
-            _taskOptinos);
+            _taskOptions);
     }
 };
 
