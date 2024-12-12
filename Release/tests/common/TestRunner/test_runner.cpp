@@ -275,7 +275,7 @@ static bool matched_properties(const UnitTest::TestProperties& test_props)
         const std::string requires = test_props.Get("Requires");
         std::vector<std::string> requirements;
 
-        // Can be multiple requirements, a semi colon seperated list
+        // Can be multiple requirements, a semi colon separated list
         std::string::size_type pos = requires.find_first_of(';');
         std::string::size_type last_pos = 0;
         while (pos != std::string::npos)
