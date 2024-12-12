@@ -208,7 +208,7 @@ std::wstring CasaLens::get_date()
 }
 
 // Query tmsapi and fetch current movie showtimes at local theaters, for the given postal code
-// Also quert bing images for movie posters
+// Also query bing images for movie posters
 // Returns a task of JSON value
 // JSON result format:
 // "movies":[{"title":"abc","theatre":[{"name":"theater1","datetime":["dd-mm-yyThh:mm"]},{"name":"theater2","datetime":["ddmmyy"]}],"poster":"img-url"}}]}..
