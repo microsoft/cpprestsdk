@@ -62,7 +62,7 @@ SUITE(connections_and_errors)
                 // exception will be caught and ignored below
                 auto rsp = client.request(methods::GET).get();
 
-                // The response body should timeout and we should recieve an exception
+                // The response body should timeout and we should receive an exception
                 rsp.content_ready().wait();
 
                 // If we reach here then it is an error

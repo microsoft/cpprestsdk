@@ -160,7 +160,7 @@ SUITE(pplxtask_tests)
 
             auto t2 = t1.then([=](int i) -> float {
                 IsTrue(i == 47,
-                       L"Continuation did not recieve the correct value from ancestor. Expected: 47, Actual: %d",
+                       L"Continuation did not receive the correct value from ancestor. Expected: 47, Actual: %d",
                        i);
                 return (float)i / 2;
             });
@@ -232,7 +232,7 @@ SUITE(pplxtask_tests)
 
             auto t2 = t1.then([&]() {
                 IsTrue(value == 147,
-                       L"void continuation did not recieve the correct value from ancestor. Expected: 147, Actual: %d",
+                       L"void continuation did not receive the correct value from ancestor. Expected: 147, Actual: %d",
                        value);
                 value++;
             });
