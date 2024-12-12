@@ -18,7 +18,7 @@
 #include <regex>
 #elif (defined(ANDROID) || defined(__ANDROID__))
 #else
-// GCC 4.8 doesn't support regex very well, fall back to Boost. Revist in GCC 4.9.
+// GCC 4.8 doesn't support regex very well, fall back to Boost. Revisit in GCC 4.9.
 #include <boost/regex.hpp>
 #endif
 
