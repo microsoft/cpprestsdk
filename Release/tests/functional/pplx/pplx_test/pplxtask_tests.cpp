@@ -277,7 +277,7 @@ SUITE(pplxtask_tests)
             try
             {
                 t1.then([]() {});
-                LogFailure(L"t1.contiue_with() should have thrown an exception");
+                LogFailure(L"t1.continue_with() should have thrown an exception");
             }
             catch (invalid_operation)
             {
