@@ -7041,10 +7041,10 @@ struct _RunAnyParam
 template<typename _CompletionType, typename _Function, typename _TaskType>
 void _WhenAnyContinuationWrapper(_RunAnyParam<_CompletionType>* _PParam, const _Function& _Func, task<_TaskType>& _Task)
 {
-    bool _IsTokenCancled = !_PParam->_M_fHasExplicitToken &&
+    bool _IsTokenCanceled = !_PParam->_M_fHasExplicitToken &&
                            _Task._GetImpl()->_M_pTokenState != _CancellationTokenState::_None() &&
                            _Task._GetImpl()->_M_pTokenState->_IsCanceled();
-    if (_Task._GetImpl()->_IsCompleted() && !_IsTokenCancled)
+    if (_Task._GetImpl()->_IsCompleted() && !_IsTokenCanceled)
     {
         _Func();
         if (atomic_increment(_PParam->_M_completeCount) == _PParam->_M_numTasks)
@@ -7054,8 +7054,8 @@ void _WhenAnyContinuationWrapper(_RunAnyParam<_CompletionType>* _PParam, const _
     }
     else
     {
-        _ASSERTE(_Task._GetImpl()->_IsCanceled() || _IsTokenCancled);
-        if (_Task._GetImpl()->_HasUserException() && !_IsTokenCancled)
+        _ASSERTE(_Task._GetImpl()->_IsCanceled() || _IsTokenCanceled);
+        if (_Task._GetImpl()->_HasUserException() && !_IsTokenCanceled)
         {
             if (_PParam->_M_Completed._StoreException(_Task._GetImpl()->_GetExceptionHolder()))
             {
