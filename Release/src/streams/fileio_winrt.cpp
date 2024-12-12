@@ -256,7 +256,7 @@ size_t __cdecl _read_file_async(_In_ Concurrency::streams::details::_file_info_i
                                 _In_ Concurrency::streams::details::_filestream_callback* callback,
                                 _Out_writes_(count) void* ptr,
                                 _In_ size_t count,
-                                size_t offset)
+                                utility::size64_t offset)
 {
     if (fInfo->m_stream == nullptr)
     {
@@ -365,8 +365,8 @@ size_t _fill_buffer_fsb(_In_ _file_info_impl* fInfo,
     // First, we need to understand how far into the buffer we have already read
     // and how much remains.
 
-    size_t bufpos = fInfo->m_rdpos - fInfo->m_bufoff;
-    size_t bufrem = fInfo->m_buffill - bufpos;
+    auto bufpos = fInfo->m_rdpos - fInfo->m_bufoff;
+    auto bufrem = static_cast<size_t>(fInfo->m_buffill - bufpos);
 
     // We have four different scenarios:
     //  1. The read position is before the start of the buffer, in which case we will just reuse the buffer.
@@ -499,8 +499,8 @@ size_t __cdecl _getn_fsb(_In_ Concurrency::streams::details::_file_info* info,
     {
         auto cb = create_callback(fInfo, [=](size_t read) {
             auto sz = count * char_size;
-            auto copy = (read < sz) ? read : sz;
-            auto bufoff = fInfo->m_rdpos - fInfo->m_bufoff;
+            auto copy = (read < sz) ? static_cast<size_t>(read) : sz;
+            auto bufoff = static_cast<size_t>(fInfo->m_rdpos - fInfo->m_bufoff);
             memcpy(ptr, fInfo->m_buffer + bufoff * char_size, copy);
             fInfo->m_atend = copy < sz;
             callback->on_completed(copy);
@@ -512,7 +512,7 @@ size_t __cdecl _getn_fsb(_In_ Concurrency::streams::details::_file_info* info,
         {
             auto sz = count * char_size;
             auto copy = (read < sz) ? read : sz;
-            auto bufoff = fInfo->m_rdpos - fInfo->m_bufoff;
+            auto bufoff = static_cast<size_t>(fInfo->m_rdpos - fInfo->m_bufoff);
             memcpy(ptr, fInfo->m_buffer + bufoff * char_size, copy);
             fInfo->m_atend = copy < sz;
             return copy;
@@ -552,7 +552,7 @@ size_t __cdecl _putn_fsb(_In_ Concurrency::streams::details::_file_info* info,
     if (fInfo->m_stream == nullptr) return static_cast<size_t>(-1);
 
     // To preserve the async write order, we have to move the write head before read.
-    if (fInfo->m_wrpos != static_cast<size_t>(-1)) fInfo->m_wrpos += count;
+    if (fInfo->m_wrpos != static_cast<utility::size64_t>(-1)) fInfo->m_wrpos += count;
 
     msl::safeint3::SafeInt<unsigned int> safeWriteSize = count;
     safeWriteSize *= char_size;
@@ -613,8 +613,8 @@ bool __cdecl _sync_fsb(_In_ Concurrency::streams::details::_file_info* info,
 /// </summary>
 /// <param name="info">The file info record of the file</param>
 /// <param name="pos">The new position (offset from the start) in the file stream</param>
-/// <returns>New file position or -1 if error</returns>
-size_t __cdecl _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info* info, size_t pos, size_t char_size)
+/// <returns>New file position or (utility::size64_t)-1 if error</returns>
+utility::size64_t __cdecl _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info* info, utility::size64_t pos, size_t char_size)
 {
     _ASSERTE(info != nullptr);
 
@@ -622,8 +622,7 @@ size_t __cdecl _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info* in
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
-    if (fInfo->m_stream == nullptr) return static_cast<size_t>(-1);
-    ;
+    if (fInfo->m_stream == nullptr) return static_cast<utility::size64_t>(-1);
 
     if (pos < fInfo->m_bufoff || pos > (fInfo->m_bufoff + fInfo->m_buffill))
     {
@@ -643,10 +642,10 @@ size_t __cdecl _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info* in
 /// <param name="info">The file info record of the file</param>
 /// <param name="offset">The new position (offset from the end of the stream) in the file stream</param>
 /// <param name="char_size">The size of the character type used for this stream</param>
-/// <returns>New file position or -1 if error</returns>
-_ASYNCRTIMP size_t __cdecl _seekrdtoend_fsb(_In_ Concurrency::streams::details::_file_info* info,
-                                            int64_t offset,
-                                            size_t char_size)
+/// <returns>New file position or (utility::size64_t)-1 if error</returns>
+_ASYNCRTIMP utility::size64_t __cdecl _seekrdtoend_fsb(_In_ Concurrency::streams::details::_file_info* info,
+                                                       int64_t offset,
+                                                       size_t char_size)
 {
     _ASSERTE(info != nullptr);
     _file_info_impl* fInfo = static_cast<_file_info_impl*>(info);
@@ -673,7 +672,7 @@ utility::size64_t __cdecl _get_size(_In_ concurrency::streams::details::_file_in
 /// <param name="info">The file info record of the file</param>
 /// <param name="pos">The new position (offset from the start) in the file stream</param>
 /// <returns>New file position or -1 if error</returns>
-size_t __cdecl _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info* info, size_t pos, size_t char_size)
+utility::size64_t __cdecl _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info* info, utility::size64_t pos, size_t char_size)
 {
     _ASSERTE(info != nullptr);
 
@@ -681,7 +680,7 @@ size_t __cdecl _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info* in
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
-    if (fInfo->m_stream == nullptr) return static_cast<size_t>(-1);
+    if (fInfo->m_stream == nullptr) return static_cast<utility::size64_t>(-1);
 
     fInfo->m_wrpos = pos;
 
@@ -691,7 +690,7 @@ size_t __cdecl _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info* in
 
     // Moving write head should follow the flush operation. is_done test is for perf optimization.
     if (fInfo->m_pendingWrites.is_done())
-        fInfo->m_stream->Seek(static_cast<long long>(pos) * char_size);
+        fInfo->m_stream->Seek(pos * char_size);
     else
     {
         auto lastWriter = fInfo->m_writer;
@@ -700,7 +699,7 @@ size_t __cdecl _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info* in
         fInfo->m_pendingWrites = fInfo->m_pendingWrites.then([=] {
             // Detach stream could avoid stream destruction after writer get destructed.
             lastWriter->DetachStream();
-            fInfo->m_stream->Seek(static_cast<long long>(pos) * char_size);
+            fInfo->m_stream->Seek(pos * char_size);
         });
     }
 
