@@ -39,6 +39,7 @@ class TaskOptionsTestScheduler : public pplx::scheduler_interface
 {
 public:
     TaskOptionsTestScheduler() : m_numTasks(0), m_scheduler(get_scheduler()) {}
+    TaskOptionsTestScheduler(std::shared_ptr<pplx::scheduler_interface> scheduler) : m_numTasks(0), m_scheduler(std::move(scheduler)) {}
 
     virtual void schedule(pplx::TaskProc_t proc, void* param)
     {
@@ -159,6 +160,24 @@ SUITE(pplx_task_options_tests)
         VERIFY_ARE_EQUAL(sched1.get_num_tasks(), 1);
         VERIFY_ARE_EQUAL(sched2.get_num_tasks(), 2);
     }
+     
+    TEST(then_from_exception_custom_scheduler_test)
+    {
+        class custom_direct_executor : public pplx::scheduler_interface
+        {
+        public:
+            virtual void schedule(pplx::TaskProc_t proc, _In_ void* param) { proc(param); }
+        };
+        
+        TaskOptionsTestScheduler sched(std::make_shared<custom_direct_executor>());
+        long n = 0;
+
+        auto t1 = pplx::create_task([&n]() { n++; throw std::runtime_error("exception"); }, sched);
+        t1.then([&n](pplx::task<void> task_result) { n++; try { task_result.get(); } catch (...){} }) // inherit sched
+            .wait();
+
+        VERIFY_ARE_EQUAL(sched.get_num_tasks(), n);
+    }
 
     TEST(opand_nooptions_test)
     {
@@ -258,6 +277,33 @@ SUITE(pplx_task_options_tests)
 
         VERIFY_ARE_EQUAL(sched1.get_num_tasks(), n + 1);
         VERIFY_ARE_EQUAL(sched2.get_num_tasks(), 0);
+    }
+
+    TEST(whenall_then_from_exception_custom_scheduler_test)
+    {
+        class custom_direct_executor : public pplx::scheduler_interface
+        {
+        public:
+            virtual void schedule(pplx::TaskProc_t proc, _In_ void* param) { proc(param); }
+        };
+        
+        TaskOptionsTestScheduler sched(std::make_shared<custom_direct_executor>());
+        
+        std::vector<pplx::task<void>> taskVect;
+        const int task_count = 3;
+        long n = 0;
+        for (int i = 0; i < (task_count-1); i++)
+        {
+            taskVect.push_back(pplx::create_task([&n]() {n++;}, sched));
+        }
+        taskVect.push_back(pplx::create_task([&n]() { n++; throw std::runtime_error("exception");}, sched));
+
+        auto t3 = pplx::when_all(
+            begin(taskVect), end(taskVect), sched);
+        n++; // sched used within when_all
+        t3.then([&n](pplx::task<void> task_result) { n++; try { task_result.get(); } catch (...){} }, sched).wait();
+        
+        VERIFY_ARE_EQUAL(sched.get_num_tasks(), n);
     }
 
     TEST(opor_nooptions_test)

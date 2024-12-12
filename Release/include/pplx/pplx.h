@@ -165,7 +165,7 @@ public:
     scheduler_ptr _GetScheduler() const { return _M_pScheduler; }
 
     // Fire and forget
-    static void _RunTask(TaskProc_t _Proc, void* _Parameter, _TaskInliningMode _InliningMode)
+    static void _RunTask(TaskProc_t _Proc, void* _Parameter, _TaskInliningMode _InliningMode, scheduler_ptr _Scheduler)
     {
         if (_InliningMode == _ForceInline)
         {
@@ -173,8 +173,16 @@ public:
         }
         else
         {
-            // Schedule the work on the ambient scheduler
-            get_ambient_scheduler()->schedule(_Proc, _Parameter);
+            if (_Scheduler)
+            {
+                // Schedule the work on the desired scheduler
+                _Scheduler->schedule(_Proc, _Parameter);
+            }
+            else
+            {
+                // Schedule the work on the ambient scheduler as a fallback
+                get_ambient_scheduler()->schedule(_Proc, _Parameter);
+            }
         }
     }
 
