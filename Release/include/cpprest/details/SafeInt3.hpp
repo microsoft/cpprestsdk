@@ -207,7 +207,7 @@ the type has. Enabling this option is not recommended.
 *
 *  One key operator that is missing is an implicit cast to type T. The reason for
 *  this is that if there is an implicit cast operator, then we end up with
-*  an ambiguous compile-time precedence. Because of this amiguity, there
+*  an ambiguous compile-time precedence. Because of this ambiguity, there
 *  are two methods that are provided:
 *
 *  Casting operators for every native integer type
