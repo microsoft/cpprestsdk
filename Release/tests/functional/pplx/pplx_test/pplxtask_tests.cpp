@@ -1555,7 +1555,7 @@ SUITE(pplxtask_tests)
         VERIFY_IS_TRUE(helpers::VerifyException<TestException2>(ot),
                        "(8) Outer task exception not propagated when inner task also throws");
         VERIFY_IS_TRUE(helpers::VerifyException<TestException1>(it),
-                       "(8) Inner task exception not explicitly propgated on pass out / get");
+                       "(8) Inner task exception not explicitly propagated on pass out / get");
         VERIFY_IS_TRUE(hit != 0, "(8) Inner hit marker expected!");
     }
 
