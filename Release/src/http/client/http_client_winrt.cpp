@@ -184,7 +184,7 @@ private:
 /// of causing the UI to become unresponsive.
 /// </remarks>
 class IRequestStream final
-    : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<ClassicCom>, ISequentialStream>
+    : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<ClassicCom>, IStream>
 {
 public:
     IRequestStream(const std::weak_ptr<winrt_request_context>& context,
@@ -256,6 +256,127 @@ public:
         (void)pv;
         (void)cb;
         (void)pcbWritten;
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Seek(_In_ LARGE_INTEGER dlibMove,
+                                           _In_ DWORD dwOrigin,
+                                           _Out_opt_  ULARGE_INTEGER* plibNewPosition)
+    {
+        const std::streamoff offset = dlibMove.QuadPart;
+        std::ios_base::seekdir way;
+
+        switch (dwOrigin)
+        {
+            case STREAM_SEEK_SET:
+                way = std::ios::beg;
+                break;
+            case STREAM_SEEK_CUR:
+                way = std::ios::cur;
+                break;
+            case STREAM_SEEK_END:
+                way = std::ios::end;
+                break;
+            default:
+                return STG_E_INVALIDPARAMETER;
+        }
+
+        auto context = m_context.lock();
+        if (context == nullptr)
+        {
+            // OnError has already been called so just error out
+            return STG_E_SEEKERROR;
+        }
+
+        try
+        {
+            auto buffer = context->_get_readbuffer();
+            if (!buffer.can_seek())
+            {
+                // If the buffer can't seek report that as not supported.
+                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            }
+
+            auto seekPosition = buffer.seekoff(offset, way, std::ios::in);
+            if (seekPosition == decltype(buffer)::traits::eof())
+            {
+                return STG_E_SEEKERROR;
+            }
+
+            if (plibNewPosition)
+            {
+                plibNewPosition->QuadPart = seekPosition;
+            }
+
+            return S_OK;
+        }
+        catch (...)
+        {
+            context->m_exceptionPtr = std::current_exception();
+            return STG_E_SEEKERROR;
+        }
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE SetSize(_In_ ULARGE_INTEGER libNewSize)
+    {
+        (void)libNewSize;
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CopyTo(_In_  IStream* pstm,
+                                             _In_ ULARGE_INTEGER cb,
+                                             _Out_opt_  ULARGE_INTEGER* pcbRead,
+                                             _Out_opt_  ULARGE_INTEGER* pcbWritten)
+    {
+        (void)pstm;
+        (void)cb;
+        (void)pcbRead;
+        (void)pcbWritten;
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Commit(_In_ DWORD grfCommitFlags)
+    {
+        (void)grfCommitFlags;
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Revert()
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE LockRegion(_In_ ULARGE_INTEGER libOffset,
+                                                 _In_ ULARGE_INTEGER cb,
+                                                 _In_ DWORD dwLockType)
+    {
+        (void)libOffset;
+        (void)cb;
+        (void)dwLockType;
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE UnlockRegion(_In_ ULARGE_INTEGER libOffset,
+                                                   _In_ ULARGE_INTEGER cb,
+                                                   _In_ DWORD dwLockType)
+    {
+        (void)libOffset;
+        (void)cb;
+        (void)dwLockType;
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Stat(__RPC__out STATSTG* pstatstg,
+                                           _In_ DWORD grfStatFlag)
+    {
+        (void)pstatstg;
+        (void)grfStatFlag;
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Clone(__RPC__deref_out_opt IStream** ppstm)
+    {
+        (void)ppstm;
         return E_NOTIMPL;
     }
 
