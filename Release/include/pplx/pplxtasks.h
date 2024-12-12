@@ -1446,7 +1446,7 @@ inline bool _IsCausalitySupported()
         OSVERSIONINFOEX _osvi = {};
         _osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
 
-        // The Causality is supported on Windows version higher than Windows 8
+        // The Causality is supported on Windows version above Windows 8
         _osvi.dwMajorVersion = 6;
         _osvi.dwMinorVersion = 3;
 
