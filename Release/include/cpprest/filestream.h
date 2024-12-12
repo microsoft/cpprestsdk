@@ -399,7 +399,7 @@ protected:
             {
                 pplx::extensibility::scoped_recursive_lock_t lck(m_info->m_lock);
                 m_info->m_rdpos += 1;
-                _CharType ch1 = (_CharType)callback->m_ch;
+                _CharType ch1 = callback->m_ch;
                 delete callback;
                 return pplx::task_from_result<int_type>(ch1);
             }
@@ -453,7 +453,7 @@ protected:
         if (ch == sizeof(_CharType))
         {
             pplx::extensibility::scoped_recursive_lock_t lck(m_info->m_lock);
-            _CharType ch1 = (_CharType)callback->m_ch;
+            _CharType ch1 = callback->m_ch;
             delete callback;
             return pplx::task_from_result<int_type>(ch1);
         }
@@ -889,7 +889,7 @@ private:
             delete this;
         }
 
-        int_type m_ch;
+        _CharType m_ch;
 
     private:
         _file_info* m_info;
@@ -917,7 +917,7 @@ private:
             delete this;
         }
 
-        int_type m_ch;
+        _CharType m_ch;
 
         virtual void on_error(const std::exception_ptr& e)
         {
