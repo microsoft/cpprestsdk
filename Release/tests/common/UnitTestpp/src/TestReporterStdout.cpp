@@ -43,7 +43,7 @@ namespace std
 
 namespace UnitTest
 {
-// Function to work around outputing to the console when under WinRT.
+// Function to work around outputting to the console when under WinRT.
 static void PrintfWrapper(const char* format, ...)
 {
     va_list args;
