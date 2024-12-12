@@ -725,7 +725,7 @@ public:
     /// <summary>
     /// Set length of the generated nonce string.
     /// </summary>
-    /// <param name="length">Lenght of nonce string.</param>
+    /// <param name="length">Length of nonce string.</param>
     void set_length(int length) { m_length = length; }
 
 private:
