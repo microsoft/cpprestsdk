@@ -488,7 +488,7 @@ SUITE(to_as_and_operators_tests)
 
     TEST(floating_number_serialize)
     {
-        // This number will have the longest serializaton possible (length of the string):
+        // This number will have the longest serialization possible (length of the string):
         // Sign, exponent, decimal comma, longest mantisa and exponent make so.
         auto value = json::value(-3.123456789012345678901234567890E-123);
 
