@@ -228,7 +228,7 @@ SUITE(connections_and_errors)
         listener.close().wait();
     }
 
-    // This test case is manual becuase it requires to be run under and account without admin access.
+    // This test case is manual because it requires to be run under and account without admin access.
     TEST(default_port_admin_access, "Ignore", "Manual")
     {
         uri address(U("http://localhost/"));
