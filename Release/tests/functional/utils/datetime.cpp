@@ -342,7 +342,7 @@ SUITE(datetime)
         TestDateTimeRoundtrip(_XPLATSTR("1970-01-01T00:00:00Z"));                                         // epoch
         TestDateTimeRoundtrip(_XPLATSTR("2038-01-19T03:14:06+00:00"), _XPLATSTR("2038-01-19T03:14:06Z")); // INT_MAX - 1
         TestDateTimeRoundtrip(_XPLATSTR("2038-01-19T03:13:07-00:01"),
-                              _XPLATSTR("2038-01-19T03:14:07Z")); // INT_MAX after subtacting 1
+                              _XPLATSTR("2038-01-19T03:14:07Z")); // INT_MAX after subtracting 1
         TestDateTimeRoundtrip(_XPLATSTR("2038-01-19T03:14:07-00:00"), _XPLATSTR("2038-01-19T03:14:07Z"));
     }
 
