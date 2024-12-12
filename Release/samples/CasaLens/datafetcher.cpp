@@ -89,7 +89,7 @@ pplx::task<json::value> CasaLens::get_events(const utility::string_t& postal_cod
                     auto iDescription = event.as_object().find(U("description"));
                     if (iDescription == event.as_object().end())
                     {
-                        throw web::json::json_exception(U("descriotion key not found"));
+                        throw web::json::json_exception(U("description key not found"));
                     }
                     event_result_node[events_json_key][i][U("description")] = iDescription->second;
                     auto iVenueAddress = event.as_object().find(U("venue_address"));
