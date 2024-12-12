@@ -3200,7 +3200,7 @@ public:
     }
 };
 
-// A helper class template that transforms an intial task lambda returns void into a lambda that returns a non-void type
+// A helper class template that transforms an initial task lambda returns void into a lambda that returns a non-void type
 // (details::_Unit_type is used to substitute for void). This is to minimize the special handling required for 'void'.
 template<typename _RetType>
 class _Init_func_transformer
