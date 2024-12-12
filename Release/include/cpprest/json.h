@@ -782,7 +782,7 @@ enum json_error
     malformed_numeric_literal,
     malformed_string_literal,
     malformed_token,
-    mismatched_brances,
+    mismatched_braces,
     nesting,
     unexpected_token
 };
@@ -805,7 +805,7 @@ public:
             case json_error::malformed_numeric_literal: return "Malformed numeric literal";
             case json_error::malformed_string_literal: return "Malformed string literal";
             case json_error::malformed_token: return "Malformed token";
-            case json_error::mismatched_brances: return "Mismatched braces";
+            case json_error::mismatched_braces: return "Mismatched braces";
             case json_error::nesting: return "Nesting too deep";
             case json_error::unexpected_token: return "Unexpected token";
             default: return "Unknown json error";
