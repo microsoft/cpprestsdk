@@ -1117,7 +1117,7 @@
     </Style>
     <Style x:Key="OpenLocalAppBarButtonStyle" TargetType="ButtonBase" BasedOn="{StaticResource AppBarButtonStyle}">
         <Setter Property="AutomationProperties.AutomationId" Value="OpenLocalAppBarButton"/>
-        <Setter Property="AutomationProperties.Name" Value="Open Loal"/>
+        <Setter Property="AutomationProperties.Name" Value="Open Local"/>
         <Setter Property="Content" Value="&#xE197;"/>
     </Style>
     <Style x:Key="MuteAppBarButtonStyle" TargetType="ButtonBase" BasedOn="{StaticResource AppBarButtonStyle}">
