@@ -878,7 +878,7 @@ struct _ResultHolder<std::vector<_Type ^>>
 
     std::vector<_Type ^> Get()
     {
-        // Return vectory<T^> with the objects that are marshaled in the proper apartment
+        // Return vector<T^> with the objects that are marshaled in the proper apartment
         std::vector<_Type ^> _Return;
         _Return.reserve(_Result.size());
 
