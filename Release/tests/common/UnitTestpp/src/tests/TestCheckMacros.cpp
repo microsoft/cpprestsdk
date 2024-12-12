@@ -320,7 +320,7 @@ TEST(CheckArrayCloseFailureIncludesTolerance)
     CHECK(strstr(reporter.lastFailedMessage, "0.01"));
 }
 
-TEST(CheckArrayEqualSuceedsOnEqual)
+TEST(CheckArrayEqualSucceedsOnEqual)
 {
     bool failure = true;
     {
