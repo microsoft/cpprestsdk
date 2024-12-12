@@ -381,7 +381,7 @@ inline bool __cdecl is_alnum(Elem ch) CPPREST_NOEXCEPT
 /// 0x0A == Line Feed
 /// 0x0B == Vertical Tab
 /// 0x0C == Form Feed
-/// 0x0D == Carrage Return
+/// 0x0D == Carriage Return
 /// 0x20 == Space
 /// </summary>
 template<class Elem>
