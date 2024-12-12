@@ -180,7 +180,7 @@ SUITE(listener_construction_tests)
         // try specifying a query
         VERIFY_THROWS(http_listener(U("http://localhost:45678/path?key1=value")), std::invalid_argument);
 
-        // try specifing a fragment
+        // try specifying a fragment
         VERIFY_THROWS(http_listener(U("http://localhost:4563/path?key1=value#frag")), std::invalid_argument);
     }
 
