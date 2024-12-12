@@ -7211,7 +7211,7 @@ public:
 template<typename T, typename U, typename E>
 SafeInt<T, E> operator/(U lhs, SafeInt<T, E> rhs) SAFEINT_CPP_THROW
 {
-    // Corner case - has to be handled seperately
+    // Corner case - has to be handled separately
     SafeInt<T, E> result;
     if (DivisionCornerCaseHelper<T, U, E, (int)DivisionMethod<U, T>::method == (int)DivisionState_UnsignedSigned>::
             DivisionCornerCase1(lhs, rhs, result))
