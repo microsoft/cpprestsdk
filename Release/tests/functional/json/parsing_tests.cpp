@@ -27,7 +27,7 @@ using namespace utility;
 using namespace utility::conversions;
 
 static utility::string_t youtubeJson = _XPLATSTR(
-R"delimeter({
+R"delimiter({
  "kind": "youtube#playlistItemListResponse",
  "etag": "\"Fznwjl6JEQdo1MGvHOGaz_YanRU/ranGcWzseanYs9xZ0NXAq24qK-w\"",
  "pageInfo": {
@@ -161,7 +161,7 @@ R"delimeter({
    }
   }
  ]
-})delimeter"
+})delimiter"
 );
 
 namespace tests
