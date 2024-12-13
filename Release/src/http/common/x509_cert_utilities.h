@@ -13,6 +13,9 @@
 
 #pragma once
 
+#include "cpprest/certificate_info.h"
+#include <string>
+
 #if defined(_WIN32)
 #include <Wincrypt.h>
 
@@ -94,6 +97,8 @@ namespace client
 {
 namespace details
 {
+bool is_end_certificate_in_chain(boost::asio::ssl::verify_context& verifyCtx);
+
 /// <summary>
 /// Using platform specific APIs verifies server certificate.
 /// Currently implemented to work on Windows, iOS, Android, and OS X.
@@ -101,7 +106,15 @@ namespace details
 /// <param name="verifyCtx">Boost.ASIO context to get certificate chain from.</param>
 /// <param name="hostName">Host name from the URI.</param>
 /// <returns>True if verification passed and server can be trusted, false otherwise.</returns>
-bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verifyCtx, const std::string& hostName);
+bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verifyCtx,
+                                         const std::string& hostName,
+                                         const CertificateChainFunction& func = nullptr);
+
+bool verify_X509_cert_chain(const std::vector<std::string>& certChain,
+                            const std::string& hostName,
+                            const CertificateChainFunction& func = nullptr);
+
+std::vector<std::vector<unsigned char>> get_X509_cert_chain_encoded_data(boost::asio::ssl::verify_context& verifyCtx);
 } // namespace details
 } // namespace client
 } // namespace http
