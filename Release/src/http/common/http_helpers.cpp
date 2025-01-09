@@ -84,7 +84,7 @@ size_t chunked_encoding::add_chunked_delimiters(_Out_writes_(buffer_size) uint8_
     }
     else
     {
-        char buffer[9];
+        char buffer[17];
 #ifdef _WIN32
         sprintf_s(buffer, sizeof(buffer), "%8IX", bytes_read);
 #else
