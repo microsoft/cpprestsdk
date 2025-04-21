@@ -76,16 +76,20 @@ template<>
 struct Value2StringFormatter<uint8_t>
 {
     template<typename T>
-    static std::basic_string<uint8_t> format(const T& val)
+    static std::vector<uint8_t> format(const T& val)
     {
-        std::basic_ostringstream<char> ss;
+        std::ostringstream ss;
         ss << val;
-        return reinterpret_cast<const uint8_t*>(ss.str().c_str());
+        std::string s = ss.str();
+
+        return std::vector<uint8_t>(reinterpret_cast<const uint8_t*>(s.data()),
+                                    reinterpret_cast<const uint8_t*>(s.data()) + s.size());
     }
 
-    static std::basic_string<uint8_t> format(const utf16string& val)
+    static std::vector<uint8_t> format(const utf16string& val)
     {
-        return format(utility::conversions::utf16_to_utf8(val));
+        std::string utf8 = utility::conversions::utf16_to_utf8(val);
+        return format(utf8);
     }
 };
 
