@@ -23,7 +23,7 @@ using namespace Windows::Storage;
 #endif
 
 #ifdef _WIN32
-#define DEFAULT_PROT (int)std::ios_base::_Openprot
+#define DEFAULT_PROT _SH_DENYNO
 #else
 #define DEFAULT_PROT 0
 #endif
