@@ -44,11 +44,11 @@ function(cpprest_find_boost)
       set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/../Boost-for-Android/build/out/x86/lib" CACHE INTERNAL "")
       set(Boost_ARCHITECTURE "-x32" CACHE INTERNAL "")
     endif()
-    cpprestsdk_find_boost_android_package(Boost ${BOOST_VERSION} EXACT REQUIRED COMPONENTS random system thread filesystem chrono atomic)
+    cpprestsdk_find_boost_android_package(Boost ${BOOST_VERSION} EXACT REQUIRED COMPONENTS random thread filesystem chrono atomic)
   elseif(UNIX)
-    find_package(Boost REQUIRED COMPONENTS random system thread filesystem chrono atomic date_time regex)
+    find_package(Boost REQUIRED COMPONENTS random thread filesystem chrono atomic date_time regex)
   else()
-    find_package(Boost REQUIRED COMPONENTS system date_time regex)
+    find_package(Boost REQUIRED COMPONENTS date_time regex)
   endif()
 
   add_library(cpprestsdk_boost_internal INTERFACE)
@@ -78,7 +78,6 @@ function(cpprest_find_boost)
       target_link_libraries(cpprestsdk_boost_internal INTERFACE
         Boost::boost
         Boost::random
-        Boost::system
         Boost::thread
         Boost::filesystem
         Boost::chrono
@@ -88,7 +87,6 @@ function(cpprest_find_boost)
       target_link_libraries(cpprestsdk_boost_internal INTERFACE
         Boost::boost
         Boost::random
-        Boost::system
         Boost::thread
         Boost::filesystem
         Boost::chrono
@@ -99,7 +97,6 @@ function(cpprest_find_boost)
     else()
       target_link_libraries(cpprestsdk_boost_internal INTERFACE
         Boost::boost
-        Boost::system
         Boost::date_time
         Boost::regex
       )

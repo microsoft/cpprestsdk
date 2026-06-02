@@ -429,7 +429,7 @@ private:
         auto& self = *pool;
         std::weak_ptr<asio_connection_pool> weak_pool = pool;
 
-        self.m_pool_epoch_timer.expires_from_now(boost::posix_time::seconds(30));
+        self.m_pool_epoch_timer.expires_after(std::chrono::seconds(30));
         self.m_pool_epoch_timer.async_wait([weak_pool](const boost::system::error_code& ec) {
             if (ec)
             {
@@ -467,7 +467,7 @@ private:
     std::mutex m_lock;
     std::map<std::string, connection_pool_stack<asio_connection>> m_connections;
     bool m_is_timer_running;
-    boost::asio::deadline_timer m_pool_epoch_timer;
+    boost::asio::steady_timer m_pool_epoch_timer;
 };
 
 class asio_client final : public _http_client_communicator
