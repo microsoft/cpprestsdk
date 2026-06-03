@@ -992,6 +992,8 @@ protected:
             return;
         }
 
+        auto config = client_config();
+        auto proxy = config.proxy();					  									
         if (m_proxy_auto_config)
         {
             WINHTTP_AUTOPROXY_OPTIONS autoproxy_options {};
@@ -1018,6 +1020,45 @@ protected:
                 // Failure to download the auto-configuration script is not fatal. Fall back to the default proxy.
             }
         }
+        else
+        {
+
+            bool isproxyspecified = proxy.is_specified();
+            if (isproxyspecified)
+            {
+
+                const web::uri uri = config.proxy().address();
+                utility::string_t proxy_str = uri.host();
+                if (uri.port() > 0)
+                {
+                    proxy_str.push_back(_XPLATSTR(':'));
+                    proxy_str.append(::utility::conversions::details::to_string_t(uri.port()));
+                }
+
+                if (proxy_str.c_str() != NULL)
+                {
+              
+
+                    memset(&info, 0, sizeof(info));
+                    TCHAR* proxy_dupstr = (TCHAR*)::GlobalAlloc(GMEM_FIXED, (proxy_str.length() + 1) * sizeof(TCHAR));//(TCHAR*)malloc((proxy_str.length() + 1) * sizeof(TCHAR));//new TCHAR[proxy_str.length() + 1];
+                    memset(proxy_dupstr, 0, (proxy_str.length() + 1) * sizeof(TCHAR));
+                    memcpy(proxy_dupstr, proxy_str.c_str(), proxy_str.length() * sizeof(TCHAR));
+                    info.lpszProxy = proxy_dupstr;
+
+                    //web_proxy has no setting for bypass list,so just set an empty buffer
+                    //setting bypass list just for destructor of proxy_info to release the pointer
+                    TCHAR* proxybypass_dupstr = (TCHAR*)::GlobalAlloc(GMEM_FIXED, 256 * sizeof(TCHAR)); //(TCHAR*)malloc(256 * sizeof(TCHAR));
+                    memset(proxybypass_dupstr, 0, 256 * sizeof(TCHAR));                    
+                    info.lpszProxyBypass = proxybypass_dupstr;
+
+                    info.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                    DWORD proxy_info_size = sizeof(info);
+
+                    proxy_info_required = true;
+
+                }
+            }
+        }			
 
         // Need to form uri path, query, and fragment for this request.
         // Make sure to keep any path that was specified with the uri when the http_client was created.
@@ -1065,6 +1106,20 @@ protected:
                 auto errorCode = GetLastError();
                 request->report_error(errorCode, build_error_msg(errorCode, "Setting proxy options"));
                 return;
+            }
+
+            auto credentials = proxy.credentials();
+            TCHAR* username = const_cast<TCHAR*>(credentials.username().c_str());
+            if (username != NULL)
+            {
+                WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_PROXY_USERNAME, username, (DWORD)wcslen(username));
+
+                utility::string_t password_str = *(credentials._internal_decrypt());
+
+                TCHAR* password = const_cast<TCHAR*>(password_str.c_str());
+                if (password != NULL)
+                    WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_PROXY_PASSWORD, password, (DWORD)wcslen(password));
+
             }
         }
 
