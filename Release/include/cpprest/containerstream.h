@@ -14,10 +14,10 @@
 #pragma once
 
 #include "cpprest/astreambuf.h"
+#include "cpprest/details/checked_array_iterator.h"
 #include "cpprest/streams.h"
 #include "pplx/pplxtasks.h"
 #include <algorithm>
-#include <iterator>
 #include <queue>
 #include <vector>
 
@@ -401,7 +401,7 @@ private:
 
 #if defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL != 0
         // Avoid warning C4996: Use checked iterators under SECURE_SCL
-        std::copy(readBegin, readEnd, stdext::checked_array_iterator<_CharType*>(ptr, count));
+        std::copy(readBegin, readEnd, ext::checked_array_iterator<_CharType*>(ptr, count));
 #else
         std::copy(readBegin, readEnd, ptr);
 #endif // _WIN32
