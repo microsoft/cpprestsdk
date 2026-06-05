@@ -135,6 +135,7 @@ private:
 
     bool m_is_https;
     const std::function<void(boost::asio::ssl::context&)>& m_ssl_context_callback;
+    const std::function<void(boost::asio::ip::tcp::socket&)>& m_tcp_socket_callback;
 
 public:
     hostport_listener(http_linux_server* server,
@@ -150,6 +151,7 @@ public:
         , m_p_server(server)
         , m_is_https(is_https)
         , m_ssl_context_callback(config.get_ssl_context_callback())
+        , m_tcp_socket_callback(config.get_tcp_socket_callback())
     {
         m_all_connections_complete.set();
 
@@ -596,6 +598,11 @@ void hostport_listener::on_accept(std::unique_ptr<ip::tcp::socket> socket, const
         boost::asio::ip::tcp::no_delay option(true);
         boost::system::error_code error_ignored;
         socket->set_option(option, error_ignored);
+
+        if (m_tcp_socket_callback)
+        {
+            m_tcp_socket_callback(*socket);
+        }
 
         auto conn = asio_server_connection::create(std::move(socket), m_p_server, this);
 

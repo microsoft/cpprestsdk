@@ -18,6 +18,7 @@
 #include <limits>
 #if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 #include <boost/asio/ssl.hpp>
+#include <boost/asio.hpp>
 #endif
 
 #if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt)) ||                         \
@@ -53,6 +54,7 @@ public:
         , m_backlog(other.m_backlog)
 #if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
         , m_ssl_context_callback(other.m_ssl_context_callback)
+        , m_tcp_socket_callback(other.m_tcp_socket_callback)
 #endif
     {
     }
@@ -66,6 +68,7 @@ public:
         , m_backlog(std::move(other.m_backlog))
 #if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
         , m_ssl_context_callback(std::move(other.m_ssl_context_callback))
+        , m_tcp_socket_callback(std::move(other.m_tcp_socket_callback))
 #endif
     {
     }
@@ -82,6 +85,7 @@ public:
             m_backlog = rhs.m_backlog;
 #if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
             m_ssl_context_callback = rhs.m_ssl_context_callback;
+            m_tcp_socket_callback = rhs.m_tcp_socket_callback;
 #endif
         }
         return *this;
@@ -99,6 +103,7 @@ public:
             m_backlog = std::move(rhs.m_backlog);
 #if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
             m_ssl_context_callback = std::move(rhs.m_ssl_context_callback);
+            m_tcp_socket_callback = std::move(rhs.m_tcp_socket_callback);
 #endif
         }
         return *this;
@@ -149,6 +154,25 @@ public:
     {
         m_ssl_context_callback = ssl_context_callback;
     }
+
+    /// <summary>
+    /// Get the callback of tcp socket
+    /// </summary>
+    /// <returns>The function defined by the user of http_listener_config to configure a tcp socket.</returns>
+    const std::function<void(boost::asio::ip::tcp::socket&)>& get_tcp_socket_callback() const
+    {
+        return m_tcp_socket_callback;
+    }
+
+    /// <summary>
+    /// Set the callback of tcp socket
+    /// </summary>
+    /// <param name="socket_callback">The function to configure a tcp socket which will setup https
+    /// connections.</param>
+    void set_tcp_socket_callback(const std::function<void(boost::asio::ip::tcp::socket&)>& tcp_socket_callback)
+    {
+        m_tcp_socket_callback = tcp_socket_callback;
+    }
 #endif
 
 private:
@@ -156,6 +180,7 @@ private:
     int m_backlog;
 #if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
+    std::function<void(boost::asio::ip::tcp::socket&)> m_tcp_socket_callback;
 #endif
 };
 
