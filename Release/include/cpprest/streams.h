@@ -15,6 +15,7 @@
 #ifndef CASA_STREAMS_H
 #define CASA_STREAMS_H
 
+#include "char_traits.h"
 #include "cpprest/astreambuf.h"
 #include <iosfwd>
 #include <cstdio>
