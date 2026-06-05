@@ -129,3 +129,18 @@ typedef std::basic_istringstream<utf16char> utf16istringstream;
 #endif
 #endif
 #endif
+
+// This is not really a basic type, but define this macro in this header
+// because it's included by all the other ones and this macro needs to be
+// available in several places.
+#if defined(_MSVC_LANG)
+#define CPPREST_CHECK_CXX_STD(ver) (_MSVC_LANG >= (ver))
+#else
+#define CPPREST_CHECK_CXX_STD(ver) (__cplusplus >= (ver))
+#endif
+
+#if CPPREST_CHECK_CXX_STD(202002L)
+#define CPPREST_CAPTURE_THIS ,this
+#else
+#define CPPREST_CAPTURE_THIS
+#endif

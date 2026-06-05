@@ -420,7 +420,7 @@ private:
     will_erase_from_parent_t do_response()
     {
         auto unique_reference = this->get_reference();
-        get_request().get_response().then([=](pplx::task<http_response> r_task) {
+        get_request().get_response().then([= CPPREST_CAPTURE_THIS](pplx::task<http_response> r_task) {
             http_response response;
             try
             {
@@ -434,7 +434,7 @@ private:
             serialize_headers(response);
 
             // before sending response, the full incoming message need to be processed.
-            return get_request().content_ready().then([=](pplx::task<http_request>) {
+            return get_request().content_ready().then([= CPPREST_CAPTURE_THIS](pplx::task<http_request>) {
                 (will_deref_and_erase_t) this->async_write(&asio_server_connection::handle_headers_written, response);
             });
         });
@@ -444,7 +444,7 @@ private:
     will_erase_from_parent_t do_bad_response()
     {
         auto unique_reference = this->get_reference();
-        get_request().get_response().then([=](pplx::task<http_response> r_task) {
+        get_request().get_response().then([= CPPREST_CAPTURE_THIS](pplx::task<http_response> r_task) {
             http_response response;
             try
             {
@@ -882,7 +882,7 @@ will_deref_t asio_server_connection::handle_chunked_body(const boost::system::er
     {
         auto writebuf = requestImpl->outstream().streambuf();
         writebuf.putn_nocopy(buffer_cast<const uint8_t*>(m_request_buf.data()), toWrite)
-            .then([=](pplx::task<size_t> writeChunkTask) -> will_deref_t {
+            .then([= CPPREST_CAPTURE_THIS](pplx::task<size_t> writeChunkTask) -> will_deref_t {
                 try
                 {
                     writeChunkTask.get();
@@ -947,13 +947,13 @@ will_deref_and_erase_t asio_server_connection::async_write(WriteFunc response_fu
 {
     if (m_ssl_stream)
     {
-        boost::asio::async_write(*m_ssl_stream, m_response_buf, [=](const boost::system::error_code& ec, std::size_t) {
+        boost::asio::async_write(*m_ssl_stream, m_response_buf, [= CPPREST_CAPTURE_THIS](const boost::system::error_code& ec, std::size_t) {
             (this->*response_func_ptr)(response, ec);
         });
     }
     else
     {
-        boost::asio::async_write(*m_socket, m_response_buf, [=](const boost::system::error_code& ec, std::size_t) {
+        boost::asio::async_write(*m_socket, m_response_buf, [= CPPREST_CAPTURE_THIS](const boost::system::error_code& ec, std::size_t) {
             (this->*response_func_ptr)(response, ec);
         });
     }
@@ -1135,7 +1135,7 @@ will_deref_and_erase_t asio_server_connection::handle_write_chunked_response(con
     auto membuf = m_response_buf.prepare(ChunkSize + chunked_encoding::additional_encoding_space);
 
     readbuf.getn(buffer_cast<uint8_t*>(membuf) + chunked_encoding::data_offset, ChunkSize)
-        .then([=](pplx::task<size_t> actualSizeTask) -> will_deref_and_erase_t {
+        .then([= CPPREST_CAPTURE_THIS](pplx::task<size_t> actualSizeTask) -> will_deref_and_erase_t {
             size_t actualSize = 0;
             try
             {
@@ -1168,7 +1168,7 @@ will_deref_and_erase_t asio_server_connection::handle_write_large_response(const
             response, std::make_exception_ptr(http_exception("Response stream close early!")));
     size_t readBytes = (std::min)(ChunkSize, m_write_size - m_write);
     readbuf.getn(buffer_cast<uint8_t*>(m_response_buf.prepare(readBytes)), readBytes)
-        .then([=](pplx::task<size_t> actualSizeTask) -> will_deref_and_erase_t {
+        .then([= CPPREST_CAPTURE_THIS](pplx::task<size_t> actualSizeTask) -> will_deref_and_erase_t {
             size_t actualSize = 0;
             try
             {

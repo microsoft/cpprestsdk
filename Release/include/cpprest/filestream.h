@@ -239,7 +239,7 @@ protected:
             // Neither heads are open. Close the underlying device
 
             // We need to flush all writes if the file was opened for writing.
-            return flush_internal().then([=](pplx::task<void> flushTask) -> pplx::task<void> {
+            return flush_internal().then([= CPPREST_CAPTURE_THIS](pplx::task<void> flushTask) -> pplx::task<void> {
                 // swallow exception from flush
                 try
                 {
@@ -527,7 +527,7 @@ protected:
     /// reached, EOF if there is some error.</returns>
     virtual pplx::task<size_t> _getn(_Out_writes_(count) _CharType* ptr, _In_ size_t count)
     {
-        return m_readOps.enqueue_operation([=]() -> pplx::task<size_t> {
+        return m_readOps.enqueue_operation([= CPPREST_CAPTURE_THIS]() -> pplx::task<size_t> {
             if (m_info->m_atend || count == 0) return pplx::task_from_result<size_t>(0);
 
             if (_in_avail_unprot() >= count)

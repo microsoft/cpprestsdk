@@ -2514,7 +2514,7 @@ struct _Task_impl : public _Task_impl_base
             if (_M_Continuations)
             {
                 // Scheduling cancellation with automatic inlining.
-                _ScheduleFuncWithAutoInline([=]() { _RunTaskContinuations(); }, details::_DefaultAutoInline);
+                _ScheduleFuncWithAutoInline([= CPPREST_CAPTURE_THIS]() { _RunTaskContinuations(); }, details::_DefaultAutoInline);
             }
         }
         return true;
