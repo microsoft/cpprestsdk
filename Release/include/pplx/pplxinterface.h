@@ -51,6 +51,7 @@ typedef void(_pplx_cdecl* TaskProc_t)(void*);
 struct __declspec(novtable) scheduler_interface
 {
     virtual void schedule(TaskProc_t, _In_ void*) = 0;
+    virtual ~scheduler_interface() = default;
 };
 
 /// <summary>
