@@ -254,7 +254,7 @@ SUITE(constructor_tests)
     }
 
     // Test query component can be separated with '&' or ';'.
-    TEST(query_seperated_with_semi_colon)
+    TEST(query_separated_with_semi_colon)
     {
         uri u(U("http://localhost/path1?key1=val1;key2=val2"));
         VERIFY_ARE_EQUAL(U("key1=val1;key2=val2"), u.query());

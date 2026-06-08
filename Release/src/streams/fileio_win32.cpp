@@ -87,14 +87,14 @@ struct EXTENDED_OVERLAPPED : OVERLAPPED
 };
 
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
-void CALLBACK IoCompletionCallback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED pOverlapped)
+void CALLBACK IoCompletionCallback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransferred, LPOVERLAPPED pOverlapped)
 {
     EXTENDED_OVERLAPPED* pExtOverlapped = static_cast<EXTENDED_OVERLAPPED*>(pOverlapped);
 
     ////If dwErrorCode is 0xc0000011, it means STATUS_END_OF_FILE.
     ////Map this error code to system error code:ERROR_HANDLE_EOF
     if (dwErrorCode == 0xc0000011) dwErrorCode = ERROR_HANDLE_EOF;
-    pExtOverlapped->func(dwErrorCode, dwNumberOfBytesTransfered, pOverlapped);
+    pExtOverlapped->func(dwErrorCode, dwNumberOfBytesTransferred, pOverlapped);
     delete pOverlapped;
 }
 #else
@@ -312,7 +312,7 @@ bool __cdecl _close_fsb(_In_ _file_info** info, _In_ streams::details::_filestre
 /// The signature is the standard IO completion signature, documented on MSDN
 /// </remarks>
 template<typename InfoType>
-VOID CALLBACK _WriteFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
+VOID CALLBACK _WriteFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfBytesTransferred, LPOVERLAPPED lpOverlapped)
 {
     EXTENDED_OVERLAPPED* pOverlapped = static_cast<EXTENDED_OVERLAPPED*>(lpOverlapped);
 
@@ -322,7 +322,7 @@ VOID CALLBACK _WriteFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfByt
     }
     else
     {
-        pOverlapped->callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransfered));
+        pOverlapped->callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransferred));
     }
 }
 
@@ -333,7 +333,7 @@ VOID CALLBACK _WriteFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfByt
 /// The signature is the standard IO completion signature, documented on MSDN
 /// </remarks>
 template<typename InfoType>
-VOID CALLBACK _ReadFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
+VOID CALLBACK _ReadFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfBytesTransferred, LPOVERLAPPED lpOverlapped)
 {
     EXTENDED_OVERLAPPED* pOverlapped = static_cast<EXTENDED_OVERLAPPED*>(lpOverlapped);
 
@@ -343,7 +343,7 @@ VOID CALLBACK _ReadFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfByte
     }
     else
     {
-        pOverlapped->callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransfered));
+        pOverlapped->callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransferred));
     }
 }
 
@@ -423,7 +423,7 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl* fInfo,
     // "_getcImpl()" function will be satisfied. The main thread will delete the input "callback", while the threadpool
     // workerthread is accessing this "callback"; there will be a race condition and AV error. We directly return 0 and
     // leave all the completion callbacks working on the workerthread. We do not need to call GetOverlappedResult, the
-    // workerthread will call the "on_error()" if the WriteFaile failed. "req" is deleted in
+    // workerthread will call the "on_error()" if the WriteFile failed. "req" is deleted in
     // "_WriteFileCompletionRoutine, "pOverlapped" is deleted in io_scheduler::FileIOCompletionRoutine.
     if (wrResult == TRUE)
     {

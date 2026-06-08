@@ -96,7 +96,7 @@ bool bind_impl(const key_type& text, std::string& ref)
 class http_headers
 {
 public:
-    /// Function object to perform case insensitive comparison of wstrings.
+    /// Function object to perform case-insensitive comparison of wstrings.
     struct _case_insensitive_cmp
     {
         bool operator()(const utility::string_t& str1, const utility::string_t& str2) const
@@ -315,7 +315,7 @@ public:
     _ASYNCRTIMP void set_date(const utility::datetime& date);
 
 private:
-    // Headers are stored in a map with case insensitive key.
+    // Headers are stored in a map with case-insensitive key.
     inner_container m_headers;
 };
 } // namespace http

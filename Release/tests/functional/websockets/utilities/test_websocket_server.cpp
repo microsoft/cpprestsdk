@@ -217,7 +217,7 @@ private:
     server m_srv;
     websocketpp::connection_hdl m_con;
     // Once the WebSocket object has been initialized,
-    // the below event wil be used to signal that the server has been initialized.
+    // the below event will be used to signal that the server has been initialized.
     // The server can now send messages to the client.
     pplx::task_completion_event<void> m_server_connected;
 };

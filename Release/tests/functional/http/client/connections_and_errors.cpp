@@ -366,7 +366,7 @@ SUITE(connections_and_errors)
         VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
     }
 
-// This test can't be implemented with our test server since it doesn't stream data so isn't avaliable on WinRT.
+// This test can't be implemented with our test server since it doesn't stream data so isn't available on WinRT.
 #ifndef __cplusplus_winrt
     TEST_FIXTURE(uri_address, cancel_while_downloading_data)
     {

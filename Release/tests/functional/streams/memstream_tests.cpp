@@ -315,7 +315,7 @@ void streambuf_seek_write(StreamBufferType& wbuf)
     auto beg = wbuf.seekoff(0, std::ios_base::beg, std::ios_base::out);
     auto cur = wbuf.seekoff(0, std::ios_base::cur, std::ios_base::out);
 
-    // current should be at the begining
+    // current should be at the beginning
     VERIFY_ARE_EQUAL(beg, cur);
 
     auto end = wbuf.seekoff(0, std::ios_base::end, std::ios_base::out);
@@ -455,7 +455,7 @@ void streambuf_ungetc(StreamBufferType& rbuf, const std::vector<typename StreamB
 {
     VERIFY_IS_TRUE(rbuf.can_read());
 
-    // ungetc from the begining should return eof
+    // ungetc from the beginning should return eof
     VERIFY_ARE_EQUAL(StreamBufferType::traits::eof(), rbuf.ungetc().get());
 
     VERIFY_ARE_EQUAL(contents[0], rbuf.bumpc().get());
@@ -535,7 +535,7 @@ void streambuf_seek_read(StreamBufferType& rbuf)
     auto beg = rbuf.seekoff(0, std::ios_base::beg, std::ios_base::in);
     auto cur = rbuf.seekoff(0, std::ios_base::cur, std::ios_base::in);
 
-    // current should be at the begining
+    // current should be at the beginning
     VERIFY_ARE_EQUAL(beg, cur);
 
     auto end = rbuf.seekoff(0, std::ios_base::end, std::ios_base::in);

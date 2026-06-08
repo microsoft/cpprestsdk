@@ -149,7 +149,7 @@ SUITE(request_handler_tests)
             })
             .wait();
 
-        // try overridding the default OPTIONS handler
+        // try overriding the default OPTIONS handler
         listener.support(methods::OPTIONS, [](http_request request) {
             http_asserts::assert_request_equals(request, methods::OPTIONS, U("/"));
             request.reply(status_codes::NoContent);
@@ -189,7 +189,7 @@ SUITE(request_handler_tests)
             })
             .wait();
 
-        // try overridding the default OPTIONS handler
+        // try overriding the default OPTIONS handler
         listener.support(methods::TRCE, [](http_request request) {
             http_asserts::assert_request_equals(request, methods::TRCE, U("/"));
             request.reply(status_codes::NoContent);

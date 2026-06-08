@@ -96,7 +96,7 @@ inline bool is_scheme_character(int c)
 /// <summary>
 /// Legal characters in the user information portion include:
 /// - Any unreserved character
-/// - The percent character ('%'), and thus any percent-endcoded octet
+/// - The percent character ('%'), and thus any percent-encoded octet
 /// - The sub-delimiters
 /// - ':' (colon)
 /// </summary>
@@ -105,7 +105,7 @@ inline bool is_user_info_character(int c) { return is_unreserved(c) || is_sub_de
 /// <summary>
 /// Legal characters in the authority portion include:
 /// - Any unreserved character
-/// - The percent character ('%'), and thus any percent-endcoded octet
+/// - The percent character ('%'), and thus any percent-encoded octet
 /// - The sub-delimiters
 /// - ':' (colon)
 /// - IPv6 requires '[]' allowed for it to be valid URI and passed to underlying platform for IPv6 support
@@ -118,7 +118,7 @@ inline bool is_authority_character(int c)
 /// <summary>
 /// Legal characters in the path portion include:
 /// - Any unreserved character
-/// - The percent character ('%'), and thus any percent-endcoded octet
+/// - The percent character ('%'), and thus any percent-encoded octet
 /// - The sub-delimiters
 /// - ':' (colon)
 /// - '@' (at sign)

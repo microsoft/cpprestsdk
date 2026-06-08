@@ -204,7 +204,7 @@ class task<void>;
 /// only one frame is captured and no stackwalk will be involved. Otherwise, the number of callstack frames will be
 /// captured.
 /// </summary>
-/// <ramarks>
+/// <remarks>
 /// This needs to be defined as a macro rather than a function so that if we're only gathering one frame,
 /// _ReturnAddress() will evaluate to client code, rather than a helper function inside of _TaskCreationCallstack,
 /// itself.
@@ -878,7 +878,7 @@ struct _ResultHolder<std::vector<_Type ^>>
 
     std::vector<_Type ^> Get()
     {
-        // Return vectory<T^> with the objects that are marshaled in the proper apartment
+        // Return vector<T^> with the objects that are marshaled in the proper apartment
         std::vector<_Type ^> _Return;
         _Return.reserve(_Result.size());
 
@@ -1446,7 +1446,7 @@ inline bool _IsCausalitySupported()
         OSVERSIONINFOEX _osvi = {};
         _osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
 
-        // The Causality is supported on Windows version higher than Windows 8
+        // The Causality is supported on Windows version above Windows 8
         _osvi.dwMajorVersion = 6;
         _osvi.dwMinorVersion = 3;
 
@@ -2396,7 +2396,7 @@ inline void _TaskEventLogger::_LogTaskCompleted()
 /// <summary>
 ///     The implementation of a first-class task. This structure contains the task group used to execute
 ///     the task function and handles the scheduling. The _Task_impl is created as a shared_ptr
-///     member of the the public task class, so its destruction is handled automatically.
+///     member of the public task class, so its destruction is handled automatically.
 /// </summary>
 /// <typeparam name="_ReturnType">
 ///     The result type of this task.
@@ -3200,7 +3200,7 @@ public:
     }
 };
 
-// A helper class template that transforms an intial task lambda returns void into a lambda that returns a non-void type
+// A helper class template that transforms an initial task lambda returns void into a lambda that returns a non-void type
 // (details::_Unit_type is used to substitute for void). This is to minimize the special handling required for 'void'.
 template<typename _RetType>
 class _Init_func_transformer
@@ -4267,7 +4267,7 @@ private:
 
         //
         // A **nullptr** token state indicates that it was not provided by the user. In this case, we inherit the
-        // antecedent's token UNLESS this is a an exception handling continuation. In that case, we break the chain with
+        // antecedent's token UNLESS this is an exception handling continuation. In that case, we break the chain with
         // a _None. That continuation is never canceled unless the user explicitly passes the same token.
         //
         if (_PTokenState == nullptr)
@@ -5348,9 +5348,9 @@ struct _SelectorTaskGenerator
                                              cancellation_token_source _Cts,
                                              const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<_ReturnType>(_Func(), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<_ReturnType>(_Func(), _taskOptions);
     }
 
     template<typename _Function>
@@ -5358,9 +5358,9 @@ struct _SelectorTaskGenerator
                                               cancellation_token_source _Cts,
                                               const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<_ReturnType>(_Func(_Cts.get_token()), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<_ReturnType>(_Func(_Cts.get_token()), _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5369,9 +5369,9 @@ struct _SelectorTaskGenerator
                                               cancellation_token_source _Cts,
                                               const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<_ReturnType>(_Func(_Progress), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<_ReturnType>(_Func(_Progress), _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5380,9 +5380,9 @@ struct _SelectorTaskGenerator
                                                cancellation_token_source _Cts,
                                                const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<_ReturnType>(_Func(_Progress, _Cts.get_token()), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<_ReturnType>(_Func(_Progress, _Cts.get_token()), _taskOptions);
     }
 };
 
@@ -5394,9 +5394,9 @@ struct _SelectorTaskGenerator<_AsyncSelector, void>
                                       cancellation_token_source _Cts,
                                       const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<void>(_Func(), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<void>(_Func(), _taskOptions);
     }
 
     template<typename _Function>
@@ -5404,9 +5404,9 @@ struct _SelectorTaskGenerator<_AsyncSelector, void>
                                        cancellation_token_source _Cts,
                                        const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<void>(_Func(_Cts.get_token()), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<void>(_Func(_Cts.get_token()), _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5415,9 +5415,9 @@ struct _SelectorTaskGenerator<_AsyncSelector, void>
                                        cancellation_token_source _Cts,
                                        const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<void>(_Func(_Progress), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<void>(_Func(_Progress), _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5426,9 +5426,9 @@ struct _SelectorTaskGenerator<_AsyncSelector, void>
                                         cancellation_token_source _Cts,
                                         const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
-        return task<void>(_Func(_Progress, _Cts.get_token()), _taskOptinos);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
+        return task<void>(_Func(_Progress, _Cts.get_token()), _taskOptions);
     }
 };
 
@@ -5446,15 +5446,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, _ReturnType>
                                              cancellation_token_source _Cts,
                                              const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<_ReturnType>(
             [=]() -> _ReturnType {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 return _Func();
             },
-            _taskOptinos);
+            _taskOptions);
     }
 #pragma warning(pop)
 
@@ -5463,15 +5463,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, _ReturnType>
                                               cancellation_token_source _Cts,
                                               const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<_ReturnType>(
             [=]() -> _ReturnType {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 return _Func(_Cts.get_token());
             },
-            _taskOptinos);
+            _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5480,15 +5480,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, _ReturnType>
                                               cancellation_token_source _Cts,
                                               const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<_ReturnType>(
             [=]() -> _ReturnType {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 return _Func(_Progress);
             },
-            _taskOptinos);
+            _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5497,15 +5497,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, _ReturnType>
                                                cancellation_token_source _Cts,
                                                const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<_ReturnType>(
             [=]() -> _ReturnType {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 return _Func(_Progress, _Cts.get_token());
             },
-            _taskOptinos);
+            _taskOptions);
     }
 };
 
@@ -5517,15 +5517,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, void>
                                       cancellation_token_source _Cts,
                                       const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<void>(
             [=]() {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 _Func();
             },
-            _taskOptinos);
+            _taskOptions);
     }
 
     template<typename _Function>
@@ -5533,15 +5533,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, void>
                                        cancellation_token_source _Cts,
                                        const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<void>(
             [=]() {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 _Func(_Cts.get_token());
             },
-            _taskOptinos);
+            _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5550,15 +5550,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, void>
                                        cancellation_token_source _Cts,
                                        const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<void>(
             [=]() {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 _Func(_Progress);
             },
-            _taskOptinos);
+            _taskOptions);
     }
 
     template<typename _Function, typename _ProgressObject>
@@ -5567,15 +5567,15 @@ struct _SelectorTaskGenerator<_TypeSelectorNoAsync, void>
                                         cancellation_token_source _Cts,
                                         const _TaskCreationCallstack& _callstack)
     {
-        task_options _taskOptinos(_Cts.get_token());
-        details::_get_internal_task_options(_taskOptinos)._set_creation_callstack(_callstack);
+        task_options _taskOptions(_Cts.get_token());
+        details::_get_internal_task_options(_taskOptions)._set_creation_callstack(_callstack);
         return task<void>(
             [=]() {
                 _Task_generator_oversubscriber_t _Oversubscriber;
                 (_Oversubscriber);
                 _Func(_Progress, _Cts.get_token());
             },
-            _taskOptinos);
+            _taskOptions);
     }
 };
 
@@ -7041,10 +7041,10 @@ struct _RunAnyParam
 template<typename _CompletionType, typename _Function, typename _TaskType>
 void _WhenAnyContinuationWrapper(_RunAnyParam<_CompletionType>* _PParam, const _Function& _Func, task<_TaskType>& _Task)
 {
-    bool _IsTokenCancled = !_PParam->_M_fHasExplicitToken &&
+    bool _IsTokenCanceled = !_PParam->_M_fHasExplicitToken &&
                            _Task._GetImpl()->_M_pTokenState != _CancellationTokenState::_None() &&
                            _Task._GetImpl()->_M_pTokenState->_IsCanceled();
-    if (_Task._GetImpl()->_IsCompleted() && !_IsTokenCancled)
+    if (_Task._GetImpl()->_IsCompleted() && !_IsTokenCanceled)
     {
         _Func();
         if (atomic_increment(_PParam->_M_completeCount) == _PParam->_M_numTasks)
@@ -7054,8 +7054,8 @@ void _WhenAnyContinuationWrapper(_RunAnyParam<_CompletionType>* _PParam, const _
     }
     else
     {
-        _ASSERTE(_Task._GetImpl()->_IsCanceled() || _IsTokenCancled);
-        if (_Task._GetImpl()->_HasUserException() && !_IsTokenCancled)
+        _ASSERTE(_Task._GetImpl()->_IsCanceled() || _IsTokenCanceled);
+        if (_Task._GetImpl()->_HasUserException() && !_IsTokenCanceled)
         {
             if (_PParam->_M_Completed._StoreException(_Task._GetImpl()->_GetExceptionHolder()))
             {

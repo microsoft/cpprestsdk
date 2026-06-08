@@ -24,7 +24,7 @@ public:
     test_module_loader();
     ~test_module_loader();
 
-    // Does't complain if module with same name is already loaded.
+    // Doesn't complain if module with same name is already loaded.
     unsigned long load(const std::string& dllName);
 
     // Module must have already been loaded.

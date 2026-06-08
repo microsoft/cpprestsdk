@@ -126,7 +126,7 @@ SUITE(json_numbers_tests)
 
     const int DOUBLE_DIGITS =
         std::numeric_limits<double>::digits10 +
-        7; // 7 = length of "1." and "e+123" which is the begining and the end of the double representation
+        7; // 7 = length of "1." and "e+123" which is the beginning and the end of the double representation
 
     void test_double(double number, string_t str_rep)
     {

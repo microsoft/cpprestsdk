@@ -89,7 +89,7 @@ pplx::task<json::value> CasaLens::get_events(const utility::string_t& postal_cod
                     auto iDescription = event.as_object().find(U("description"));
                     if (iDescription == event.as_object().end())
                     {
-                        throw web::json::json_exception(U("descriotion key not found"));
+                        throw web::json::json_exception(U("description key not found"));
                     }
                     event_result_node[events_json_key][i][U("description")] = iDescription->second;
                     auto iVenueAddress = event.as_object().find(U("venue_address"));
@@ -208,7 +208,7 @@ std::wstring CasaLens::get_date()
 }
 
 // Query tmsapi and fetch current movie showtimes at local theaters, for the given postal code
-// Also quert bing images for movie posters
+// Also query bing images for movie posters
 // Returns a task of JSON value
 // JSON result format:
 // "movies":[{"title":"abc","theatre":[{"name":"theater1","datetime":["dd-mm-yyThh:mm"]},{"name":"theater2","datetime":["ddmmyy"]}],"poster":"img-url"}}]}..
@@ -400,10 +400,10 @@ void CasaLens::get_data(http_request message, const std::wstring& input_text)
             .then([=](http_response resp) { return resp.extract_json(); })
             .then([=](json::value maps_result) mutable {
                 auto coordinates = maps_result[U("resourceSets")][0][U("resources")][0][U("point")];
-                auto lattitude = coordinates[U("coordinates")][0].serialize();
+                auto latitude = coordinates[U("coordinates")][0].serialize();
                 auto longitude = coordinates[U("coordinates")][1].serialize();
                 uri_builder ub;
-                ub.append_path(lattitude + U(",") + longitude)
+                ub.append_path(latitude + U(",") + longitude)
                     .append_query(casalens_creds::bmaps_keyname, casalens_creds::bmaps_key);
                 auto s2 = ub.to_string();
                 return bing_client.request(methods::GET, s2);

@@ -1258,7 +1258,7 @@ void hostport_listener::add_listener(const std::string& path, http_listener_impl
 
     if (m_is_https != (listener->uri().scheme() == U("https")))
         throw std::invalid_argument(
-            "Error: http_listener can not simultaneously listen both http and https paths of one host");
+            "Error: http_listener cannot simultaneously listen both http and https paths of one host");
     else if (!m_listeners.insert(std::map<std::string, http_listener_impl*>::value_type(path, listener)).second)
         throw std::invalid_argument("Error: http_listener is already registered for this path");
 }

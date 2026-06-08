@@ -381,7 +381,7 @@ inline bool __cdecl is_alnum(Elem ch) CPPREST_NOEXCEPT
 /// 0x0A == Line Feed
 /// 0x0B == Vertical Tab
 /// 0x0C == Form Feed
-/// 0x0D == Carrage Return
+/// 0x0D == Carriage Return
 /// 0x20 == Space
 /// </summary>
 template<class Elem>
@@ -451,7 +451,7 @@ std::unique_ptr<_Type> make_unique(_Arg1&& arg1, _Arg2&& arg2, _Arg3&& arg3, _Ar
 }
 
 /// <summary>
-/// Cross platform utility function for performing case insensitive string equality comparison.
+/// Cross platform utility function for performing case-insensitive string equality comparison.
 /// </summary>
 /// <param name="left">First string to compare.</param>
 /// <param name="right">Second strong to compare.</param>
@@ -459,7 +459,7 @@ std::unique_ptr<_Type> make_unique(_Arg1&& arg1, _Arg2&& arg2, _Arg3&& arg3, _Ar
 _ASYNCRTIMP bool __cdecl str_iequal(const std::string& left, const std::string& right) CPPREST_NOEXCEPT;
 
 /// <summary>
-/// Cross platform utility function for performing case insensitive string equality comparison.
+/// Cross platform utility function for performing case-insensitive string equality comparison.
 /// </summary>
 /// <param name="left">First string to compare.</param>
 /// <param name="right">Second strong to compare.</param>
@@ -467,7 +467,7 @@ _ASYNCRTIMP bool __cdecl str_iequal(const std::string& left, const std::string& 
 _ASYNCRTIMP bool __cdecl str_iequal(const std::wstring& left, const std::wstring& right) CPPREST_NOEXCEPT;
 
 /// <summary>
-/// Cross platform utility function for performing case insensitive string less-than comparison.
+/// Cross platform utility function for performing case-insensitive string less-than comparison.
 /// </summary>
 /// <param name="left">First string to compare.</param>
 /// <param name="right">Second strong to compare.</param>
@@ -476,7 +476,7 @@ _ASYNCRTIMP bool __cdecl str_iequal(const std::wstring& left, const std::wstring
 _ASYNCRTIMP bool __cdecl str_iless(const std::string& left, const std::string& right) CPPREST_NOEXCEPT;
 
 /// <summary>
-/// Cross platform utility function for performing case insensitive string less-than comparison.
+/// Cross platform utility function for performing case-insensitive string less-than comparison.
 /// </summary>
 /// <param name="left">First string to compare.</param>
 /// <param name="right">Second strong to compare.</param>
@@ -725,7 +725,7 @@ public:
     /// <summary>
     /// Set length of the generated nonce string.
     /// </summary>
-    /// <param name="length">Lenght of nonce string.</param>
+    /// <param name="length">Length of nonce string.</param>
     void set_length(int length) { m_length = length; }
 
 private:

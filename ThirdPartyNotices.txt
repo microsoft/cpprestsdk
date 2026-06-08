@@ -45,7 +45,7 @@ listed below.
 
 base64.cpp and base64.h
 
-Copyright (C) 2004-2008 René Nyffenegger
+Copyright (C) 2004-2008 Renï¿½ Nyffenegger
 
 This source code is provided 'as-is', without any express or implied
 warranty. In no event will the author be held liable for any damages
@@ -65,10 +65,10 @@ freely, subject to the following restrictions:
 
 3. This notice may not be removed or altered from any source distribution.
 
-René Nyffenegger rene.nyffenegger@adp-gmbh.ch
+Renï¿½ Nyffenegger rene.nyffenegger@adp-gmbh.ch
 
 ****** SHA1 Library (sha1/sha1.hpp) ******
-sha1.hpp is a repackaging of the sha1.cpp and sha1.h files from the shallsha1
+sha1.hpp is a repackaging of the sha1.cpp and sha1.h files from the smallsha1
 library (http://code.google.com/p/smallsha1/) into a single header suitable for
 use as a header only library. This conversion was done by Peter Thorson
 (webmaster@zaphoyd.com) in 2013. All modifications to the code are redistributed

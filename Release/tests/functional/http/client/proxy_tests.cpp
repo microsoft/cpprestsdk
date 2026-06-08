@@ -148,13 +148,13 @@ SUITE(proxy_tests)
     TEST_FIXTURE(uri_address,
                  http_proxy_with_credentials,
                  "Ignore:Linux",
-                 "Github 53",
+                 "GitHub 53",
                  "Ignore:Apple",
-                 "Github 53",
+                 "GitHub 53",
                  "Ignore:Android",
-                 "Github 53",
+                 "GitHub 53",
                  "Ignore:IOS",
-                 "Github 53",
+                 "GitHub 53",
                  "Ignore",
                  "Manual")
     {

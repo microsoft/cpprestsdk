@@ -59,7 +59,7 @@ public:
     /// </summary>
     /// <remarks>
     /// This function allows an application (in their main function) to initialize the cpprestsdk
-    /// threadpool with a custom threadcount. Libraries should avoid calling this function to avoid
+    /// threadpool with a custom thread count. Libraries should avoid calling this function to avoid
     /// a diamond problem with multiple consumers attempting to customize the pool.
     /// </remarks>
     /// <exception cref="std::exception">Thrown if the threadpool has already been initialized</exception>

@@ -336,7 +336,7 @@ struct BJTable
         auto iPlayers = object.find(PLAYERS);
         if (iPlayers == object.end())
         {
-            throw web::json::json_exception(U("PLAYTERS key not found"));
+            throw web::json::json_exception(U("PLAYERS key not found"));
         }
         web::json::value players = iPlayers->second;
         int i = 0;

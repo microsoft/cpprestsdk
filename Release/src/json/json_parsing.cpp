@@ -873,7 +873,7 @@ try_again:
         {
             if ((signed int)(--m_currentParsingDepth) < 0)
             {
-                SetErrorCode(result, json_error::mismatched_brances);
+                SetErrorCode(result, json_error::mismatched_braces);
                 break;
             }
 

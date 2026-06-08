@@ -18,7 +18,7 @@ using namespace utility;
 using namespace concurrency::streams;
 
 /// <summary>
-/// A convenient helper function to loop asychronously until a condition is met.
+/// A convenient helper function to loop asynchronously until a condition is met.
 /// </summary>
 pplx::task<bool> _do_while_iteration(std::function<pplx::task<bool>(void)> func)
 {

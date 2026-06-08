@@ -5,7 +5,7 @@
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * MainPage.xaml.h - Declaration of the MainPage class.  Also includes
-* the declaration for the FacebookAlbum class that the GridView databinds to.
+* the declaration for the FacebookAlbum class to which the GridView binds.
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #pragma once

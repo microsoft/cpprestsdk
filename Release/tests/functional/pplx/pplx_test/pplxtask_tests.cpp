@@ -160,7 +160,7 @@ SUITE(pplxtask_tests)
 
             auto t2 = t1.then([=](int i) -> float {
                 IsTrue(i == 47,
-                       L"Continuation did not recieve the correct value from ancestor. Expected: 47, Actual: %d",
+                       L"Continuation did not receive the correct value from ancestor. Expected: 47, Actual: %d",
                        i);
                 return (float)i / 2;
             });
@@ -232,7 +232,7 @@ SUITE(pplxtask_tests)
 
             auto t2 = t1.then([&]() {
                 IsTrue(value == 147,
-                       L"void continuation did not recieve the correct value from ancestor. Expected: 147, Actual: %d",
+                       L"void continuation did not receive the correct value from ancestor. Expected: 147, Actual: %d",
                        value);
                 value++;
             });
@@ -277,7 +277,7 @@ SUITE(pplxtask_tests)
             try
             {
                 t1.then([]() {});
-                LogFailure(L"t1.contiue_with() should have thrown an exception");
+                LogFailure(L"t1.continue_with() should have thrown an exception");
             }
             catch (invalid_operation)
             {
@@ -353,7 +353,7 @@ SUITE(pplxtask_tests)
         // test create task
         task<int> t1 = create_task([]() -> int { return 4; });
         IsTrue(t1.get() == 4, L"create_task for simple task did not properly execute.");
-        IsTrue(create_task(t1).get() == 4, L"create_task from a task task did not properly execute.");
+        IsTrue(create_task(t1).get() == 4, L"create_task from a task did not properly execute.");
         task<void> t2 = create_task([]() {});
         task<int> t3 = create_task([]() -> task<int> { return create_task([]() -> int { return 4; }); });
         IsTrue(t3.get() == 4, L"create_task for task unwrapping did not properly execute.");
@@ -1555,7 +1555,7 @@ SUITE(pplxtask_tests)
         VERIFY_IS_TRUE(helpers::VerifyException<TestException2>(ot),
                        "(8) Outer task exception not propagated when inner task also throws");
         VERIFY_IS_TRUE(helpers::VerifyException<TestException1>(it),
-                       "(8) Inner task exception not explicitly propgated on pass out / get");
+                       "(8) Inner task exception not explicitly propagated on pass out / get");
         VERIFY_IS_TRUE(hit != 0, "(8) Inner hit marker expected!");
     }
 

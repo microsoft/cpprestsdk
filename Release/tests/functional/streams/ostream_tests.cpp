@@ -279,7 +279,7 @@ SUITE(ostream_tests)
                 // This will fail
                 VERIFY_ARE_EQUAL(int_read, i);
 
-                // This return statment will prevent the test from hanging,
+                // This return statement will prevent the test from hanging,
                 // cause if the numbers are merged there will be less than 100 numbers,
                 // and reading from the file will block
                 return;
