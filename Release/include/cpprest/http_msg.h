@@ -503,6 +503,8 @@ public:
 
     _http_response(http::status_code code) : m_status_code(code) {}
 
+    virtual _http_response() = default;
+
     http::status_code status_code() const { return m_status_code; }
 
     void set_status_code(http::status_code code) { m_status_code = code; }
@@ -853,7 +855,7 @@ public:
 
     _ASYNCRTIMP _http_request(std::unique_ptr<http::details::_http_server_context> server_context);
 
-    virtual ~_http_request() {}
+    virtual ~_http_request() = default;
 
     http::method& method() { return m_method; }
 
@@ -950,11 +952,6 @@ public:
     /// </summary>
     /// <param name="mtd">Request method.</param>
     http_request(http::method mtd) : _m_impl(std::make_shared<http::details::_http_request>(std::move(mtd))) {}
-
-    /// <summary>
-    /// Destructor frees any held resources.
-    /// </summary>
-    ~http_request() {}
 
     /// <summary>
     /// Get the method (GET/PUT/POST/DELETE) of the request message.
