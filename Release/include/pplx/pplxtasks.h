@@ -1270,7 +1270,7 @@ public:
         : _M_Scheduler(get_ambient_scheduler())
         , _M_CancellationToken(_Token)
         , _M_ContinuationContext(_ContinuationContext)
-        , _M_HasCancellationToken(false)
+        , _M_HasCancellationToken(true)
         , _M_HasScheduler(false)
     {
     }
