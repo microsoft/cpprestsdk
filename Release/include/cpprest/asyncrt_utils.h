@@ -26,7 +26,7 @@
 
 #ifndef _WIN32
 #include <sys/time.h>
-#if !defined(ANDROID) && !defined(__ANDROID__) && defined(HAVE_XLOCALE_H) // CodePlex 269
+#if !defined(ANDROID) && !defined(__ANDROID__) && (defined(HAVE_XLOCALE_H) || defined(__APPLE__)) // CodePlex 269
 /* Systems using glibc: xlocale.h has been removed from glibc 2.26
    The above include of locale.h is sufficient
    Further details: https://sourceware.org/git/?p=glibc.git;a=commit;h=f0be25b6336db7492e47d2e8e72eb8af53b5506d */
