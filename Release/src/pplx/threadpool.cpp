@@ -4,7 +4,7 @@
  **/
 #include "stdafx.h"
 
-#if !defined(CPPREST_EXCLUDE_WEBSOCKETS) || !defined(_WIN32)
+#if !defined(_WIN32) || !defined(CPPREST_EXCLUDE_WEBSOCKETS) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 #include "pplx/threadpool.h"
 #include <boost/asio/detail/thread.hpp>
 #include <new>
@@ -232,4 +232,4 @@ std::unique_ptr<crossplat::threadpool> crossplat::threadpool::construct(size_t n
 {
     return std::unique_ptr<crossplat::threadpool>(new threadpool_impl(num_threads));
 }
-#endif //  !defined(CPPREST_EXCLUDE_WEBSOCKETS) || !defined(_WIN32)
+#endif //  !defined(_WIN32) || !defined(CPPREST_EXCLUDE_WEBSOCKETS) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
