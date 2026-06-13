@@ -391,6 +391,14 @@ SUITE(ostream_tests)
         VERIFY_THROWS(t3.get(), std::logic_error);
     }
 
+    TEST(datetime_ostream_output)
+    {
+        ::utility::ostringstream_t stream;
+        ::utility::datetime const date = ::utility::datetime::utc_now();
+        stream << date;
+        VERIFY_ARE_EQUAL(stream.str(), date.to_string());
+    }
+
 } // SUITE(ostream_tests)
 
 } // namespace streams
