@@ -1,4 +1,10 @@
-**cpprestsdk is in maintenance mode and we do not recommend its use in new projects. We will continue to fix critical bugs and address security issues.**
+#  [!WARNING] ARCHIVED: [The C++ REST SDK]
+
+This repository is no longer maintained and has been archived. 
+
+- **Support**: No further issues or pull requests will be reviewed. You are free to fork this project if you wish to continue development independently.
+- **Alternatives**: Depending on your usage scenarios, alternatives to the C++ REST SDK include [libcurl](https://github.com/curl/curl) or [Boost beast](https://github.com/boostorg/beast). 
+
 
 ## Welcome!
 
