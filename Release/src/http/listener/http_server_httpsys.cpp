@@ -484,6 +484,24 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
     {
         utility::string_t header;
         std::string badRequestMsg;
+
+        auto pListener = (web::http::experimental::listener::details::http_listener_impl*)m_request->UrlContext;
+
+        // If ssl_context_callback is set, invoke the callback - that's the closest analog of asio's ssl_context_callback
+        auto ssl_context_callback = pListener->configuration().get_ssl_context_callback();
+        if (ssl_context_callback != nullptr
+            && m_request->pSslInfo != nullptr)
+        {
+            try
+            {
+                ssl_context_callback(m_request->pSslInfo, this);
+            }
+            catch (http_exception& e)
+            {
+                badRequestMsg = e.what();
+            }
+        }
+
         try
         {
             // HTTP_REQUEST::pRawUrl contains the raw URI that came across the wire.
@@ -596,8 +614,7 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         // Dispatch request to the http_listener.
         if (badRequestMsg.empty())
         {
-            dispatch_request_to_listener(
-                (web::http::experimental::listener::details::http_listener_impl*)m_request->UrlContext);
+            dispatch_request_to_listener(pListener);
         }
         else
         {
@@ -738,6 +755,7 @@ void windows_request_context::dispatch_request_to_listener(
 
     // Look up the lock for the http_listener.
     auto* pServer = static_cast<http_windows_server*>(http_server_api::server_api());
+
     pplx::extensibility::reader_writer_lock_t* pListenerLock;
     {
         pplx::extensibility::scoped_read_lock_t lock(pServer->_M_listenersLock);
