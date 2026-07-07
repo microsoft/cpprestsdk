@@ -822,16 +822,27 @@ protected:
         {
             access_type = WINHTTP_ACCESS_TYPE_NO_PROXY;
         }
-        else if (proxy.is_auto_discovery())
+        else if (proxy.is_auto_discovery() || proxy.is_legacy_auto_discovery())
         {
             access_type = WinHttpDefaultProxyConstant();
-            if (access_type != WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY)
+            if (access_type != WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY || proxy.is_legacy_auto_discovery())
             {
-                // Windows 8 or earlier, do proxy autodetection ourselves
+                // Windows 8 or earlier, or if manually specified, do proxy autodetection ourselves
                 m_proxy_auto_config = true;
+                if (proxy.is_legacy_auto_discovery())
+                {
+                    access_type = WINHTTP_ACCESS_TYPE_NO_PROXY;
+                }
 
+                auto pac_url = proxy.pac_url();
                 proxy_info proxyDefault;
-                if (!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
+
+                if (!pac_url.empty())
+                {
+                    // PAC url was provided
+                    m_proxy_auto_config_url = pac_url.c_str();
+                }
+                else if (!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
                     proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
                 {
                     // ... then try to fall back on the default WinINET proxy, as

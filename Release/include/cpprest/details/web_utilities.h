@@ -138,6 +138,7 @@ class web_proxy
     {
         use_default_,
         use_auto_discovery_,
+        use_legacy_auto_discovery_,
         disabled_,
         user_provided_
     };
@@ -147,6 +148,7 @@ public:
     {
         use_default = use_default_,
         use_auto_discovery = use_auto_discovery_,
+        use_legacy_auto_discovery = use_legacy_auto_discovery_,
         disabled = disabled_
     };
 
@@ -193,6 +195,25 @@ public:
     }
 
     /// <summary>
+    /// Gets the PAC url address to be used when looking for a proxy.
+    /// </summary>
+    /// <returns>PAC url</returns>
+    const std::wstring& pac_url() const { return m_pac_url; }
+
+    /// <summary>
+    /// Sets the PAC url address to be used when looking for a proxy.
+    /// </summary>
+    /// <param name="url">PAC url where wdap will be tried.</param>
+    void set_pac_url(std::wstring url)
+    {
+        if (m_mode != use_legacy_auto_discovery_)
+        {
+            throw std::invalid_argument("Cannot specify PAC url outside legacy auto discovery");
+        }
+        m_pac_url = std::move(url);
+    }
+
+    /// <summary>
     /// Checks if this proxy was constructed with default settings.
     /// </summary>
     /// <returns>True if default, false otherwise.</param>
@@ -216,8 +237,15 @@ public:
     /// <returns>True if a proxy address was explicitly specified, false otherwise.</returns>
     bool is_specified() const { return m_mode == user_provided_; }
 
+    /// <summary>
+    /// Checks if wdap should be manually tried.
+    /// </summary>
+    /// <returns>True if wdap should be manually tried, false otherwise.</returns>
+    bool is_legacy_auto_discovery() const { return m_mode == use_legacy_auto_discovery_; }
+
 private:
     web::uri m_address;
+    std::wstring m_pac_url;
     web_proxy_mode_internal m_mode;
     web::credentials m_credentials;
 };
