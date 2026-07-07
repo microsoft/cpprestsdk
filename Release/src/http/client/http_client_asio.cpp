@@ -337,6 +337,13 @@ public:
         m_socket.set_option(option, error_ignored);
     }
 
+    void disable_socket_send_buffer()
+    {
+        boost::asio::socket_base::send_buffer_size option(0);
+        boost::system::error_code error_ignored;
+        m_socket.set_option(option, error_ignored);
+    }
+
 private:
     // Guards concurrent access to socket/ssl::stream. This is necessary
     // because timeouts and cancellation can touch the socket at the same time
@@ -616,6 +623,10 @@ public:
             {
                 m_context->m_timer.reset();
                 m_context->m_connection->enable_no_delay();
+                if (m_context->m_http_client->client_config().is_socket_send_buffer_disabled())
+                {
+                    m_context->m_connection->disable_socket_send_buffer();
+                }
                 m_context->m_connection->async_write(m_request,
                                                      boost::bind(&ssl_proxy_tunnel::handle_write_request,
                                                                  shared_from_this(),
@@ -1012,6 +1023,10 @@ private:
         if (!ec)
         {
             m_connection->enable_no_delay();
+            if (m_http_client->client_config().is_socket_send_buffer_disabled())
+            {
+                m_connection->disable_socket_send_buffer();
+            }
             write_request();
         }
         else if (ec.value() == boost::system::errc::operation_canceled ||
