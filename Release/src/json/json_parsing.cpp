@@ -15,6 +15,12 @@
 
 #include <cstdlib>
 
+#if defined(__ANDROID__)
+using utility::conversions::details::to_string;
+#else
+using std::to_string;
+#endif
+
 #if defined(_MSC_VER)
 #pragma warning(disable : 4127) // allow expressions like while(true) pass
 #endif
@@ -49,9 +55,9 @@ __declspec(noreturn)
     void CreateException(const Token& tk, const utility::string_t& message)
 {
     std::string str("* Line ");
-    str += std::to_string(tk.start.m_line);
+    str += to_string(tk.start.m_line);
     str += ", Column ";
-    str += std::to_string(tk.start.m_column);
+    str += to_string(tk.start.m_column);
     str += " Syntax error: ";
     str += utility::conversions::to_utf8string(message);
     throw web::json::json_exception(std::move(str));

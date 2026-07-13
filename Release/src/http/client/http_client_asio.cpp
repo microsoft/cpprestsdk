@@ -1925,10 +1925,10 @@ private:
             timedout
         };
 
-#if (defined(ANDROID) || defined(__ANDROID__)) && !defined(_LIBCPP_VERSION)
-        boost::chrono::microseconds m_duration;
-#else
+#if defined(BOOST_ASIO_HAS_STD_CHRONO)
         std::chrono::microseconds m_duration;
+#else
+        boost::chrono::microseconds m_duration;
 #endif
         std::atomic<timer_state> m_state;
         std::weak_ptr<asio_context> m_ctx;
