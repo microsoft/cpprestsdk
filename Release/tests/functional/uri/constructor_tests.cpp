@@ -87,6 +87,18 @@ SUITE(constructor_tests)
         VERIFY_ARE_EQUAL(U("boff"), u.fragment());
     }
 
+    TEST(relative_ref_segment_nz_nc_query_fragment_colon_string)
+    {
+        uri u(uri::encode_uri(U("segment-nz-nc?foo:bar#baz:qux")));
+
+        VERIFY_ARE_EQUAL(U(""), u.scheme());
+        VERIFY_ARE_EQUAL(U(""), u.host());
+        VERIFY_ARE_EQUAL(0, u.port());
+        VERIFY_ARE_EQUAL(U("segment-nz-nc"), u.path());
+        VERIFY_ARE_EQUAL(U("foo:bar"), u.query());
+        VERIFY_ARE_EQUAL(U("baz:qux"), u.fragment());
+    }
+
     TEST(absolute_ref_string)
     {
         uri u(uri::encode_uri(U("/first/second#boff")));

@@ -171,13 +171,15 @@ struct inner_parse_out
         const utility::char_t* p = encoded;
 
         // IMPORTANT -- A uri may either be an absolute uri, or an relative-reference
-        // Absolute: 'http://host.com'
-        // Relative-Reference: '//:host.com', '/path1/path2?query', './path1:path2'
+        // Absolute: 'http://host.com', 'foo:bar'
+        // Relative-Reference: '//:host.com', '/path1/path2?query', './path1:path2', 'foo?bar:baz'
         // A Relative-Reference can be disambiguated by parsing for a ':' before the first slash
+        // or query ('?') or fragment ('#')
 
         bool is_relative_reference = true;
-        const utility::char_t* p2 = p;
-        for (; *p2 != _XPLATSTR('/') && *p2 != _XPLATSTR('\0'); p2++)
+        for (const utility::char_t* p2 = p;
+            *p2 != _XPLATSTR('/') && *p2 != _XPLATSTR('?') && *p2 != _XPLATSTR('#') && *p2 != _XPLATSTR('\0');
+            p2++)
         {
             if (*p2 == _XPLATSTR(':'))
             {
