@@ -35,9 +35,12 @@ function(cpprest_find_openssl)
       if(NOT DEFINED OPENSSL_ROOT_DIR)
         # Prefer a homebrew version of OpenSSL over the one in /usr/lib
         file(GLOB OPENSSL_ROOT_DIR /usr/local/Cellar/openssl*/*)
-        # Prefer the latest (make the latest one first)
-        list(REVERSE OPENSSL_ROOT_DIR)
-        list(GET OPENSSL_ROOT_DIR 0 OPENSSL_ROOT_DIR)
+
+        if(OPENSSL_ROOT_DIR)
+          # Prefer the latest (make the latest one first)
+          list(REVERSE OPENSSL_ROOT_DIR)
+          list(GET OPENSSL_ROOT_DIR 0 OPENSSL_ROOT_DIR)
+        endif()
       endif()
       # This should prevent linking against the system provided 0.9.8y
       message(STATUS "OPENSSL_ROOT_DIR = ${OPENSSL_ROOT_DIR}")
