@@ -964,7 +964,7 @@ private:
         return header;
     }
 
-    void report_error(const std::string& message,
+    void report_error(std::string&& message,
                       const boost::system::error_code& ec,
                       httpclient_errorcode_context context = httpclient_errorcode_context::none)
     {
@@ -1003,6 +1003,17 @@ private:
                 default: break;
             }
         }
+
+        // SSL error codes may contain valuable information, so append it to
+        // the message if available.
+        if (ec.category() == boost::asio::error::ssl_category ||
+            ec.category() == boost::asio::ssl::error::stream_category)
+        {
+          message += " (";
+          message += ec.message();
+          message += ")";
+        }
+
         request_context::report_error(errorcodeValue, message);
     }
 
