@@ -18,8 +18,10 @@
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 #include "cpprest/asyncrt_utils.h"
+#include "cpprest/certificate_info.h"
 #include "cpprest/details/web_utilities.h"
 #include "cpprest/http_headers.h"
+#include "cpprest/json.h"
 #include "cpprest/uri.h"
 #include "cpprest/ws_msg.h"
 #include "pplx/pplxtasks.h"
@@ -79,7 +81,13 @@ public:
     /// <summary>
     /// Creates a websocket client configuration with default settings.
     /// </summary>
-    websocket_client_config() : m_sni_enabled(true), m_validate_certificates(true) {}
+    websocket_client_config()
+        : m_certificate_chain_callback([](const std::shared_ptr<http::client::certificate_info>&) -> bool
+                                       { return true; })
+        , m_sni_enabled(true)
+        , m_validate_certificates(true)
+    {
+    }
 
     /// <summary>
     /// Get the web proxy object
@@ -199,6 +207,26 @@ public:
     }
 #endif
 
+    /// Set the certificate chain callback. If set, HTTP client will call this callback in a blocking manner during HTTP
+    /// connection.
+    /// </summary>
+    void set_user_certificate_chain_callback(const http::client::CertificateChainFunction& callback)
+    {
+        m_certificate_chain_callback = callback;
+    }
+
+    /// <summary>
+    /// Invokes the certificate chain callback.
+    /// </summary>
+    /// <param name="certificate_info">Pointer to the certificate_info struct that has the certificate
+    /// information.</param> <returns>True if the consumer code allows the connection, false otherwise. False will
+    /// terminate the HTTP connection.</returns>
+    bool invoke_certificate_chain_callback(
+        const std::shared_ptr<http::client::certificate_info>& certificate_Info) const
+    {
+        return m_certificate_chain_callback(certificate_Info);
+    }
+
 private:
     web::web_proxy m_proxy;
     web::credentials m_credentials;
@@ -206,6 +234,8 @@ private:
     bool m_sni_enabled;
     utf8string m_sni_hostname;
     bool m_validate_certificates;
+    http::client::CertificateChainFunction m_certificate_chain_callback;
+
 #if !defined(_WIN32) || !defined(__cplusplus_winrt)
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
 #endif

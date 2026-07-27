@@ -23,6 +23,7 @@ LeonidCSIT
 kreuzerkrieg
 evanc
 Jesse Towner (jwtowner)
+Atul Bagga  (atbagga)
 
 Abinsula s.r.l.
 Gianfranco Costamagna (LocutusOfBorg)
@@ -36,9 +37,14 @@ Gery Vessere (gery@vessere.com)
 Cisco Systems
 Gergely Lukacsy (glukacsy)
 Chris Deering (deeringc)
+Chris O'Gorman (chogorma)
 
 Ocedo GmbH
 Henning Pfeiffer (megaposer)
+
+neXenio GmbH
+Patrik Fiedler (xqp)
+René Meusel (reneme)
 
 thomasschaub
 

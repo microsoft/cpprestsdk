@@ -41,6 +41,7 @@
 
 #include "../common/x509_cert_utilities.h"
 #include "cpprest/base_uri.h"
+#include "cpprest/certificate_info.h"
 #include "cpprest/details/http_helpers.h"
 #include "http_client_impl.h"
 #include "pplx/threadpool.h"
@@ -754,7 +755,7 @@ public:
         }
 
         auto start_http_request_flow = [proxy_type, proxy_host, proxy_port AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
-                                           std::shared_ptr<asio_context> ctx) {
+                                            std::shared_ptr<asio_context> ctx) {
             if (ctx->m_request._cancellation_token().is_canceled())
             {
                 ctx->request_context::report_error(make_error_code(std::errc::operation_canceled).value(),
@@ -1123,6 +1124,9 @@ private:
         // If OpenSSL fails we will doing verification at the end using the whole certificate
         // chain so wait until the 'leaf' cert. For now return true so OpenSSL continues down
         // the certificate chain.
+        const auto& host = utility::conversions::to_utf8string(m_http_client->base_uri().host());
+        using namespace web::http::client::details;
+
         if (!preverified)
         {
             m_openssl_failed = true;
@@ -1130,12 +1134,36 @@ private:
 
         if (m_openssl_failed)
         {
-            return verify_cert_chain_platform_specific(verifyCtx, m_connection->cn_hostname());
-        }
-#endif // CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
+            if (!is_end_certificate_in_chain(verifyCtx))
+            {
+                // Continue until we get the end certificate.
+                return true;
+            }
 
-        boost::asio::ssl::rfc2818_verification rfc2818(m_connection->cn_hostname());
-        return rfc2818(preverified, verifyCtx);
+            auto chainFunc = [this](const std::shared_ptr<certificate_info>& cert_info)
+            { return m_http_client->client_config().invoke_certificate_chain_callback(cert_info); };
+
+            return http::client::details::verify_cert_chain_platform_specific(
+                verifyCtx, utility::conversions::to_utf8string(host), chainFunc);
+        }
+#endif
+
+        boost::asio::ssl::rfc2818_verification rfc2818(host);
+        if (!rfc2818(preverified, verifyCtx))
+        {
+            return false;
+        }
+
+        auto info = std::make_shared<certificate_info>(host, get_X509_cert_chain_encoded_data(verifyCtx));
+        info->verified = true;
+
+        if (!is_end_certificate_in_chain(verifyCtx))
+        {
+            // Continue until we get the end certificate.
+            return true;
+        }
+
+        return m_http_client->client_config().invoke_certificate_chain_callback(info);
     }
 
     void handle_write_headers(const boost::system::error_code& ec)
@@ -1200,7 +1228,8 @@ private:
 
                 const size_t offset = http::details::chunked_encoding::add_chunked_delimiters(
                     buf, chunkSize + http::details::chunked_encoding::additional_encoding_space, readSize);
-                this_request->m_body_buf.commit(readSize + http::details::chunked_encoding::additional_encoding_space);
+                this_request->m_body_buf.commit(readSize +
+                                                http::details::chunked_encoding::additional_encoding_space);
                 this_request->m_body_buf.consume(offset);
                 this_request->m_uploaded += static_cast<uint64_t>(readSize);
 
@@ -1213,9 +1242,10 @@ private:
                 }
                 else
                 {
-                    this_request->m_connection->async_write(
-                        this_request->m_body_buf,
-                        boost::bind(&asio_context::handle_write_body, this_request, boost::asio::placeholders::error));
+                    this_request->m_connection->async_write(this_request->m_body_buf,
+                                                            boost::bind(&asio_context::handle_write_body,
+                                                                        this_request,
+                                                                        boost::asio::placeholders::error));
                 }
             });
     }
@@ -1665,7 +1695,7 @@ private:
 
                         writeBuffer.putn_nocopy(shared_decompressed->data(), shared_decompressed->size())
                             .then([this_request, to_read, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
-                                      pplx::task<size_t> op) {
+                                    pplx::task<size_t> op) {
                                 try
                                 {
                                     op.get();
@@ -1688,23 +1718,26 @@ private:
                 else
                 {
                     writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t*>(m_body_buf.data()), to_read)
-                        .then([this_request, to_read AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op) {
-                            try
+                        .then(
+                            [this_request, to_read AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op)
                             {
-                                op.wait();
-                            }
-                            catch (...)
-                            {
-                                this_request->report_exception(std::current_exception());
-                                return;
-                            }
-                            this_request->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
-                            this_request->m_connection->async_read_until(this_request->m_body_buf,
-                                                                         CRLF,
-                                                                         boost::bind(&asio_context::handle_chunk_header,
-                                                                                     this_request,
-                                                                                     boost::asio::placeholders::error));
-                        });
+                                try
+                                {
+                                    op.wait();
+                                }
+                                catch (...)
+                                {
+                                    this_request->report_exception(std::current_exception());
+                                    return;
+                                }
+                                this_request->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
+                                this_request->m_connection->async_read_until(
+                                    this_request->m_body_buf,
+                                    CRLF,
+                                    boost::bind(&asio_context::handle_chunk_header,
+                                                this_request,
+                                                boost::asio::placeholders::error));
+                            });
                 }
             }
         }
@@ -1795,7 +1828,7 @@ private:
 
                     writeBuffer.putn_nocopy(shared_decompressed->data(), shared_decompressed->size())
                         .then([this_request, read_size, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
-                                  pplx::task<size_t> op) {
+                                pplx::task<size_t> op) {
                             size_t writtenSize = 0;
                             (void)writtenSize;
                             try
@@ -1804,9 +1837,10 @@ private:
                                 this_request->m_downloaded += static_cast<uint64_t>(read_size);
                                 this_request->m_body_buf.consume(read_size);
                                 this_request->async_read_until_buffersize(
-                                    static_cast<size_t>((std::min)(
-                                        static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()),
-                                        this_request->m_content_length - this_request->m_downloaded)),
+                                    static_cast<size_t>(
+                                        (std::min)(static_cast<uint64_t>(
+                                                        this_request->m_http_client->client_config().chunksize()),
+                                                    this_request->m_content_length - this_request->m_downloaded)),
                                     boost::bind(&asio_context::handle_read_content,
                                                 this_request,
                                                 boost::asio::placeholders::error));
@@ -1830,9 +1864,10 @@ private:
                             this_request->m_downloaded += static_cast<uint64_t>(writtenSize);
                             this_request->m_body_buf.consume(writtenSize);
                             this_request->async_read_until_buffersize(
-                                static_cast<size_t>((std::min)(
-                                    static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()),
-                                    this_request->m_content_length - this_request->m_downloaded)),
+                                static_cast<size_t>(
+                                    (std::min)(static_cast<uint64_t>(
+                                                this_request->m_http_client->client_config().chunksize()),
+                                            this_request->m_content_length - this_request->m_downloaded)),
                                 boost::bind(&asio_context::handle_read_content,
                                             this_request,
                                             boost::asio::placeholders::error));
@@ -1873,8 +1908,7 @@ private:
             m_timer.expires_from_now(m_duration);
             auto ctx = m_ctx;
             m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec) {
-                handle_timeout(ec, ctx);
-            });
+                handle_timeout(ec, ctx); });
         }
 
         void reset()
@@ -1887,8 +1921,7 @@ private:
                 assert(m_state == started);
                 auto ctx = m_ctx;
                 m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec) {
-                    handle_timeout(ec, ctx);
-                });
+                    handle_timeout(ec, ctx); });
             }
         }
 
@@ -2028,12 +2061,12 @@ static bool is_recognized_redirection(status_code code)
     return is_retrieval_redirection(code) || is_unchanged_redirection(code);
 }
 
-static bool is_retrieval_request(method method)
-{
+static bool is_retrieval_request(method method) 
+{ 
     return methods::GET == method || methods::HEAD == method;
 }
 
-static const std::vector<utility::string_t> request_body_header_names =
+static const std::vector<utility::string_t> request_body_header_names = 
 {
     header_names::content_encoding,
     header_names::content_language,
@@ -2081,28 +2114,28 @@ uri http_redirect_follower::url_to_follow(const http_response& response) const
 {
     // Return immediately if the response is not a supported redirection
     if (!is_recognized_redirection(response.status_code()))
-        return{};
+        return {};
 
     // Although not required by RFC 7231, config may limit the number of automatic redirects
     // (followed_urls includes the initial request URL, hence '<' here)
     if (config.max_redirects() < followed_urls.size())
-        return{};
+        return {};
 
     // Can't very well automatically redirect if the server hasn't provided a Location
     const auto location = response.headers().find(header_names::location);
     if (response.headers().end() == location)
-        return{};
+        return {};
 
     uri to_follow(followed_urls.back().resolve_uri(location->second));
 
     // Config may prohibit automatic redirects from HTTPS to HTTP
     if (!config.https_to_http_redirects() && followed_urls.back().scheme() == _XPLATSTR("https")
         && to_follow.scheme() != _XPLATSTR("https"))
-        return{};
+        return {};
 
     // "A client SHOULD detect and intervene in cyclical redirections."
     if (followed_urls.end() != std::find(followed_urls.begin(), followed_urls.end(), to_follow))
-        return{};
+        return {};
 
     return to_follow;
 }
@@ -2111,7 +2144,7 @@ pplx::task<http_response> http_redirect_follower::operator()(http_response respo
 {
     // Return immediately if the response doesn't indicate a valid automatic redirect
     uri to_follow = url_to_follow(response);
-    if (to_follow.is_empty())
+    if (to_follow.is_empty()) 
         return pplx::task_from_result(response);
 
     // This implementation only supports retrieval redirects, as it cannot redirect e.g. a POST request
@@ -2119,7 +2152,7 @@ pplx::task<http_response> http_redirect_follower::operator()(http_response respo
     if (!is_retrieval_request(redirect.method()) && !is_retrieval_redirection(response.status_code()))
         return pplx::task_from_result(response);
 
-    if (!is_retrieval_request(redirect.method()))
+    if (!is_retrieval_request(redirect.method())) 
         redirect.set_method(methods::GET);
 
     // If the reply to this request is also a redirect, we want visibility of that
@@ -2152,9 +2185,9 @@ pplx::task<http_response> asio_client::propagate(http_request request)
     // Asynchronously send the response with the HTTP client implementation.
     this->async_send_request(context);
 
-    return client_config().max_redirects() > 0
-        ? result_task.then(http_redirect_follower(client_config(), request))
-        : result_task;
+    return client_config().max_redirects() > 0 
+    ? result_task.then(http_redirect_follower(client_config(), request))
+    : result_task;
 }
 } // namespace details
 } // namespace client
