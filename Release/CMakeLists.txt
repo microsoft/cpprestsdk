@@ -15,9 +15,21 @@ set(CPPREST_VERSION_REVISION 19)
 
 enable_testing()
 
-set(WERROR ON CACHE BOOL "Treat Warnings as Errors.")
+if(IOS)
+  # We disable warnings as errors on iOS because of command-line warning:
+  #     clang: warning: overriding '-mios-simulator-version-min=8.0' option with '--target=arm64-apple-ios13.5' [-Woverriding-t-option]
+  # which for some reason can't be disabled from cmake the usual way.
+  set(WERROR OFF CACHE BOOL "Treat Warnings as Errors.")
+  # We exclude compression on iOS for now because of the problem I described
+  # in greater details in this StackOverflow post:
+  # https://stackoverflow.com/questions/58628377/catalina-c-using-cmath-headers-yield-error-no-member-named-signbit-in-th/59780819#59780819
+  set(CPPREST_EXCLUDE_COMPRESSION ON  CACHE BOOL "Exclude compression functionality.")
+else()
+  set(WERROR ON  CACHE BOOL "Treat Warnings as Errors.")
+  set(CPPREST_EXCLUDE_COMPRESSION OFF CACHE BOOL "Exclude compression functionality.")
+endif()
+
 set(CPPREST_EXCLUDE_WEBSOCKETS OFF CACHE BOOL "Exclude websockets functionality.")
-set(CPPREST_EXCLUDE_COMPRESSION OFF CACHE BOOL "Exclude compression functionality.")
 set(CPPREST_EXCLUDE_BROTLI ON CACHE BOOL "Exclude Brotli compression functionality.")
 set(CPPREST_EXPORT_DIR cmake/cpprestsdk CACHE STRING "Directory to install CMake config files.")
 set(CPPREST_INSTALL_HEADERS ON CACHE BOOL "Install header files.")

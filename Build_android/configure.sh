@@ -151,12 +151,11 @@ if [ "${DO_OPENSSL}" == "1" ]; then (
 # -----
 # Uses the build script from Moritz Wundke (formerly MysticTreeGames)
 # https://github.com/moritz-wundke/Boost-for-Android
-# (plus the patch https://github.com/o01eg/Boost-for-Android/tree/ndk-bump-21)
 
 if [ "${DO_BOOST}" == "1" ]; then (
-    if [ ! -d 'Boost-for-Android' ]; then git clone https://github.com/o01eg/Boost-for-Android/; fi
+    if [ ! -d 'Boost-for-Android' ]; then git clone https://github.com/moritz-wundke/Boost-for-Android; fi
     cd Boost-for-Android
-    git checkout 7626dd6f7cab7866dce20e685d4a1b11194366a7
+    git checkout c439278a9e7b33b8a176c172bb573c2f665d9179
     PATH="$PATH:$NDK_DIR" \
     CXXFLAGS="-std=gnu++11" \
     ./build-android.sh \

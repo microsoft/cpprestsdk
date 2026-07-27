@@ -1,7 +1,7 @@
 # iOS folders that dependencies get stored in
 boostoniphone/
 boost
-boost.framework/
+boost.xcframework/
 ios-cmake/
 openssl/
 OpenSSL-for-iPhone/
