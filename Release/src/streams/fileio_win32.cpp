@@ -203,7 +203,7 @@ void _finish_create(HANDLE fh, _In_ _filestream_callback* callback, std::ios_bas
 
     if (mode & std::ios_base::app || mode & std::ios_base::ate)
     {
-        info->m_wrpos = static_cast<size_t>(-1); // Start at the end of the file.
+        info->m_wrpos = static_cast<utility::size64_t>(-1); // Start at the end of the file.
     }
 
     callback->on_opened(info);
@@ -360,25 +360,13 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl* fInfo,
                          _In_ streams::details::_filestream_callback* callback,
                          const void* ptr,
                          size_t count,
-                         size_t position)
+                         utility::size64_t position)
 {
     auto pOverlapped = std::unique_ptr<EXTENDED_OVERLAPPED>(
         new EXTENDED_OVERLAPPED(_WriteFileCompletionRoutine<streams::details::_file_info_impl>, callback));
 
-    if (position == static_cast<size_t>(-1))
-    {
-        pOverlapped->Offset = 0xFFFFFFFF;
-        pOverlapped->OffsetHigh = 0xFFFFFFFF;
-    }
-    else
-    {
-        pOverlapped->Offset = static_cast<DWORD>(position);
-#ifdef _WIN64
-        pOverlapped->OffsetHigh = static_cast<DWORD>(position >> 32);
-#else
-        pOverlapped->OffsetHigh = 0;
-#endif
-    }
+    pOverlapped->Offset = static_cast<DWORD>(position);
+    pOverlapped->OffsetHigh = static_cast<DWORD>(position >> 32);
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     StartThreadpoolIo(static_cast<PTP_IO>(fInfo->m_io_context));
@@ -463,16 +451,12 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl* fInfo,
                         _In_ streams::details::_filestream_callback* callback,
                         _Out_writes_(count) void* ptr,
                         _In_ size_t count,
-                        size_t offset)
+                        utility::size64_t offset)
 {
     auto pOverlapped = std::unique_ptr<EXTENDED_OVERLAPPED>(
         new EXTENDED_OVERLAPPED(_ReadFileCompletionRoutine<streams::details::_file_info_impl>, callback));
     pOverlapped->Offset = static_cast<DWORD>(offset);
-#ifdef _WIN64
     pOverlapped->OffsetHigh = static_cast<DWORD>(offset >> 32);
-#else
-    pOverlapped->OffsetHigh = 0;
-#endif
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     StartThreadpoolIo((PTP_IO)fInfo->m_io_context);
@@ -635,8 +619,8 @@ size_t _fill_buffer_fsb(_In_ _file_info_impl* fInfo,
     // First, we need to understand how far into the buffer we have already read
     // and how much remains.
 
-    size_t bufpos = fInfo->m_rdpos - fInfo->m_bufoff;
-    size_t bufrem = fInfo->m_buffill - bufpos;
+    auto bufpos = fInfo->m_rdpos - fInfo->m_bufoff;
+    auto bufrem = static_cast<size_t>(fInfo->m_buffill - bufpos);
 
     // We have four different scenarios:
     //  1. The read position is before the start of the buffer, in which case we will just reuse the buffer.
@@ -774,7 +758,7 @@ size_t __cdecl _getn_fsb(_In_ streams::details::_file_info* info,
         auto cb = create_callback(fInfo, [=](size_t read) {
             auto sz = count * char_size;
             auto copy = (read < sz) ? read : sz;
-            auto bufoff = fInfo->m_rdpos - fInfo->m_bufoff;
+            auto bufoff = static_cast<size_t>(fInfo->m_rdpos - fInfo->m_bufoff);
             memcpy(ptr, fInfo->m_buffer + bufoff * char_size, copy);
             fInfo->m_atend = copy < sz;
             callback->on_completed(copy);
@@ -786,7 +770,7 @@ size_t __cdecl _getn_fsb(_In_ streams::details::_file_info* info,
         {
             auto sz = count * char_size;
             auto copy = (read < sz) ? read : sz;
-            auto bufoff = fInfo->m_rdpos - fInfo->m_bufoff;
+            auto bufoff = static_cast<size_t>(fInfo->m_rdpos - fInfo->m_bufoff);
             memcpy(ptr, fInfo->m_buffer + bufoff * char_size, copy);
             fInfo->m_atend = copy < sz;
             return copy;
@@ -829,7 +813,7 @@ size_t __cdecl _putn_fsb(_In_ streams::details::_file_info* info,
 
     // To preserve the async write order, we have to move the write head before read.
     auto lastPos = fInfo->m_wrpos;
-    if (fInfo->m_wrpos != static_cast<size_t>(-1))
+    if (fInfo->m_wrpos != static_cast<utility::size64_t>(-1))
     {
         fInfo->m_wrpos += count;
         lastPos *= char_size;
@@ -859,7 +843,7 @@ bool __cdecl _sync_fsb(_In_ streams::details::_file_info*, _In_ streams::details
 /// <param name="info">The file info record of the file</param>
 /// <param name="pos">The new position (offset from the start) in the file stream</param>
 /// <returns>New file position or -1 if error</returns>
-size_t __cdecl _seekrdpos_fsb(_In_ streams::details::_file_info* info, size_t pos, size_t)
+utility::size64_t __cdecl _seekrdpos_fsb(_In_ streams::details::_file_info* info, utility::size64_t pos, size_t)
 {
     _ASSERTE(info != nullptr);
 
@@ -867,7 +851,7 @@ size_t __cdecl _seekrdpos_fsb(_In_ streams::details::_file_info* info, size_t po
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
-    if (fInfo->m_handle == INVALID_HANDLE_VALUE) return static_cast<size_t>(-1);
+    if (fInfo->m_handle == INVALID_HANDLE_VALUE) return static_cast<utility::size64_t>(-1);
 
     if (pos < fInfo->m_bufoff || pos > (fInfo->m_bufoff + fInfo->m_buffill))
     {
@@ -887,7 +871,7 @@ size_t __cdecl _seekrdpos_fsb(_In_ streams::details::_file_info* info, size_t po
 /// <param name="offset">The new position (offset from the end of the stream) in the file stream</param>
 /// <param name="char_size">The size of the character type used for this stream</param>
 /// <returns>New file position or -1 if error</returns>
-size_t __cdecl _seekrdtoend_fsb(_In_ streams::details::_file_info* info, int64_t offset, size_t char_size)
+utility::size64_t __cdecl _seekrdtoend_fsb(_In_ streams::details::_file_info* info, int64_t offset, size_t char_size)
 {
     _ASSERTE(info != nullptr);
 
@@ -895,7 +879,7 @@ size_t __cdecl _seekrdtoend_fsb(_In_ streams::details::_file_info* info, int64_t
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
-    if (fInfo->m_handle == INVALID_HANDLE_VALUE) return static_cast<size_t>(-1);
+    if (fInfo->m_handle == INVALID_HANDLE_VALUE) return static_cast<utility::size64_t>(-1);
 
     if (fInfo->m_buffer != nullptr)
     {
@@ -905,26 +889,16 @@ size_t __cdecl _seekrdtoend_fsb(_In_ streams::details::_file_info* info, int64_t
         fInfo->m_bufoff = fInfo->m_buffill = fInfo->m_bufsize = 0;
     }
 
-#ifdef _WIN64
-    LARGE_INTEGER filesize;
-    filesize.QuadPart = 0;
+    LARGE_INTEGER liDistanceToMove;
+    liDistanceToMove.QuadPart = offset * char_size;
 
-    BOOL result = GetFileSizeEx(fInfo->m_handle, &filesize);
-    if (FALSE == result)
+    LARGE_INTEGER newFilePointer;
+    if (!SetFilePointerEx(fInfo->m_handle, liDistanceToMove, &newFilePointer, FILE_END)) 
     {
-        return static_cast<size_t>(-1);
+        return static_cast<utility::size64_t>(-1);
     }
-    else
-    {
-        fInfo->m_rdpos = static_cast<size_t>(filesize.QuadPart) / char_size;
-    }
-#else
-    auto newpos = SetFilePointer(fInfo->m_handle, (LONG)(offset * char_size), nullptr, FILE_END);
 
-    if (newpos == INVALID_SET_FILE_POINTER) return static_cast<size_t>(-1);
-
-    fInfo->m_rdpos = static_cast<size_t>(newpos) / char_size;
-#endif
+    fInfo->m_rdpos = newFilePointer.QuadPart / char_size;
 
     return fInfo->m_rdpos;
 }
@@ -953,7 +927,7 @@ utility::size64_t __cdecl _get_size(_In_ concurrency::streams::details::_file_in
 /// <param name="info">The file info record of the file</param>
 /// <param name="pos">The new position (offset from the start) in the file stream</param>
 /// <returns>New file position or -1 if error</returns>
-size_t __cdecl _seekwrpos_fsb(_In_ streams::details::_file_info* info, size_t pos, size_t)
+utility::size64_t __cdecl _seekwrpos_fsb(_In_ streams::details::_file_info* info, utility::size64_t pos, size_t)
 {
     _ASSERTE(info != nullptr);
 
@@ -961,7 +935,7 @@ size_t __cdecl _seekwrpos_fsb(_In_ streams::details::_file_info* info, size_t po
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
-    if (fInfo->m_handle == INVALID_HANDLE_VALUE) return static_cast<size_t>(-1);
+    if (fInfo->m_handle == INVALID_HANDLE_VALUE) return static_cast<utility::size64_t>(-1);
 
     fInfo->m_wrpos = pos;
     return fInfo->m_wrpos;

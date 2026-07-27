@@ -54,8 +54,8 @@ struct _file_info
 
     // Positional data
 
-    size_t m_rdpos;
-    size_t m_wrpos;
+    utility::size64_t m_rdpos;
+    utility::size64_t m_wrpos;
     bool m_atend;
 
     // Input buffer
@@ -63,7 +63,7 @@ struct _file_info
     size_t m_buffer_size; // The intended size of the buffer to read into.
     char* m_buffer;
 
-    size_t m_bufoff;                          // File position that the start of the buffer represents.
+    utility::size64_t m_bufoff;               // File position that the start of the buffer represents.
     msl::safeint3::SafeInt<size_t> m_bufsize; // Buffer allocated size, as actually allocated.
     size_t m_buffill;                         // Amount of file data actually in the buffer
 
@@ -176,7 +176,8 @@ extern "C"
     /// </summary>
     /// <param name="info">The file info record of the file</param>
     /// <param name="callback">A pointer to the callback interface to invoke when the write request is
-    /// completed.</param> <returns><c>true</c> if the request was initiated</returns>
+    /// completed.</param>
+    /// <returns><c>true</c> if the request was initiated</returns>
     _ASYNCRTIMP bool __cdecl _sync_fsb(_In_ concurrency::streams::details::_file_info* info,
                                        _In_ concurrency::streams::details::_filestream_callback* callback);
 
@@ -193,28 +194,28 @@ extern "C"
     /// </summary>
     /// <param name="info">The file info record of the file</param>
     /// <param name="pos">The new position (offset from the start) in the file stream</param>
-    /// <returns><c>true</c> if the request was initiated</returns>
-    _ASYNCRTIMP size_t __cdecl _seekrdpos_fsb(_In_ concurrency::streams::details::_file_info* info,
-                                              size_t pos,
+    /// <returns>New file position or (utility::size64_t)-1 on error</returns>
+    _ASYNCRTIMP utility::size64_t __cdecl _seekrdpos_fsb(_In_ concurrency::streams::details::_file_info* info,
+                                              utility::size64_t pos,
                                               size_t char_size);
 
     /// <summary>
     /// Adjust the internal buffers and pointers when the application seeks to a new read location in the stream.
     /// </summary>
     /// <param name="info">The file info record of the file</param>
-    /// <param name="pos">The new position (offset from the start) in the file stream</param>
-    /// <returns><c>true</c> if the request was initiated</returns>
-    _ASYNCRTIMP size_t __cdecl _seekrdtoend_fsb(_In_ concurrency::streams::details::_file_info* info,
-                                                int64_t offset,
-                                                size_t char_size);
+    /// <param name="offset">offset relative to the end of the stream</param>
+    /// <returns>New file position or (utility::size64_t)-1 on error</returns>
+    _ASYNCRTIMP utility::size64_t __cdecl _seekrdtoend_fsb(_In_ concurrency::streams::details::_file_info* info,
+                                                           int64_t offset,
+                                                           size_t char_size);
 
     /// <summary>
     /// Adjust the internal buffers and pointers when the application seeks to a new write location in the stream.
     /// </summary>
     /// <param name="info">The file info record of the file</param>
     /// <param name="pos">The new position (offset from the start) in the file stream</param>
-    /// <returns><c>true</c> if the request was initiated</returns>
-    _ASYNCRTIMP size_t __cdecl _seekwrpos_fsb(_In_ concurrency::streams::details::_file_info* info,
-                                              size_t pos,
-                                              size_t char_size);
+    /// <returns>New file position or (utility::size64_t)-1 on error</returns>
+    _ASYNCRTIMP utility::size64_t __cdecl _seekwrpos_fsb(_In_ concurrency::streams::details::_file_info* info,
+                                                         utility::size64_t pos,
+                                                         size_t char_size);
 }
